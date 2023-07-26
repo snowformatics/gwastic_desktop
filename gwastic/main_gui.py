@@ -20,6 +20,8 @@ pheno_file = ''
 
 vcf_app_data = None
 variants_app_data = None
+bed_app_data = None
+pheno_app_data = None
 
 log_win = dpg.add_window(label="Log", pos=(0, 600), width=1000, height=500)
 logz = logger.mvLogger(log_win)
@@ -49,12 +51,29 @@ def callback_vcf(sender, app_data):
     add_log('VCF Selected: ' + vcf_path)
 
 
+def callback_bed(sender, app_data):
+    """Get vcf file path selected from the user."""
+    global bed_app_data  # Use the global variable to store the value
+    bed_app_data = app_data
+    bed_path, current_path = get_selection_path(bed_app_data)
+    add_log('BED file Selected: ' + bed_path)
+
+
 def callback_variants(sender, app_data):
-    """Get phenotype file path selected from the user."""
+    """Get variant file path selected from the user."""
     global variants_app_data  # Use the global variable to store the value
     variants_app_data = app_data
     variants_path, current_path = get_selection_path(variants_app_data)
-    add_log('File Selected: ' + variants_path)
+    add_log('Variant File Selected: ' + variants_path)
+
+
+def callback_pheno(sender, app_data):
+    """Get phenotype file path selected from the user."""
+    global pheno_app_data  # Use the global variable to store the value
+    pheno_app_data = app_data
+    pheno_path, current_path = get_selection_path(pheno_app_data)
+    add_log('Pheno File Selected: ' + pheno_path)
+
 
 
 def retrieve_callback(sender, callback):
@@ -66,7 +85,6 @@ def retrieve_callback(sender, callback):
 # Get functions
 def convert_vcf(sender, data, user_data):
     """Converts vcf to bed file using PLINK."""
-
     maf = str(dpg.get_value(user_data[0]))
     geno = str(dpg.get_value(user_data[1]))
     variant_ids = variants_app_data
@@ -76,7 +94,6 @@ def convert_vcf(sender, data, user_data):
         variants_path = None
     else:
         variants_path, current_path = get_selection_path(variants_app_data)
-        helper.duplicate_column(variants_path, variants_path)
 
     add_log('Staring converting VCF to BED...')
     plink_log = gwas.vcf_to_bed(vcf_path, variants_path, current_path + 'test', maf, geno)
@@ -84,9 +101,12 @@ def convert_vcf(sender, data, user_data):
     logz.log_debug('Converting done!')
 
 
-def get_data_gwas(sender, data, user_data):
-    pass
-    #print(dpg.get_value(user_data[0]), dpg.get_value(user_data[1]))
+def run_gwas(sender, data, user_data):
+    bed_path, current_path1 = get_selection_path(bed_app_data)
+    pheno_path, current_path2 = get_selection_path(pheno_app_data)
+    helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+    gwas.start_gwas(bed_path, pheno_path)
+    #print(bed_path, current_path1, pheno_path, current_path2)
 
 
 def get_data_gp(sender, data, user_data):
@@ -101,15 +121,21 @@ with dpg.file_dialog(directory_selector=False, show=False, callback=callback_vcf
     dpg.add_file_extension(".*")
 
 with dpg.file_dialog(directory_selector=False, show=False, callback=callback_variants, file_count=3,
-                     tag="file_dialog_pheno", width=700 ,height=400, default_path="E:/GWAS_data/test/"):
-    dpg.add_file_extension(".*")
+                     tag="file_dialog_variants", width=700 ,height=400, default_path="E:/GWAS_data/test/"):
     dpg.add_file_extension(".txt", color=(255, 150, 150, 255))
+    dpg.add_file_extension(".*")
     dpg.add_file_extension(".csv", color=(255, 255, 0, 255))
 
-with dpg.file_dialog(directory_selector=False, show=False, callback=callback_vcf, file_count=3,
-                     tag="file_dialog_bed", width=700 ,height=400,default_path="E:/GWAS_data/test/"):
+with dpg.file_dialog(directory_selector=False, show=False, callback=callback_pheno, file_count=3,
+                     tag="file_dialog_pheno", width=700 ,height=400, default_path="E:/GWAS_data/test/"):
+    dpg.add_file_extension(".txt", color=(255, 150, 150, 255))
     dpg.add_file_extension(".*")
+    dpg.add_file_extension(".csv", color=(255, 255, 0, 255))
+
+with dpg.file_dialog(directory_selector=False, show=False, callback=callback_bed, file_count=3,
+                     tag="file_dialog_bed", width=700 ,height=400,default_path="E:/GWAS_data/test/"):
     dpg.add_file_extension(".bed", color=(255, 150, 150, 255))
+    dpg.add_file_extension(".*")
 
 
 with dpg.window(label="GWAStic", width=1000, height=600):
@@ -120,7 +146,7 @@ with dpg.window(label="GWAStic", width=1000, height=600):
             dpg.add_text("Select files:", indent=50)
             vcf = dpg.add_button(label="Choose VCF", callback=lambda: dpg.show_item("file_dialog_vcf"), indent=50)
             variant_ids = dpg.add_button(label="Choose Variants",
-                                         callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
+                                         callback=lambda: dpg.show_item("file_dialog_variants"), indent=50)
             dpg.add_spacer(height=20)
             dpg.add_text("Apply filters:", indent=50)
             maf_input = dpg.add_input_float(label="MAF", width=150, default_value=0.05, indent=50)
@@ -130,9 +156,14 @@ with dpg.window(label="GWAStic", width=1000, height=600):
             dpg.bind_item_theme(convert_btn, our_theme)
 
         with dpg.tab(label='GWAS Analysis'):
-            geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"))
-            pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"))
-            dpg.add_button(label="Run GWAS", callback=get_data_gwas, user_data=[geno, pheno])
+            dpg.add_text("\nStart Fast-LMM GWAS.",
+                         indent=50)
+            dpg.add_spacer(height=20)
+            geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50)
+            pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
+            dpg.add_spacer(height=20)
+            gwas_btn = dpg.add_button(label="Run GWAS", callback=run_gwas, user_data=[geno, pheno], indent=50)
+            dpg.bind_item_theme(gwas_btn, our_theme)
 
         with dpg.tab(label='Genomic Prediction Analysis'):
             dpg.add_button(label="Run Genomic Prediction", callback=retrieve_callback, user_data=[maf_input, geno_input, vcf, pheno])
