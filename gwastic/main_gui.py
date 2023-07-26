@@ -1,9 +1,10 @@
 import dearpygui.dearpygui as dpg
 from dearpygui_ext import logger
-from run_gwas import GWAS
+from gwas_pipeline import GWAS
+from helpers import HELPERS
 
 gwas = GWAS()
-
+helper = HELPERS()
 dpg.create_context()
 
 with dpg.font_registry():
@@ -18,33 +19,42 @@ vcf_file = ''
 pheno_file = ''
 
 vcf_app_data = None
+variants_app_data = None
 
-log_win = dpg.add_window(label="Log", pos=(0, 600), width=1000, height=300)
+log_win = dpg.add_window(label="Log", pos=(0, 600), width=1000, height=500)
 logz = logger.mvLogger(log_win)
 
 
 # Callbacks
 def get_selection_path(app_data):
+    """Extract path from the app_data dictionary selections key."""
+    current_path = app_data['current_path'] + '/'
     k = app_data['selections']
     for key, value in k.items():
-        return value
+        file_path = value
+
+    return file_path, current_path
 
 
 def add_log(message):
+    """Adds a log message."""
     logz.log_info(message)
 
 
 def callback_vcf(sender, app_data):
+    """Get vcf file path selected from the user."""
     global vcf_app_data  # Use the global variable to store the value
     vcf_app_data = app_data
-    vcf_path = get_selection_path(vcf_app_data)
+    vcf_path, current_path = get_selection_path(vcf_app_data)
     add_log('VCF Selected: ' + vcf_path)
 
 
-def callback_pheno(sender, app_data):
-    add_log('Phenotype File Selected: ')
-    #print("Sender: ", sender)
-    #print("App Data: ", app_data)
+def callback_variants(sender, app_data):
+    """Get phenotype file path selected from the user."""
+    global variants_app_data  # Use the global variable to store the value
+    variants_app_data = app_data
+    variants_path, current_path = get_selection_path(variants_app_data)
+    add_log('File Selected: ' + variants_path)
 
 
 def retrieve_callback(sender, callback):
@@ -55,14 +65,23 @@ def retrieve_callback(sender, callback):
 
 # Get functions
 def convert_vcf(sender, data, user_data):
+    """Converts vcf to bed file using PLINK."""
 
     maf = str(dpg.get_value(user_data[0]))
     geno = str(dpg.get_value(user_data[1]))
-    vcf_path = get_selection_path(vcf_app_data)
-    add_log('Staring converting VCF to BED...')
-    gwas.vcf_to_bed(vcf_path, None, 'test', maf, geno)
-    #print (maf, geno, value)
+    variant_ids = variants_app_data
+    vcf_path, current_path = get_selection_path(vcf_app_data)
 
+    if variant_ids == None:
+        variants_path = None
+    else:
+        variants_path, current_path = get_selection_path(variants_app_data)
+        helper.duplicate_column(variants_path, variants_path)
+
+    add_log('Staring converting VCF to BED...')
+    plink_log = gwas.vcf_to_bed(vcf_path, variants_path, current_path + 'test', maf, geno)
+    add_log(plink_log)
+    logz.log_debug('Converting done!')
 
 
 def get_data_gwas(sender, data, user_data):
@@ -81,13 +100,14 @@ with dpg.file_dialog(directory_selector=False, show=False, callback=callback_vcf
     dpg.add_file_extension(".gz", color=(255, 255, 0, 255))
     dpg.add_file_extension(".*")
 
-
-with dpg.file_dialog(directory_selector=False, show=False, callback=callback_pheno, file_count=3, tag="file_dialog_pheno", width=700 ,height=400):
+with dpg.file_dialog(directory_selector=False, show=False, callback=callback_variants, file_count=3,
+                     tag="file_dialog_pheno", width=700 ,height=400, default_path="E:/GWAS_data/test/"):
     dpg.add_file_extension(".*")
     dpg.add_file_extension(".txt", color=(255, 150, 150, 255))
     dpg.add_file_extension(".csv", color=(255, 255, 0, 255))
 
-with dpg.file_dialog(directory_selector=False, show=False, callback=callback_vcf, file_count=3, tag="file_dialog_bed", width=700 ,height=400):
+with dpg.file_dialog(directory_selector=False, show=False, callback=callback_vcf, file_count=3,
+                     tag="file_dialog_bed", width=700 ,height=400,default_path="E:/GWAS_data/test/"):
     dpg.add_file_extension(".*")
     dpg.add_file_extension(".bed", color=(255, 150, 150, 255))
 
@@ -100,13 +120,13 @@ with dpg.window(label="GWAStic", width=1000, height=600):
             dpg.add_text("Select files:", indent=50)
             vcf = dpg.add_button(label="Choose VCF", callback=lambda: dpg.show_item("file_dialog_vcf"), indent=50)
             variant_ids = dpg.add_button(label="Choose Variants",
-                                         callback=lambda: dpg.show_item("file_dialog_variants"), indent=50)
+                                         callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
             dpg.add_spacer(height=20)
             dpg.add_text("Apply filters:", indent=50)
             maf_input = dpg.add_input_float(label="MAF", width=150, default_value=0.05, indent=50)
             geno_input = dpg.add_input_float(label="Missing genotype rate", width=150, default_value=0.1, indent=50)
             dpg.add_spacer(height=20)
-            convert_btn = dpg.add_button(label="Convert", callback=convert_vcf, user_data=[maf_input, geno_input, vcf], indent=50)
+            convert_btn = dpg.add_button(label="Convert", callback=convert_vcf, user_data=[maf_input, geno_input, vcf, variant_ids], indent=50)
             dpg.bind_item_theme(convert_btn, our_theme)
 
         with dpg.tab(label='GWAS Analysis'):
@@ -125,9 +145,7 @@ with dpg.window(label="Manhatten Plot", width=800, height=400, pos=[1000,1]):
 
 
 
-
-
-dpg.create_viewport(title='Custom Title', width=2000, height=1000)
+dpg.create_viewport(title='Custom Title', width=2000, height=1200)
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.start_dearpygui()
