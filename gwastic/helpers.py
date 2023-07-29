@@ -30,5 +30,6 @@ class HELPERS:
                 s += '\t'.join(parts) + '\n'
         with open(input_file, 'w', encoding='utf-8') as outfile:
             outfile.write(s)
+        return mapping
 
 

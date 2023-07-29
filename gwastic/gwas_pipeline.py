@@ -1,14 +1,5 @@
 import subprocess
 
-
-# turn on logging to INFO level
-#logging.basicConfig(level=logging.INFO)
-#root = Path("C:\\deldir\\test_carl")
-#bed_file = root / "090222_8070_test.bed"
-#pheno_file = root / "pheno.csv"
-sid_batch_size = 1000  # number of SNPs to read at a time
-
-
 class GWAS:
     """GWAS class."""
 
@@ -29,12 +20,11 @@ class GWAS:
         plink_log = open(file_out + '.log').read()
         return plink_log
 
-
     def filter_out_missing(self, bed):
         import numpy as np
         import logging
         from pysnptools.util import log_in_place
-
+        sid_batch_size = 1000  # number of SNPs to read at a time, decrease in case we run oput of memory
         # list of all NaN columns
         all_nan = []
         with log_in_place("read snp #", logging.INFO) as updater:
@@ -56,7 +46,6 @@ class GWAS:
         return bed_fixed
 
     def start_gwas(self, bed_file, pheno_file):
-        from pathlib import Path
         from fastlmm.association import single_snp
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
