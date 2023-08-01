@@ -62,6 +62,25 @@ class GWAS:
         # run single_snp with the fixed file
         single_snp(bed_fixed, pheno, output_file_name="single_snp.csv")
 
+    def plot_gwas(self, gwas_file, limit):
+        """Manhatten and qq-plot."""
+        import matplotlib.pyplot as plt
+        import geneview as gv
+        import pandas as pd
+        dataset2 = pd.read_csv(gwas_file, delimiter='\t')  # Take your df from wherever
+        dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+        dataset = dataset.head(limit)
+        dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
+
+        #print (dataset)
+        ax = gv.manhattanplot(data=dataset, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
+        plt.savefig("manhatten.png", dpi=100)
+        ax = gv.qqplot(data=dataset["PValue"])
+        plt.savefig("qq.png", dpi=100)
+        #plt.show()
+
+
+
 
 
 

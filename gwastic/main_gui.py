@@ -5,6 +5,23 @@ from helpers import HELPERS
 import pandas as pd
 #import matplotlib.pyplot as plt
 #import geneview as gv
+from math import sin
+
+# sindatax = []
+# sindatay = []
+# for i in range(0, 100):
+#     sindatax.append(i / 100)
+#     sindatay.append(0.5 + 0.5 * sin(50 * i / 100))
+
+# dataset2 = pd.read_csv("single_snp.csv", delimiter='\t')  # Take your df from wherever
+# dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+# dataset = dataset.head(1000)
+# dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
+# dataset = dataset[dataset["Chr"] == 1.0]
+# dataset["Chr"] = dataset["Chr"].replace(1.0, 'Chr1')
+# print (dataset)
+# sindatax = dataset['ChrPos'].tolist()
+# sindatay = dataset['PValue'].tolist()
 
 
 class GWASApp:
@@ -98,18 +115,22 @@ class GWASApp:
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
+    def show_plot(self):
+        width, height, channels, data = dpg.load_image("manhatten.png")
+        width2, height2, channels2, data2 = dpg.load_image("qq.png")
+        with dpg.texture_registry(show=False):
+            dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
+            dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
+
         with dpg.window(label="Results", width=950, height=600, pos=[1000, 1]):
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label="Manhatten Plot"):
-                    dpg.add_simple_plot(label="Simpleplot1", default_value=(0.3, 0.9, 0.5, 0.3), height=300)
+                    dpg.add_image("manhatten_tag")
                 with dpg.tab(label="QQ-Plot"):
-                    dpg.add_simple_plot(label="Simpleplot1", default_value=(0.3, 0.9, 0.5, 0.3), height=300)
+                    dpg.add_image("qq_tag")
                 with dpg.tab(label="Data"):
-                    #dpg.add_table()
                     dataset2 = pd.read_csv("single_snp.csv", delimiter='\t')  # Take your df from wherever
                     dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                    #ax = gv.manhattanplot(data=dataset, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP",)
-                    #plt.show()
                     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
                                    borders_outerH=True, borders_innerV=True, borders_outerV=True):
                         for i in range(dataset.shape[1]):  # Generates the correct amount of columns
@@ -119,9 +140,6 @@ class GWASApp:
                                 for j in range(dataset.shape[1]):
                                     dpg.add_text(f"{dataset.iloc[i, j]}")  # Displays the value of
                                     # each row/column combination
-
-        #with dpg.window(label="Manhatten Plot", width=950, height=600, pos=[1000, 1]):
-           # dpg.add_simple_plot(label="Simpleplot1", default_value=(0.3, 0.9, 0.5, 0.3), height=300)
 
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""
@@ -183,11 +201,19 @@ class GWASApp:
         self.logz.log_debug('Converting done!')
 
     def run_gwas(self, sender, data, user_data):
+        self.add_log('Reading Bed file...')
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
+        self.add_log('Reading Phenotypic file...')
         pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+        self.add_log('Replacing chromosome names...')
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
         self.add_log('Starting GWAS Analysis, this might take a while...')
         self.gwas.start_gwas(bed_path, pheno_path)
+        self.add_log('GWAS Analysis done.')
+        self.add_log('Plotting...')
+        self.gwas.plot_gwas("single_snp.csv", 10000)
+        self.add_log('Done...')
+        self.show_plot()
 
     def retrieve_callback(self, sender, data, user_data):
         pass
@@ -197,6 +223,7 @@ class GWASApp:
         dpg.show_viewport()
         dpg.start_dearpygui()
         dpg.destroy_context()
+
 
 if __name__ == "__main__":
     app = GWASApp()
