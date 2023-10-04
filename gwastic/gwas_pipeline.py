@@ -80,7 +80,7 @@ class GWAS:
         """Manhatten and qq-plot."""
         import matplotlib.pyplot as plt
         import geneview as gv
-        import pandas as pd
+
         dataset2 = df  # Take your df from wherever
         dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
         dataset = dataset.head(limit)

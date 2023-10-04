@@ -1,0 +1,7 @@
+dearpygui
+dearpygui-ext
+pandas
+fastlmm
+geneview
+matplotlib
+fastlmm

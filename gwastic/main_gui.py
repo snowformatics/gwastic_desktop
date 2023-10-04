@@ -2,10 +2,10 @@ import dearpygui.dearpygui as dpg
 from dearpygui_ext import logger
 from gwas_pipeline import GWAS
 from helpers import HELPERS
-import pandas as pd
+#import pandas as pd
 #import matplotlib.pyplot as plt
 #import geneview as gv
-from math import sin
+#from math import sin
 
 # sindatax = []
 # sindatay = []
@@ -44,6 +44,7 @@ class GWASApp:
         self.variants_app_data = None
         self.bed_app_data = None
         self.pheno_app_data = None
+        self.default_path = "C:/gwas_test_data/test/"
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 600), width=1000, height=500)
         self.logz = logger.mvLogger(self.log_win)
@@ -57,27 +58,40 @@ class GWASApp:
     def setup_gui(self):
         dpg.create_viewport(title='Custom Title', width=2000, height=1200)
 
+        def print_me(sender):
+            print(f"Menu Item: {sender}")
+            #self.default_path = "C:/gwas_test_data/test/"
+
+
+    # Menu bar
+        with dpg.viewport_menu_bar():
+            with dpg.menu(label="Settings"):
+                dpg.add_menu_item(label="Setting 1", callback=print_me, check=True)
+                dpg.add_menu_item(label="Setting 2", callback=print_me)
+            dpg.add_menu_item(label="Help", callback=print_me)
+
         # File dialogs
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf",
-                             width=700, height=400, default_path="E:/GWAS_data/test/"):
+                             width=700, height=400, default_path=self.default_path):
+
             dpg.add_file_extension(".vcf", color=(255, 150, 150, 255))
             dpg.add_file_extension(".gz", color=(255, 255, 0, 255))
-            dpg.add_file_extension(".*")
+            #dpg.add_file_extension(".*")
 
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_variants, file_count=3,
-                             tag="file_dialog_variants", width=700, height=400, default_path="E:/GWAS_data/test/"):
+                             tag="file_dialog_variants", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension(".txt", color=(255, 150, 150, 255))
             dpg.add_file_extension(".*")
             dpg.add_file_extension(".csv", color=(255, 255, 0, 255))
 
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_pheno, file_count=3,
-                             tag="file_dialog_pheno", width=700, height=400, default_path="E:/GWAS_data/test/"):
+                             tag="file_dialog_pheno", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension(".txt", color=(255, 150, 150, 255))
             dpg.add_file_extension(".*")
             dpg.add_file_extension(".csv", color=(255, 255, 0, 255))
 
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_bed, file_count=3,
-                             tag="file_dialog_bed", width=700, height=400, default_path="E:/GWAS_data/test/"):
+                             tag="file_dialog_bed", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension(".bed", color=(255, 150, 150, 255))
             dpg.add_file_extension(".*")
 
@@ -87,13 +101,15 @@ class GWASApp:
                     dpg.add_text("\nConvert a VCF file into BED file format and apply MAF\nor missing genotype filter.", indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Select files:", indent=50)
-                    vcf = dpg.add_button(label="Choose VCF", callback=lambda: dpg.show_item("file_dialog_vcf"), indent=50)
-                    variant_ids = dpg.add_button(label="Choose Variants",
+                    vcf = dpg.add_button(label="Choose VCF", callback=lambda: dpg.show_item("file_dialog_vcf"),
+                                         indent=50, tag='tooltip_vcf')
+
+                    variant_ids = dpg.add_button(label="Choose Variants (optional)", tag= 'tooltip_variant',
                                                  callback=lambda: dpg.show_item("file_dialog_variants"), indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Apply filters:", indent=50)
-                    maf_input = dpg.add_input_float(label="MAF", width=150, default_value=0.05, indent=50)
-                    geno_input = dpg.add_input_float(label="Missing genotype rate", width=150, default_value=0.1, indent=50)
+                    maf_input = dpg.add_input_float(label="MAF", width=150, default_value=0.05, indent=50, tag= 'tooltip_maf')
+                    geno_input = dpg.add_input_float(label="Missing genotype rate", width=150, default_value=0.1, indent=50, tag= 'tooltip_missing')
                     dpg.add_spacer(height=20)
                     convert_btn = dpg.add_button(label="Convert", callback=self.convert_vcf, user_data=[maf_input, geno_input, vcf, variant_ids], indent=50)
                     dpg.bind_item_theme(convert_btn, self.our_theme)
@@ -112,6 +128,19 @@ class GWASApp:
                 with dpg.tab(label='Genomic Prediction Analysis'):
                     dpg.add_button(label="Comming soon", callback=self.retrieve_callback, user_data=[maf_input, geno_input, vcf, pheno])
 
+            # Tooltips
+            with dpg.tooltip("tooltip_vcf"):
+                dpg.add_text("Choose a VCF file (.gz or .vcf).", color=[79,128,226])
+            with dpg.tooltip("tooltip_variant"):
+                dpg.add_text("Choose a variant file.\nVariant IDs must match IDs in the VCF file.\n By using a variant file, you can create a subset of your VCF file.\n Highly recommended if only a subset with phenotypic data is available).", color=[79,128,226])
+            with dpg.tooltip("tooltip_maf"):
+                dpg.add_text("Filters out all variants with minor allele frequency below the provided threshold.", color=[79, 128, 226])
+                with dpg.tooltip("tooltip_missing"):
+                    dpg.add_text("Filters out all variants with missing call rates exceeding the provided value to be removed.", color=[79, 128, 226])
+
+
+
+
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
@@ -128,7 +157,7 @@ class GWASApp:
                     dpg.add_image("manhatten_tag")
                 with dpg.tab(label="QQ-Plot"):
                     dpg.add_image("qq_tag")
-                with dpg.tab(label="Data"):
+                with dpg.tab(label="GWAS Results"):
                     dataset2 = df
                     dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
                     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
