@@ -110,12 +110,12 @@ class GWASApp:
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
 
                 with dpg.tab(label='Genomic Prediction Analysis'):
-                    dpg.add_button(label="Run Genomic Prediction", callback=self.retrieve_callback, user_data=[maf_input, geno_input, vcf, pheno])
+                    dpg.add_button(label="Comming soon", callback=self.retrieve_callback, user_data=[maf_input, geno_input, vcf, pheno])
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
-    def show_plot(self):
+    def show_plot(self, df):
         width, height, channels, data = dpg.load_image("manhatten.png")
         width2, height2, channels2, data2 = dpg.load_image("qq.png")
         with dpg.texture_registry(show=False):
@@ -129,7 +129,7 @@ class GWASApp:
                 with dpg.tab(label="QQ-Plot"):
                     dpg.add_image("qq_tag")
                 with dpg.tab(label="Data"):
-                    dataset2 = pd.read_csv("single_snp.csv", delimiter='\t')  # Take your df from wherever
+                    dataset2 = df
                     dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
                     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
                                    borders_outerH=True, borders_innerV=True, borders_outerV=True):
@@ -174,9 +174,12 @@ class GWASApp:
 
         return file_path, current_path
 
-    def add_log(self, message):
+    def add_log(self, message, warn=False):
         """Adds a log message."""
-        self.logz.log_info(message)
+        if warn:
+            self.logz.log_warning(message)
+        else:
+            self.logz.log_info(message)
 
     def callback_checkbox(self, sender):
         print(f"Menu Item: {sender}")
@@ -207,13 +210,12 @@ class GWASApp:
         pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
         self.add_log('Replacing chromosome names...')
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-        self.add_log('Starting GWAS Analysis, this might take a while...')
-        self.gwas.start_gwas(bed_path, pheno_path)
+        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.add_log)
         self.add_log('GWAS Analysis done.')
-        self.add_log('Plotting...')
-        self.gwas.plot_gwas("single_snp.csv", 10000)
+        self.add_log('GWAS Results Plotting...')
+        self.gwas.plot_gwas(gwas_df, 10000)
         self.add_log('Done...')
-        self.show_plot()
+        self.show_plot(gwas_df)
 
     def retrieve_callback(self, sender, data, user_data):
         pass

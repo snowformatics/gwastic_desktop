@@ -45,29 +45,43 @@ class GWAS:
         bed_fixed = bed[:, ~all_nan]
         return bed_fixed
 
-    def start_gwas(self, bed_file, pheno_file):
-        from fastlmm.association import single_snp
+    def start_gwas(self, bed_file, pheno_file,chrom_mapping, add_log):
+        from fastlmm.association import single_snp, single_snp_linreg
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
-        bed = Bed(str(bed_file), count_A1=False)
+        import matplotlib.pyplot as plt
+        import fastlmm.util.util as flutil
+        import time
+        bed = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
         pheno = Pheno(str(pheno_file))
-        print(f"Before, bed is {bed.iid_count:,} x {bed.sid_count:,}, pheno is {pheno.iid_count:,}")
+        s1 = 'Raw BED: Nr. of IDs: ' + str(bed.iid_count) + ' Nr.of SNPs: ' + str(bed.sid_count) + ' Nr. of Phenoytpic IDs: ' + str(pheno.iid_count)
+        add_log(s1, warn=True)
         # replace original bed with one that has the same iids as the pheno
         bed, pheno = pstutil.intersect_apply([bed, pheno])
-
-        print(f"After intersection, bed is {bed.iid_count} x {bed.sid_count:,}, pheno is {pheno.iid_count:,}")
+        s2 = "After intersection:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
+        add_log(s2, warn=True)
         bed_fixed = self.filter_out_missing(bed)
         # format numbers with commas and no decimals
-        print(f"After removing missing, bed is {bed.iid_count:,} x {bed.sid_count:,}, pheno is {pheno.iid_count:,}")
+        s3 = "After removing missing:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
+        add_log(s3, warn=True)
         # run single_snp with the fixed file
-        single_snp(bed_fixed, pheno, output_file_name="single_snp.csv")
+        add_log('Starting GWAS Analysis, this might take a while...')
+        #t1 = time.process_time()
+        df = single_snp(bed_fixed, pheno, output_file_name="single_snp.csv")
+        exchanged_dict = {v: k for k, v in chrom_mapping.items()}
+        df['Chr'] = df['Chr'].replace(exchanged_dict)
+        return df
+        #single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name="single_snp.csv")
+        #t2 = time.process_time()
+        #print(t2-t1)
 
-    def plot_gwas(self, gwas_file, limit):
+
+    def plot_gwas(self, df, limit):
         """Manhatten and qq-plot."""
         import matplotlib.pyplot as plt
         import geneview as gv
         import pandas as pd
-        dataset2 = pd.read_csv(gwas_file, delimiter='\t')  # Take your df from wherever
+        dataset2 = df  # Take your df from wherever
         dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
         dataset = dataset.head(limit)
         dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
