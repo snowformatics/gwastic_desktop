@@ -44,11 +44,12 @@ class GWASApp:
         self.variants_app_data = None
         self.bed_app_data = None
         self.pheno_app_data = None
+        self.algorithm = "FaST-LMM"
         self.default_path = "C:/gwas_test_data/test/"
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 600), width=1000, height=500)
         self.logz = logger.mvLogger(self.log_win)
-
+        table_window = None
         # Set up GUI components and callbacks
         self.setup_gui()
 
@@ -61,6 +62,7 @@ class GWASApp:
         def print_me(sender):
             print(f"Menu Item: {sender}")
             #self.default_path = "C:/gwas_test_data/test/"
+
 
 
     # Menu bar
@@ -120,8 +122,9 @@ class GWASApp:
                     geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
                     pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
+                    dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression"], indent=50, width=150, default_value="FaST-LMM", callback=self.get_algorithm)
                     #dpg.add_checkbox(label="Replace Chromosome Labels", callback=self.callback_checkbox, indent=50)
-                    #dpg.add_spacer(height=20)
+                    dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
 
@@ -150,30 +153,45 @@ class GWASApp:
             dpg.set_global_font_scale(0.6)
 
     def show_plot(self, df):
+        #global table_window
+        # print (table_window)
+        # if table_window is not None:
+        #     dpg.delete_item(table_window)
+        #     table_window = None
+
         width, height, channels, data = dpg.load_image("manhatten.png")
         width2, height2, channels2, data2 = dpg.load_image("qq.png")
+
         with dpg.texture_registry(show=False):
             dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
             dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
 
-        with dpg.window(label="Results", width=950, height=600, pos=[1000, 1]):
+        with dpg.window(label="Results", width=950, height=600, pos=[1000, 1]) as table_window:
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label="Manhatten Plot"):
                     dpg.add_image("manhatten_tag")
                 with dpg.tab(label="QQ-Plot"):
                     dpg.add_image("qq_tag")
-                with dpg.tab(label="GWAS Results"):
-                    dataset2 = df
-                    dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                    with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
-                                   borders_outerH=True, borders_innerV=True, borders_outerV=True):
-                        for i in range(dataset.shape[1]):  # Generates the correct amount of columns
-                            dpg.add_table_column(label=dataset.columns[i])  # Adds the headers
-                        for i in range(500):  # Shows the first n rows
-                            with dpg.table_row():
-                                for j in range(dataset.shape[1]):
-                                    dpg.add_text(f"{dataset.iloc[i, j]}")  # Displays the value of
-                                    # each row/column combination
+                # with dpg.tab(label="GWAS Results"):
+                #     dataset2 = df
+                #     dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                #     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
+                #                    borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
+                #         for i in range(dataset.shape[1]):  # Generates the correct amount of columns
+                #             dpg.add_table_column(label=dataset.columns[i], parent='table_gwas')  # Adds the headers
+                #         for i in range(500):  # Shows the first n rows
+                #             with dpg.table_row():
+                #                 for j in range(dataset.shape[1]):
+                #                     dpg.add_text(f"{dataset.iloc[i, j]}")  # Displays the value of
+                #                     # each row/column combination
+                    #dpg.delete_item("table_gwas")
+                    #dpg.remove_alias("table_gwas")
+        dpg.delete_item("manhatten_tag")
+        dpg.remove_alias("manhatten_tag")
+        dpg.delete_item("qq_tag")
+        dpg.remove_alias("qq_tag")
+        #dpg.delete_item("table_gwas")
+        #dpg.remove_alias("table_gwas")
 
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""
@@ -208,10 +226,15 @@ class GWASApp:
 
         return file_path, current_path
 
-    def add_log(self, message, warn=False):
+    def get_algorithm(self, sender, data):
+        self.algorithm = data
+
+    def add_log(self, message, warn=False, error=False):
         """Adds a log message."""
         if warn:
             self.logz.log_warning(message)
+        elif error:
+            self.logz.log_error(message)
         else:
             self.logz.log_info(message)
 
@@ -238,21 +261,24 @@ class GWASApp:
         self.logz.log_debug('Converting done!')
 
     def run_gwas(self, sender, data, user_data):
+
+
+
         self.add_log('Reading Bed file...')
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
         self.add_log('Reading Phenotypic file...')
         pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
         self.add_log('Replacing chromosome names...')
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.add_log)
-        if gwas_df:
+        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log)
+        if gwas_df is not None:
             self.add_log('GWAS Analysis done.')
             self.add_log('GWAS Results Plotting...')
             self.gwas.plot_gwas(gwas_df, 10000)
             self.add_log('Done...')
             self.show_plot(gwas_df)
         else:
-            self.add_log('GWAS Analysis done.')
+            self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
     def retrieve_callback(self, sender, data, user_data):
         pass

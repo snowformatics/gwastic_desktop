@@ -59,36 +59,28 @@ class GWAS:
 
         pheno_data = open(pheno_file, 'r').readlines()
         pheno_ids = []
+        columns = None
         for line2 in pheno_data:
             line2 = line2.strip()
             line2 = line2.split(' ')
+            columns = len(line2)
             if len(line2) > 1:
                 pheno_ids.append(line2[0])
-
-                return (True, "Input files validated.")
-
+                #return (True, "Input files validated.")
             else:
                 return (False, "Phenotpic file is not space delimited.")
 
         # Check whether all pheno ids are in the fam file
         check_ids = all(x in fam_ids for x in pheno_ids)
-        if check_ids:
-            pass
-            # Check whether
+        if check_ids and columns == 3:
+            return (True, "Input files validated.")
+        elif columns != 3:
+            return (False, "Invalid phenotypic file. File should contain 3 coloumns (FID IID Value)")
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
 
-
-
-
-
-
-
-
-
-
-    def start_gwas(self, bed_file, pheno_file ,chrom_mapping, add_log):
+    def start_gwas(self, bed_file, pheno_file ,chrom_mapping, algorithm, add_log):
         from fastlmm.association import single_snp, single_snp_linreg
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
@@ -96,7 +88,7 @@ class GWAS:
         import time
         # First we have to validate the input files
         check_input_data = self.validate_gwas_input_files(bed_file, pheno_file)
-        print (check_input_data)
+
         if check_input_data[0]:
             bed = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_file))
@@ -107,13 +99,22 @@ class GWAS:
             s2 = "After intersection:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
             add_log(s2, warn=True)
             bed_fixed = self.filter_out_missing(bed)
+            import numpy as np
+            np.save('snp', bed_fixed.read().val)
+            np.save('pheno', pheno.read().val)
+            print (bed_fixed.read().val)
+            print(pheno.read().val)
             # format numbers with commas and no decimals
             s3 = "After removing missing:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
             add_log(s3, warn=True)
             # run single_snp with the fixed file
             add_log('Starting GWAS Analysis, this might take a while...')
             #t1 = time.process_time()
-            df = single_snp(bed_fixed, pheno, output_file_name="single_snp.csv")
+            if algorithm == 'FaST-LMM':
+                print (bed_fixed)
+                df = single_snp(bed_fixed, pheno, output_file_name="single_snp.csv")
+            elif algorithm == 'Linear regression':
+                df = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name="single_snp.csv")
             exchanged_dict = {v: k for k, v in chrom_mapping.items()}
             df['Chr'] = df['Chr'].replace(exchanged_dict)
             return df
@@ -121,8 +122,7 @@ class GWAS:
             #t2 = time.process_time()
             #print(t2-t1)
         else:
-            s1 = 'Input files wrong'
-            add_log(s1, warn=True)
+            add_log(check_input_data[1], error=True)
 
 
     def plot_gwas(self, df, limit):
