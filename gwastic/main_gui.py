@@ -117,11 +117,11 @@ class GWASApp:
                 with dpg.tab(label='GWAS Analysis'):
                     dpg.add_text("\nStart Fast-LMM GWAS", indent=50)
                     dpg.add_spacer(height=20)
-                    geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50)
-                    pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
+                    geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
+                    pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
-                    dpg.add_checkbox(label="Replace Chromosome Labels", callback=self.callback_checkbox, indent=50)
-                    dpg.add_spacer(height=20)
+                    #dpg.add_checkbox(label="Replace Chromosome Labels", callback=self.callback_checkbox, indent=50)
+                    #dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
 
@@ -132,12 +132,17 @@ class GWASApp:
             with dpg.tooltip("tooltip_vcf"):
                 dpg.add_text("Choose a VCF file (.gz or .vcf).", color=[79,128,226])
             with dpg.tooltip("tooltip_variant"):
-                dpg.add_text("Choose a variant file.\nVariant IDs must match IDs in the VCF file.\n By using a variant file, you can create a subset of your VCF file.\n Highly recommended if only a subset with phenotypic data is available).", color=[79,128,226])
+                dpg.add_text("Choose a variant file.\nVariant IDs must match with IDs in the VCF file.\n By using a variant file, you can create a subset of your VCF file.\n Highly recommended if only a subset with phenotypic data is available).", color=[79,128,226])
             with dpg.tooltip("tooltip_maf"):
                 dpg.add_text("Filters out all variants with minor allele frequency below the provided threshold.", color=[79, 128, 226])
-                with dpg.tooltip("tooltip_missing"):
-                    dpg.add_text("Filters out all variants with missing call rates exceeding the provided value to be removed.", color=[79, 128, 226])
-
+            with dpg.tooltip("tooltip_missing"):
+                dpg.add_text("Filters out all variants with missing call rates exceeding the provided value to be removed.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_missing"):
+                dpg.add_text("Filters out all variants with missing call rates exceeding the provided value to be removed.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_bed"):
+                dpg.add_text("Choose a BED file.\nPrimary representation of genotype calls at biallelic variants. Must be accompanied by .bim and .fam files.\n", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_pheno"):
+                dpg.add_text("Choose a phenotype file.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 0.25\nID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
 
 
 
@@ -240,11 +245,14 @@ class GWASApp:
         self.add_log('Replacing chromosome names...')
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
         gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.add_log)
-        self.add_log('GWAS Analysis done.')
-        self.add_log('GWAS Results Plotting...')
-        self.gwas.plot_gwas(gwas_df, 10000)
-        self.add_log('Done...')
-        self.show_plot(gwas_df)
+        if gwas_df:
+            self.add_log('GWAS Analysis done.')
+            self.add_log('GWAS Results Plotting...')
+            self.gwas.plot_gwas(gwas_df, 10000)
+            self.add_log('Done...')
+            self.show_plot(gwas_df)
+        else:
+            self.add_log('GWAS Analysis done.')
 
     def retrieve_callback(self, sender, data, user_data):
         pass
