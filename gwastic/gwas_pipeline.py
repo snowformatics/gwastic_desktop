@@ -99,11 +99,11 @@ class GWAS:
             s2 = "After intersection:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
             add_log(s2, warn=True)
             bed_fixed = self.filter_out_missing(bed)
+
             import numpy as np
             np.save('snp', bed_fixed.read().val)
             np.save('pheno', pheno.read().val)
-            print (bed_fixed.read().val)
-            print(pheno.read().val)
+
             # format numbers with commas and no decimals
             s3 = "After removing missing:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
             add_log(s3, warn=True)
