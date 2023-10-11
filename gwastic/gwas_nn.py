@@ -27,9 +27,9 @@ from sklearn.inspection import permutation_importance
 #
 # ])
 
-snp_data = np.load('snp2.npy')
+snp_data = np.load('snp.npy')
 snp_data[np.isnan(snp_data)] = -1
-phenotype_labels = np.load('pheno1.npy')
+phenotype_labels = np.load('pheno.npy')
 
 #print (snp_data)
 #print (phenotype_labels)

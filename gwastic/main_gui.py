@@ -76,21 +76,17 @@ class GWASApp:
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf",
                              width=700, height=400, default_path=self.default_path):
 
-            dpg.add_file_extension(".vcf", color=(255, 150, 150, 255))
-            dpg.add_file_extension(".gz", color=(255, 255, 0, 255))
-            #dpg.add_file_extension(".*")
+            dpg.add_file_extension("Source files (*.vcf *.gz){.vcf,.gz}", color=(255, 255, 0, 255))
 
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_variants, file_count=3,
                              tag="file_dialog_variants", width=700, height=400, default_path=self.default_path):
-            dpg.add_file_extension(".txt", color=(255, 150, 150, 255))
+            dpg.add_file_extension("Source files (*.txt *.csv){.txt,.csv}", color=(255, 255, 0, 255))
             dpg.add_file_extension(".*")
-            dpg.add_file_extension(".csv", color=(255, 255, 0, 255))
 
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_pheno, file_count=3,
                              tag="file_dialog_pheno", width=700, height=400, default_path=self.default_path):
-            dpg.add_file_extension(".txt", color=(255, 150, 150, 255))
+            dpg.add_file_extension("Source files (*.txt *.csv){.txt,.csv}", color=(255, 255, 0, 255))
             dpg.add_file_extension(".*")
-            dpg.add_file_extension(".csv", color=(255, 255, 0, 255))
 
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_bed, file_count=3,
                              tag="file_dialog_bed", width=700, height=400, default_path=self.default_path):
@@ -110,8 +106,8 @@ class GWASApp:
                                                  callback=lambda: dpg.show_item("file_dialog_variants"), indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Apply filters:", indent=50)
-                    maf_input = dpg.add_input_float(label="MAF", width=150, default_value=0.05, indent=50, tag= 'tooltip_maf')
-                    geno_input = dpg.add_input_float(label="Missing genotype rate", width=150, default_value=0.1, indent=50, tag= 'tooltip_missing')
+                    maf_input = dpg.add_input_float(label="MAF", width=150, default_value=0.05,step=0.005, indent=50, tag= 'tooltip_maf')
+                    geno_input = dpg.add_input_float(label="Missing genotype rate", width=150, default_value=0.1, step=0.005, indent=50, tag= 'tooltip_missing')
                     dpg.add_spacer(height=20)
                     convert_btn = dpg.add_button(label="Convert", callback=self.convert_vcf, user_data=[maf_input, geno_input, vcf, variant_ids], indent=50)
                     dpg.bind_item_theme(convert_btn, self.our_theme)
@@ -147,8 +143,6 @@ class GWASApp:
             with dpg.tooltip("tooltip_pheno"):
                 dpg.add_text("Choose a phenotype file.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 0.25\nID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
 
-
-
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
@@ -172,24 +166,24 @@ class GWASApp:
                     dpg.add_image("manhatten_tag")
                 with dpg.tab(label="QQ-Plot"):
                     dpg.add_image("qq_tag")
-                # with dpg.tab(label="GWAS Results"):
-                #     dataset2 = df
-                #     dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                #     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
-                #                    borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
-                #         for i in range(dataset.shape[1]):  # Generates the correct amount of columns
-                #             dpg.add_table_column(label=dataset.columns[i], parent='table_gwas')  # Adds the headers
-                #         for i in range(500):  # Shows the first n rows
-                #             with dpg.table_row():
-                #                 for j in range(dataset.shape[1]):
-                #                     dpg.add_text(f"{dataset.iloc[i, j]}")  # Displays the value of
-                #                     # each row/column combination
+                with dpg.tab(label="GWAS Results"):
+                    dataset2 = df
+                    dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                    with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
+                                   borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
+                        for i in range(dataset.shape[1]):  # Generates the correct amount of columns
+                            dpg.add_table_column(label=dataset.columns[i], parent='table_gwas')  # Adds the headers
+                        for i in range(500):  # Shows the first n rows
+                            with dpg.table_row():
+                                for j in range(dataset.shape[1]):
+                                    dpg.add_text(f"{dataset.iloc[i, j]}")  # Displays the value of
+                                    # each row/column combination
                     #dpg.delete_item("table_gwas")
                     #dpg.remove_alias("table_gwas")
-        dpg.delete_item("manhatten_tag")
-        dpg.remove_alias("manhatten_tag")
-        dpg.delete_item("qq_tag")
-        dpg.remove_alias("qq_tag")
+        #dpg.delete_item("manhatten_tag")
+        #dpg.remove_alias("manhatten_tag")
+        #dpg.delete_item("qq_tag")
+        #dpg.remove_alias("qq_tag")
         #dpg.delete_item("table_gwas")
         #dpg.remove_alias("table_gwas")
 
@@ -254,9 +248,11 @@ class GWASApp:
             variants_path = None
         else:
             variants_path, current_path = self.get_selection_path(self.variants_app_data)
+        print (vcf_path, vcf_path.split('.')[0])
+        self.add_log('Start converting VCF to BED...')
+        #plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, current_path + 'test', maf, geno)
+        plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, vcf_path.split('.')[0], maf, geno)
 
-        self.add_log('Starting converting VCF to BED...')
-        plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, current_path + 'test', maf, geno)
         self.add_log(plink_log)
         self.logz.log_debug('Converting done!')
 

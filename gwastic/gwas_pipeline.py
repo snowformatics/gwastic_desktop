@@ -71,14 +71,14 @@ class GWAS:
                 return (False, "Phenotpic file is not space delimited.")
 
         # Check whether all pheno ids are in the fam file
-        check_ids = all(x in fam_ids for x in pheno_ids)
+        check_ids = all(x in pheno_ids for x in fam_ids)
+
         if check_ids and columns == 3:
             return (True, "Input files validated.")
         elif columns != 3:
             return (False, "Invalid phenotypic file. File should contain 3 coloumns (FID IID Value)")
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
-
 
     def start_gwas(self, bed_file, pheno_file ,chrom_mapping, algorithm, add_log):
         from fastlmm.association import single_snp, single_snp_linreg
@@ -100,9 +100,11 @@ class GWAS:
             add_log(s2, warn=True)
             bed_fixed = self.filter_out_missing(bed)
 
+            ### save data for NN
             import numpy as np
             np.save('snp', bed_fixed.read().val)
             np.save('pheno', pheno.read().val)
+            ###
 
             # format numbers with commas and no decimals
             s3 = "After removing missing:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
@@ -111,7 +113,6 @@ class GWAS:
             add_log('Starting GWAS Analysis, this might take a while...')
             #t1 = time.process_time()
             if algorithm == 'FaST-LMM':
-                print (bed_fixed)
                 df = single_snp(bed_fixed, pheno, output_file_name="single_snp.csv")
             elif algorithm == 'Linear regression':
                 df = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name="single_snp.csv")
@@ -123,7 +124,6 @@ class GWAS:
             #print(t2-t1)
         else:
             add_log(check_input_data[1], error=True)
-
 
     def plot_gwas(self, df, limit):
         """Manhatten and qq-plot."""
@@ -138,7 +138,9 @@ class GWAS:
         #print (dataset)
         ax = gv.manhattanplot(data=dataset, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
         plt.savefig("manhatten.png", dpi=100)
+
         ax = gv.qqplot(data=dataset["PValue"])
+        ax.set(ylim=(0, 10), xlim=(0, 10))
         plt.savefig("qq.png", dpi=100)
         #plt.show()
 
