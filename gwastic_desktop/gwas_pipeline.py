@@ -1,7 +1,13 @@
 import subprocess
+import pandas as pd
+from gwastic_desktop.gwas_ai import GWASAI
 
 class GWAS:
     """GWAS class."""
+
+    def __init__(self):
+        self.gwas_ai = GWASAI()
+
 
     def vcf_to_bed(self, vcf_file, id_file, file_out, maf, geno):
         """Converts the vcf to bed files."""
@@ -125,10 +131,21 @@ class GWAS:
             #t1 = time.process_time()
             if algorithm == 'FaST-LMM':
                 df = single_snp(bed_fixed, pheno, output_file_name="single_snp.csv")
+                exchanged_dict = {v: k for k, v in chrom_mapping.items()}
+                df['Chr'] = df['Chr'].replace(exchanged_dict)
             elif algorithm == 'Linear regression':
                 df = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name="single_snp.csv")
-            exchanged_dict = {v: k for k, v in chrom_mapping.items()}
-            df['Chr'] = df['Chr'].replace(exchanged_dict)
+                exchanged_dict = {v: k for k, v in chrom_mapping.items()}
+                df['Chr'] = df['Chr'].replace(exchanged_dict)
+            elif algorithm == 'Random Forest (AI)':
+                df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
+                snp_ids = df.iloc[:, 1].tolist()
+                df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids)
+            elif algorithm == 'XGBoost (AI)':
+                pass
+
+            #exchanged_dict = {v: k for k, v in chrom_mapping.items()}
+            #df['Chr'] = df['Chr'].replace(exchanged_dict)
             return df
             #single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name="single_snp.csv")
             #t2 = time.process_time()
@@ -136,24 +153,37 @@ class GWAS:
         else:
             add_log(check_input_data[1], error=True)
 
-    def plot_gwas(self, df, limit):
+    def plot_gwas(self, df, limit, algorithm):
         """Manhatten and qq-plot."""
         import matplotlib.pyplot as plt
         import geneview as gv
 
-        dataset2 = df  # Take your df from wherever
-        dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-        dataset = dataset.head(limit)
-        dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
+        if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
+            dataset2 = df
+            dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+            dataset = dataset.head(limit)
+            dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
 
-        #print (dataset)
-        ax = gv.manhattanplot(data=dataset, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
-        plt.savefig("manhatten.png", dpi=100)
+            ax = gv.manhattanplot(data=dataset, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
+            plt.savefig("manhatten.png", dpi=100)
 
-        ax = gv.qqplot(data=dataset["PValue"])
-        ax.set(ylim=(0, 10), xlim=(0, 10))
-        plt.savefig("qq.png", dpi=100)
-        #plt.show()
+            ax = gv.qqplot(data=dataset["PValue"])
+            ax.set(ylim=(0, 10), xlim=(0, 10))
+            plt.savefig("qq.png", dpi=100)
+
+        else:
+            dataset2 = df
+            dataset2.columns = ['SNP', 'Value']
+            dataset2[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
+
+            #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+            feature_list = dataset2['Value'].to_numpy()
+            plt.plot(feature_list)
+            plt.show()
+            #dataset = dataset.head(limit)
+            #dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
+
+
 
 
 

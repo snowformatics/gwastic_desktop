@@ -51,7 +51,7 @@ class GWASApp:
         self.algorithm = "FaST-LMM"
         self.default_path = "C:/gwas_test_data/test/"
 
-        self.log_win = dpg.add_window(label="Log", pos=(0, 600), width=1000, height=500)
+        self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500)
         self.logz = logger.mvLogger(self.log_win)
         table_window = None
         # Set up GUI components and callbacks
@@ -61,7 +61,7 @@ class GWASApp:
         print("Save Clicked")
 
     def setup_gui(self):
-        dpg.create_viewport(title='Custom Title', width=2000, height=1200)
+        dpg.create_viewport(title='GWAStic Desktop Software', width=2000, height=1200)
 
         def print_me(sender):
             print(f"Menu Item: {sender}")
@@ -97,8 +97,25 @@ class GWASApp:
             dpg.add_file_extension(".bed", color=(255, 150, 150, 255))
             dpg.add_file_extension(".*")
 
-        with dpg.window(label="GWAStic", width=1000, height=600):
+        with dpg.window(label="GWAStic", width=1000, height=600, no_close=True):
             with dpg.tab_bar(label='tabbar'):
+
+
+                with dpg.tab(label='GWAS Analysis'):
+                    dpg.add_text("\nStart GWAS Analysis", indent=50)
+                    dpg.add_spacer(height=20)
+                    geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
+                    pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
+                    dpg.add_spacer(height=20)
+                    dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
+                    #dpg.add_checkbox(label="Replace Chromosome Labels", callback=self.callback_checkbox, indent=50)
+                    dpg.add_spacer(height=20)
+                    gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
+                    dpg.bind_item_theme(gwas_btn, self.our_theme)
+
+                with dpg.tab(label='Genomic Prediction Analysis'):
+                    dpg.add_button(label="Comming soon", callback=self.retrieve_callback, user_data=[geno, pheno])
+
                 with dpg.tab(label='Convert VCF'):
                     dpg.add_text("\nConvert a VCF file into BED file format and apply MAF\nor missing genotype filter.", indent=50)
                     dpg.add_spacer(height=20)
@@ -116,21 +133,6 @@ class GWASApp:
                     convert_btn = dpg.add_button(label="Convert", callback=self.convert_vcf, user_data=[maf_input, geno_input, vcf, variant_ids], indent=50)
                     dpg.bind_item_theme(convert_btn, self.our_theme)
 
-                with dpg.tab(label='GWAS Analysis'):
-                    dpg.add_text("\nStart Fast-LMM GWAS", indent=50)
-                    dpg.add_spacer(height=20)
-                    geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
-                    pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
-                    dpg.add_spacer(height=20)
-                    dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
-                    #dpg.add_checkbox(label="Replace Chromosome Labels", callback=self.callback_checkbox, indent=50)
-                    dpg.add_spacer(height=20)
-                    gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
-                    dpg.bind_item_theme(gwas_btn, self.our_theme)
-
-                with dpg.tab(label='Genomic Prediction Analysis'):
-                    dpg.add_button(label="Comming soon", callback=self.retrieve_callback, user_data=[maf_input, geno_input, vcf, pheno])
-
             # Tooltips
             with dpg.tooltip("tooltip_vcf"):
                 dpg.add_text("Choose a VCF file (.gz or .vcf).", color=[79,128,226])
@@ -140,12 +142,10 @@ class GWASApp:
                 dpg.add_text("Filters out all variants with minor allele frequency below the provided threshold.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_missing"):
                 dpg.add_text("Filters out all variants with missing call rates exceeding the provided value to be removed.", color=[79, 128, 226])
-            with dpg.tooltip("tooltip_missing"):
-                dpg.add_text("Filters out all variants with missing call rates exceeding the provided value to be removed.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_bed"):
                 dpg.add_text("Choose a BED file.\nPrimary representation of genotype calls at biallelic variants. Must be accompanied by .bim and .fam files.\n", color=[79, 128, 226])
             with dpg.tooltip("tooltip_pheno"):
-                dpg.add_text("Choose a phenotype file.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 0.25\nID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
+                dpg.add_text("Choose a phenotype file.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
@@ -262,8 +262,6 @@ class GWASApp:
 
     def run_gwas(self, sender, data, user_data):
 
-
-
         self.add_log('Reading Bed file...')
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
         self.add_log('Reading Phenotypic file...')
@@ -274,7 +272,7 @@ class GWASApp:
         if gwas_df is not None:
             self.add_log('GWAS Analysis done.')
             self.add_log('GWAS Results Plotting...')
-            self.gwas.plot_gwas(gwas_df, 10000)
+            self.gwas.plot_gwas(gwas_df, 10000, self.algorithm)
             self.add_log('Done...')
             self.show_plot(gwas_df)
         else:
