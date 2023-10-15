@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gwastic-desktop"
-version = "0.1.2"
+version = "0.1.3"
 description = "GWAS software that combines traditional statistical methods with the power of Artificial Intelligence"
 authors = ["Stefanie Lueck <lueck@ipk-gatersleben.de>"]
 readme = "README.md"
@@ -19,4 +19,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-gwastic = "gwastic_desktop.main_gui:main"
+gwastic = "gwastic_desktop.main_gui"
