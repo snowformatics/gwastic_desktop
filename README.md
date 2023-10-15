@@ -40,8 +40,17 @@ GWAStic software was build and successfully tested on Windows operating system (
 
 # Usage:
 
-1. Open the Ananconda prompt and activate your GWAStic environment if you are not already there.<br/>`conda activate gwastic_env`<br/>
+1. Open the Anaconda prompt and activate your GWAStic environment if you are not already there.<br/>`conda activate gwastic_env`<br/>
 2. Type `gwastic` in the command line to start the software.
+
+# Supported input file formats
+- VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format. 
+
+[VCF example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/example.vcf.gz)
+
+- Phenotypic data must be three columns (Family ID; Within-family ID; Value) text or CSV file delimited by *space*.
+
+[Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
 
 # Contributions:
 We are strongly looking for contributions.

@@ -7,9 +7,6 @@ import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
 
 def prepare_data():
-    import numpy as np
-
-
 
     s_data = np.load('snp.npy')
     s_data[np.isnan(s_data)] = -1
@@ -50,8 +47,7 @@ def run_tree():
 
     #xgb_model = RandomForestRegressor(n_estimators=100, random_state=42)
     # xgboost2
-    xgb_model = xgb.XGBRegressor(n_estimators=25
-                                      ,
+    xgb_model = xgb.XGBRegressor(n_estimators=25,
                                       max_depth=20,
                                       min_child_weight=10,
                                       subsample=0.8,
