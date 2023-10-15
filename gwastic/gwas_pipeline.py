@@ -55,7 +55,11 @@ class GWAS:
         for line in fam_data:
             line = line.strip()
             line = line.split(' ')
-            fam_ids.append(line[0])
+            if len(line) > 1:
+                fam_ids.append(line[0])
+            else:
+                return (False, "FAM file is not space delimited.")
+
 
         pheno_data = open(pheno_file, 'r').readlines()
         pheno_ids = []
@@ -71,7 +75,13 @@ class GWAS:
                 return (False, "Phenotpic file is not space delimited.")
 
         # Check whether all pheno ids are in the fam file
-        check_ids = all(x in pheno_ids for x in fam_ids)
+        check_ids = any(x in pheno_ids for x in fam_ids)
+        #check_ids = True
+
+        #print (pheno_ids)
+        #print(fam_ids)
+        #print (columns)
+        #print (check_ids)
 
         if check_ids and columns == 3:
             return (True, "Input files validated.")
@@ -101,9 +111,10 @@ class GWAS:
             bed_fixed = self.filter_out_missing(bed)
 
             ### save data for NN
-            import numpy as np
-            np.save('snp', bed_fixed.read().val)
-            np.save('pheno', pheno.read().val)
+            #import numpy as np
+            #np.save('snp', bed_fixed.read().val)
+            #np.savez_compressed('snp.npz', bed_fixed.read().val)
+            #np.save('pheno', pheno.read().val)
             ###
 
             # format numbers with commas and no decimals
