@@ -18,7 +18,6 @@ Key Features:
 
 - Frequent Updates: Stay at the forefront of genetic research with regular software updates. GWAStic incorporates the latest advancements in GWAS and AI methodologies to keep your analyses up-to-date.
 
-Whether you are investigating the genetic basis of complex diseases, unraveling the mysteries of ancestry, or conducting groundbreaking research in personalized medicine, GenoAI empowers you with the tools you need to extract meaningful insights from your genetic data. With its innovative AI integration and user-friendly interface, GenoAI is the ultimate solution for researchers and scientists seeking to push the boundaries of genetic research. Explore the potential of your genetic data like never before with GenoAI.
 
 
 # Citation
