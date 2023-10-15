@@ -17,3 +17,6 @@ matplotlib = "3.8.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+gwastic = "gwastic_desktop.main_gui:main"

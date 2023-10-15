@@ -19,7 +19,6 @@ Key Features:
 - Frequent Updates: Stay at the forefront of genetic research with regular software updates. GWAStic incorporates the latest advancements in GWAS and AI methodologies to keep your analyses up-to-date.
 
 
-
 # Citation
 
 # Documentation
