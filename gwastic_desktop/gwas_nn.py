@@ -104,4 +104,4 @@ def plot():
     # plt.savefig('rf.png')
 
 #run_tree()
-#plot()
+plot()

@@ -23,6 +23,10 @@ from gwastic_desktop.helpers import HELPERS
 # sindatax = dataset['ChrPos'].tolist()
 # sindatay = dataset['PValue'].tolist()
 
+def main():
+    app = GWASApp()
+    app.run()
+
 
 class GWASApp:
     def __init__(self):
@@ -118,7 +122,7 @@ class GWASApp:
                     geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
                     pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
-                    dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression"], indent=50, width=150, default_value="FaST-LMM", callback=self.get_algorithm)
+                    dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
                     #dpg.add_checkbox(label="Replace Chromosome Labels", callback=self.callback_checkbox, indent=50)
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
@@ -287,5 +291,5 @@ class GWASApp:
 
 
 if __name__ == "__main__":
-    app = GWASApp()
-    app.run()
+    main()
+
