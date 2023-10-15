@@ -2,26 +2,7 @@ import dearpygui.dearpygui as dpg
 from dearpygui_ext import logger
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.helpers import HELPERS
-#import pandas as pd
-#import matplotlib.pyplot as plt
-#import geneview as gv
-#from math import sin
 
-# sindatax = []
-# sindatay = []
-# for i in range(0, 100):
-#     sindatax.append(i / 100)
-#     sindatay.append(0.5 + 0.5 * sin(50 * i / 100))
-
-# dataset2 = pd.read_csv("single_snp.csv", delimiter='\t')  # Take your df from wherever
-# dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-# dataset = dataset.head(1000)
-# dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
-# dataset = dataset[dataset["Chr"] == 1.0]
-# dataset["Chr"] = dataset["Chr"].replace(1.0, 'Chr1')
-# print (dataset)
-# sindatax = dataset['ChrPos'].tolist()
-# sindatay = dataset['PValue'].tolist()
 
 def main():
     app = GWASApp()
@@ -49,7 +30,7 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         self.algorithm = "FaST-LMM"
-        self.default_path = "C:/gwas_test_data/test/"
+        self.default_path = ""
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500)
         self.logz = logger.mvLogger(self.log_win)
@@ -65,8 +46,6 @@ class GWASApp:
 
         def print_me(sender):
             print(f"Menu Item: {sender}")
-            #self.default_path = "C:/gwas_test_data/test/"
-
 
 
     # Menu bar
@@ -99,8 +78,6 @@ class GWASApp:
 
         with dpg.window(label="GWAStic", width=1000, height=600, no_close=True):
             with dpg.tab_bar(label='tabbar'):
-
-
                 with dpg.tab(label='GWAS Analysis'):
                     dpg.add_text("\nStart GWAS Analysis", indent=50)
                     dpg.add_spacer(height=20)
@@ -108,13 +85,12 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
                     dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
-                    #dpg.add_checkbox(label="Replace Chromosome Labels", callback=self.callback_checkbox, indent=50)
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
 
                 with dpg.tab(label='Genomic Prediction Analysis'):
-                    dpg.add_button(label="Comming soon", callback=self.retrieve_callback, user_data=[geno, pheno])
+                    dpg.add_button(label="Comming soon", callback=self.gen_pred_callback, user_data=[geno, pheno])
 
                 with dpg.tab(label='Convert VCF'):
                     dpg.add_text("\nConvert a VCF file into BED file format and apply MAF\nor missing genotype filter.", indent=50)
@@ -150,12 +126,7 @@ class GWASApp:
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
-    def show_plot(self, df):
-        #global table_window
-        # print (table_window)
-        # if table_window is not None:
-        #     dpg.delete_item(table_window)
-        #     table_window = None
+    def show_lmm_results(self, df):
 
         width, height, channels, data = dpg.load_image("manhatten.png")
         width2, height2, channels2, data2 = dpg.load_image("qq.png")
@@ -236,11 +207,6 @@ class GWASApp:
         else:
             self.logz.log_info(message)
 
-    def callback_checkbox(self, sender):
-        print(f"Menu Item: {sender}")
-        value = dpg.get_value(sender)
-        print(value)
-
     def convert_vcf(self, sender, data, user_data):
         """Converts vcf to bed file using PLINK."""
         maf = str(dpg.get_value(user_data[0]))
@@ -252,9 +218,7 @@ class GWASApp:
             variants_path = None
         else:
             variants_path, current_path = self.get_selection_path(self.variants_app_data)
-        print (vcf_path, vcf_path.split('.')[0])
         self.add_log('Start converting VCF to BED...')
-        #plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, current_path + 'test', maf, geno)
         plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, vcf_path.split('.')[0], maf, geno)
 
         self.add_log(plink_log)
@@ -266,7 +230,7 @@ class GWASApp:
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
         self.add_log('Reading Phenotypic file...')
         pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
-        self.add_log('Replacing chromosome names...')
+        # Replace chromosome names, they need to be numbers
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
         gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log)
         if gwas_df is not None:
@@ -274,11 +238,11 @@ class GWASApp:
             self.add_log('GWAS Results Plotting...')
             self.gwas.plot_gwas(gwas_df, 10000, self.algorithm)
             self.add_log('Done...')
-            self.show_plot(gwas_df)
+            self.show_lmm_results(gwas_df)
         else:
             self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
-    def retrieve_callback(self, sender, data, user_data):
+    def gen_pred_callback(self, sender, data, user_data):
         pass
 
     def run(self):

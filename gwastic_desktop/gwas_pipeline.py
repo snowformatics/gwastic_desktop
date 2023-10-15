@@ -8,7 +8,6 @@ class GWAS:
     def __init__(self):
         self.gwas_ai = GWASAI()
 
-
     def vcf_to_bed(self, vcf_file, id_file, file_out, maf, geno):
         """Converts the vcf to bed files."""
         if id_file == None:
@@ -66,7 +65,6 @@ class GWAS:
             else:
                 return (False, "FAM file is not space delimited.")
 
-
         pheno_data = open(pheno_file, 'r').readlines()
         pheno_ids = []
         columns = None
@@ -82,12 +80,6 @@ class GWAS:
 
         # Check whether all pheno ids are in the fam file
         check_ids = any(x in pheno_ids for x in fam_ids)
-        #check_ids = True
-
-        #print (pheno_ids)
-        #print(fam_ids)
-        #print (columns)
-        #print (check_ids)
 
         if check_ids and columns == 3:
             return (True, "Input files validated.")
@@ -144,10 +136,7 @@ class GWAS:
             elif algorithm == 'XGBoost (AI)':
                 pass
 
-            #exchanged_dict = {v: k for k, v in chrom_mapping.items()}
-            #df['Chr'] = df['Chr'].replace(exchanged_dict)
             return df
-            #single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name="single_snp.csv")
             #t2 = time.process_time()
             #print(t2-t1)
         else:
