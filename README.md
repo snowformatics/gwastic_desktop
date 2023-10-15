@@ -40,6 +40,8 @@ GWAStic software was build and successfully tested on Windows operating system (
 
 # Usage:
 
+1. Open the Ananconda prompt and activate your GWAStic environment if you are not already there.<br/>`conda activate gwastic_env`<br/>
+2. Type `gwastic` in the command line to start the software.
 
 # Contributions:
 We are strongly looking for contributions.
