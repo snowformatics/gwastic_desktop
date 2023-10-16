@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 from dearpygui_ext import logger
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.helpers import HELPERS
-
+import os
 
 def main():
     app = GWASApp()
@@ -16,7 +16,10 @@ class GWASApp:
         dpg.create_context()
 
         with dpg.font_registry():
-            self.font = dpg.add_font("test.ttf", 20*2, tag="ttf-font")
+            script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
+            rel_path = "test.ttf"
+            abs_file_path = os.path.join(script_dir, rel_path)
+            self.font = dpg.add_font(abs_file_path, 20*2, tag="ttf-font")
 
         with dpg.theme() as self.our_theme:
             with dpg.theme_component(dpg.mvAll):
@@ -30,7 +33,9 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         self.algorithm = "FaST-LMM"
-        self.default_path = ""
+        self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
+        self.test_size = 0.2
+        self.estimators = 100
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500)
         self.logz = logger.mvLogger(self.log_win)
@@ -51,9 +56,18 @@ class GWASApp:
     # Menu bar
         with dpg.viewport_menu_bar():
             with dpg.menu(label="Settings"):
-                dpg.add_menu_item(label="Setting 1", callback=print_me, check=True)
-                dpg.add_menu_item(label="Setting 2", callback=print_me)
-            dpg.add_menu_item(label="Help", callback=print_me)
+                with dpg.menu(label="Methods"):
+                    dpg.add_menu_item(label="Decision Tree Options", callback=print_me, check=True)
+                    dpg.add_input_float(label="Test Size", default_value=0.2, min_value=0.0, max_value=1.0,  width=150)
+                    dpg.add_input_int(label="Number of trees", default_value=100, width=150)
+                    dpg.add_input_int(label="Depth of the tree", width=150)
+                    dpg.add_spacer(height=20)
+                    dpg.add_menu_item(label="Other", callback=print_me, check=True)
+
+            with dpg.menu(label="Help"):
+                dpg.add_menu_item(label="Documentation", callback=print_me, check=True)
+                dpg.add_menu_item(label="Tutorials", callback=print_me, check=True)
+
 
         # File dialogs
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf",
@@ -135,7 +149,7 @@ class GWASApp:
             dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
             dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
 
-        with dpg.window(label="Results", width=950, height=600, pos=[1000, 1]) as table_window:
+        with dpg.window(label="Results", width=950, height=600, pos=[1000, 1]):
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label="Manhatten Plot"):
                     dpg.add_image("manhatten_tag")
@@ -232,7 +246,7 @@ class GWASApp:
         pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
         # Replace chromosome names, they need to be numbers
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log)
+        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log, self.test_size, self.estimators)
         if gwas_df is not None:
             self.add_log('GWAS Analysis done.')
             self.add_log('GWAS Results Plotting...')

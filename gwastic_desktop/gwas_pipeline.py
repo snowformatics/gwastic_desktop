@@ -88,7 +88,7 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
-    def start_gwas(self, bed_file, pheno_file ,chrom_mapping, algorithm, add_log):
+    def start_gwas(self, bed_file, pheno_file ,chrom_mapping, algorithm, add_log, test_size, estimators):
         from fastlmm.association import single_snp, single_snp_linreg
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
@@ -132,7 +132,7 @@ class GWAS:
             elif algorithm == 'Random Forest (AI)':
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
-                df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids)
+                df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size, estimators)
             elif algorithm == 'XGBoost (AI)':
                 pass
 
@@ -150,7 +150,7 @@ class GWAS:
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
             dataset2 = df
             dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-            dataset = dataset.head(limit)
+            #dataset = dataset.head(limit)
             dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
 
             ax = gv.manhattanplot(data=dataset, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
@@ -161,12 +161,28 @@ class GWAS:
             plt.savefig("qq.png", dpi=100)
 
         else:
-            dataset2 = df
-            dataset2.columns = ['SNP', 'Value']
-            dataset2[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
+            #print (df)
+            #dataset2 = df
+            #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'Value']]
+            #df = df.head(limit)
+            df = df.sort_values(by=['Chr', 'ChrPos'])
+            df['Chr'] = df['Chr'].astype(int)
+            df['ChrPos'] = df['ChrPos'].astype(int)
+            #print (df)
+            #print (df.dtypes)
+            ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="Value", snp="SNP", logp=False)
+            plt.savefig("manhatten.png", dpi=100)
 
-            #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-            feature_list = dataset2['Value'].to_numpy()
+            ax = gv.qqplot(data=df["Value"])
+            ax.set(ylim=(0, 10), xlim=(0, 10))
+            plt.savefig("qq.png", dpi=100)
+
+            # dataset2 = df
+            # dataset2.columns = ['SNP', 'Value']
+            # dataset2[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
+            #
+            # #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+            feature_list = df['Value'].to_numpy()
             plt.plot(feature_list)
             plt.show()
             #dataset = dataset.head(limit)

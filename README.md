@@ -37,6 +37,22 @@ GWAStic software was build and successfully tested on Windows operating system (
 
 `pip install gwastic_desktop`
 
+for linux after installation:
+
+`wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
+
+`chmod +x Miniconda3-latest-Linux-x86_64.sh`
+
+`./Miniconda3-latest-Linux-x86_64.sh`
+
+`cd /home/stefanie/miniconda3`
+
+`source ~/miniconda3/bin/activate`
+
+`pip install gwastic_desktop`
+
+`apt-get install libgl1`
+
 
 # Usage:
 
