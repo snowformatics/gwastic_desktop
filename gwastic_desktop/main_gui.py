@@ -240,6 +240,8 @@ class GWASApp:
 
     def run_gwas(self, sender, data, user_data):
 
+        #dpg.delete_item("manhatten_tag")
+
         self.add_log('Reading Bed file...')
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
         self.add_log('Reading Phenotypic file...')

@@ -134,7 +134,10 @@ class GWAS:
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size, estimators)
             elif algorithm == 'XGBoost (AI)':
-                pass
+                df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
+                snp_ids = df.iloc[:, 1].tolist()
+                df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                                                    estimators)
 
             return df
             #t2 = time.process_time()
