@@ -182,9 +182,9 @@ class GWAS:
             # dataset2[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
             #
             # #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-            feature_list = df['Value'].to_numpy()
-            plt.plot(feature_list)
-            plt.show()
+            #feature_list = df['Value'].to_numpy()
+            #plt.plot(feature_list)
+            #plt.show()
             #dataset = dataset.head(limit)
             #dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
 
