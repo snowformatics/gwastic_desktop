@@ -1,6 +1,7 @@
 import subprocess
 import pandas as pd
 from gwastic_desktop.gwas_ai import GWASAI
+from datetime import datetime
 
 class GWAS:
     """GWAS class."""
@@ -100,12 +101,12 @@ class GWAS:
         if check_input_data[0]:
             bed = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_file))
-            s1 = 'Raw BED: Nr. of IDs: ' + str(bed.iid_count) + ' Nr.of SNPs: ' + str(bed.sid_count) + ' Nr. of Phenoytpic IDs: ' + str(pheno.iid_count)
-            add_log(s1, warn=True)
+            #s1 = 'Raw BED: Nr. of IDs: ' + str(bed.iid_count) + ' Nr.of SNPs: ' + str(bed.sid_count) + ' Nr. of Phenoytpic IDs: ' + str(pheno.iid_count)
+            #add_log(s1, warn=True)
             # replace original bed with one that has the same iids as the pheno
             bed, pheno = pstutil.intersect_apply([bed, pheno])
-            s2 = "After intersection:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
-            add_log(s2, warn=True)
+            #s2 = "After intersection:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
+            #add_log(s2, warn=True)
             bed_fixed = self.filter_out_missing(bed)
 
             ### save data for NN
@@ -116,7 +117,7 @@ class GWAS:
             ###
 
             # format numbers with commas and no decimals
-            s3 = "After removing missing:" + 'bed ids: ' + str(bed.iid_count) + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
+            s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
             add_log(s3, warn=True)
             # run single_snp with the fixed file
             add_log('Starting GWAS Analysis, this might take a while...')
@@ -151,19 +152,65 @@ class GWAS:
         import geneview as gv
 
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
+            chr_names = df['Chr'].unique()
             df['ChrPos'] = df['ChrPos'].astype(int)
             # dataset2 = df
             # dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
             # #dataset = dataset.head(limit)
             # dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
 
-            ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
+            # common parameters for plotting
+            plt_params = {
+                "font.sans-serif": "Arial",
+                "legend.fontsize": 14,
+                "axes.titlesize": 18,
+                "axes.labelsize": 16,
+                "xtick.labelsize": 14,
+                "ytick.labelsize": 14
+            }
+            plt.rcParams.update(plt_params)
+
+            # Create a manhattan plot
+            f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
+            #xtick = set(["chr" + i for i in list(map(str, chr_names))])
+
+            _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP",
+                              marker=".",
+                              sign_marker_p=1e-6,
+                              sign_marker_color="r",
+
+                              title="GWAS Manhatten Plot " + algorithm + '\n' + dt_string,
+                              #xtick_label_set=xtick,
+
+                              xlabel="Chromosome",
+                              ylabel=r"$-log_{10}{(P)}$",
+
+                              sign_line_cols=["#D62728", "#2CA02C"],
+                              hline_kws={"linestyle": "--", "lw": 1.3},
+
+                              is_annotate_topsnp=True,
+                              ld_block_size=50000,  # 50000 bp
+                              text_kws={"fontsize": 12,
+                                        "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
+                              ax=ax)
+            plt.tight_layout(pad=1)
             plt.savefig("manhatten.png", dpi=100)
 
-            ax = gv.qqplot(data=df["PValue"])
-            ax.set(ylim=(0, 10), xlim=(0, 10))
+            f, ax = plt.subplots(figsize=(6, 6), facecolor="w", edgecolor="k")
+            _ = gv.qqplot(data=df["PValue"],
+                       marker="o",
+                       title="GWAS QQ Plot " + algorithm + '\n' + dt_string + '\n',
+                       xlabel=r"Expected $-log_{10}{(P)}$",
+                       ylabel=r"Observed $-log_{10}{(P)}$",
+                       ax=ax)
+
+            #ax = gv.qqplot(data=df["PValue"])
+            #ax.set(ylim=(0, 20), xlim=(0, 20))
+            plt.tight_layout(pad=1)
             plt.savefig("qq.png", dpi=100)
 
         else:
