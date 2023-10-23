@@ -124,12 +124,13 @@ class GWAS:
             elif algorithm == 'Random Forest (AI)':
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
-                df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size, estimators)
+                df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                                                    estimators, gwas_result_name)
             elif algorithm == 'XGBoost (AI)':
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                                    estimators)
+                                                    estimators, gwas_result_name)
 
             t2 = time.process_time()
             t3 = round((t2-t1)/ 60, 2)

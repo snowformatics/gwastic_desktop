@@ -149,7 +149,7 @@ class GWASApp:
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
-    def show_lmm_results(self, df):
+    def show_lmm_results(self, df, algorithm):
 
         width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
         width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
@@ -165,12 +165,17 @@ class GWASApp:
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label="Manhatten Plot"):
                     dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
-                if self.algorithm != "Random Forest (AI)" or self.algorithm != "XGBoost (AI)":
+                if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+                    df = df.sort_values(by=['PValue'], ascending=True)
                     with dpg.tab(label="QQ-Plot"):
                         dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=450, width=450)
+                else:
+
+                    df = df.sort_values(by=['PValue'], ascending=False)
+
                 with dpg.tab(label="GWAS Results (Top 500)"):
                     df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                    df = df.sort_values(by=['PValue'], ascending=True)
+                    #df = df.sort_values(by=['PValue'], ascending=True)
                     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
                                    borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
                         for i in range(df.shape[1]):
@@ -206,6 +211,7 @@ class GWASApp:
 
     def get_selection_path(self, app_data):
         """Extract path from the app_data dictionary selections key."""
+
         current_path = app_data['current_path'] + '/'
         k = app_data['selections']
         for key, value in k.items():
@@ -217,7 +223,7 @@ class GWASApp:
         self.results_directory = app_data
         results_path, current_path = self.get_selection_path(self.results_directory)
         self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
-                                 self.manhatten_plot_name, self.qq_plot_name)
+                                 self.manhatten_plot_name, self.qq_plot_name, self.algorithm)
         self.add_log('Results saved in: ' + current_path)
 
     def cancel_callback_directory(self, sender, app_data):
@@ -263,21 +269,25 @@ class GWASApp:
         dpg.delete_item("table_gwas")
 
         self.add_log('Reading Bed file...')
-        bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
-        self.add_log('Reading Phenotypic file...')
-        pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
-        # Replace chromosome names, they need to be numbers
-        chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                       self.test_size, self.estimators, self.gwas_result_name)
-        if gwas_df is not None:
-            self.add_log('GWAS Analysis done.')
-            self.add_log('GWAS Results Plotting...')
-            self.gwas.plot_gwas(gwas_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
-            self.add_log('Done...')
-            self.show_lmm_results(gwas_df)
-        else:
-            self.add_log('Error, GWAS Analysis could not be started.', error=True)
+        try:
+            bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
+            self.add_log('Reading Phenotypic file...')
+            pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+            # Replace chromosome names, they need to be numbers
+            chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+            gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+                                           self.test_size, self.estimators, self.gwas_result_name)
+            if gwas_df is not None:
+                self.add_log('GWAS Analysis done.')
+                self.add_log('GWAS Results Plotting...')
+                self.gwas.plot_gwas(gwas_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
+                self.add_log('Done...')
+                self.show_lmm_results(gwas_df, self.algorithm)
+            else:
+                self.add_log('Error, GWAS Analysis could not be started.', error=True)
+
+        except TypeError:
+            self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def gen_pred_callback(self, sender, data, user_data):
         pass

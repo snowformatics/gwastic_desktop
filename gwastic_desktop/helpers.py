@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import shutil
 
+
 class HELPERS:
     def duplicate_column(self, input_file, output_file):
         # Read the text file with one column
@@ -36,7 +37,6 @@ class HELPERS:
     def get_timestamp(self):
         now = datetime.now()
         dt_string = now.strftime("%d%m%Y_%H%M%S")
-        print (dt_string)
         return dt_string
 
     def save_raw_data(self, bed, pheno):
@@ -44,7 +44,8 @@ class HELPERS:
         np.savez_compressed('snp.npz', bed.read().val)
         np.save('pheno', pheno.read().val)
 
-    def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name):
+    def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
+                     algorithm):
         ts = self.get_timestamp()
 
         # try:
@@ -56,7 +57,6 @@ class HELPERS:
         os.mkdir(os.path.join(save_dir, ts))
         save_dir = os.path.join(save_dir, ts)
         shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
-        shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
         # We store also a trimmed version of single_snp with 10000 SNPs
         df = pd.read_csv(gwas_result_name)
         first_10000_rows = df.head(10000)
@@ -64,11 +64,17 @@ class HELPERS:
         shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
         shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
 
-    def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name):
+        if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+            shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
+
+    def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
+                     algorithm):
         os.remove(os.path.join(current_dir, manhatten_plot_name))
-        os.remove(os.path.join(current_dir, qq_plot_name))
         os.remove(os.path.join(current_dir, gwas_result_name))
         os.remove(os.path.join(current_dir, gwas_result_name_top))
+        if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+            os.remove(os.path.join(current_dir, qq_plot_name))
+
 
 
 
