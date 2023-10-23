@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 
 
 class GWASAI:
-    def run_random_forest(self, snp_data, pheno_data, snp_ids, test_size, estimators):
+    def run_random_forest(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name):
 
         snp_data[np.isnan(snp_data)] = -1
 
@@ -32,7 +32,7 @@ class GWASAI:
         #test_loss = np.mean((test_predictions - y_test)**2)  # Mean squared error
         #print(f'Test Loss: {test_loss}')
 
-        f = open('out_rf_test.txt', 'w')
+        f = open(gwas_result_name, 'w')
         data = []
         for col, score in zip(snp_ids, rf_model.feature_importances_):
             f.write(str(col) + ' ' + str(score) + '\n')
@@ -43,7 +43,7 @@ class GWASAI:
         return df
 
 
-    def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators):
+    def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name):
 
         snp_data[np.isnan(snp_data)] = -1
 
@@ -69,7 +69,7 @@ class GWASAI:
         #test_loss = np.mean((test_predictions - y_test)**2)  # Mean squared error
         #print(f'Test Loss: {test_loss}')
 
-        f = open('out_xg_test.txt', 'w')
+        f = open(gwas_result_name, 'w')
         data = []
         for col, score in zip(snp_ids, xgb_model.feature_importances_):
             f.write(str(col) + ' ' + str(score) + '\n')

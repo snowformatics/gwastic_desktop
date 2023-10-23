@@ -36,6 +36,10 @@ class GWASApp:
         self.pheno_app_data = None
         self.algorithm = "FaST-LMM"
         self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
+        self.gwas_result_name = "gwas_results.csv"
+        self.gwas_result_name_top = "gwas_results_top10000.csv"
+        self.manhatten_plot_name = "manhatten_plot.png"
+        self.qq_plot_name = "qq_plot.png"
         self.test_size = 0.2
         self.estimators = 100
 
@@ -57,19 +61,18 @@ class GWASApp:
 
     # Menu bar
         with dpg.viewport_menu_bar():
-            with dpg.menu(label="Settings"):
-                with dpg.menu(label="Methods"):
-                    dpg.add_menu_item(label="Decision Tree Options", callback=print_me, check=True)
-                    dpg.add_input_float(label="Test Size", default_value=0.2, min_value=0.0, max_value=1.0,  width=150)
-                    dpg.add_input_int(label="Number of trees", default_value=100, width=150)
-                    dpg.add_input_int(label="Depth of the tree", width=150)
-                    dpg.add_spacer(height=20)
-                    dpg.add_menu_item(label="Other", callback=print_me, check=True)
+            # with dpg.menu(label="Settings"):
+            #     with dpg.menu(label="Methods"):
+            #         dpg.add_menu_item(label="Decision Tree Options", callback=print_me, check=True)
+            #         dpg.add_input_float(label="Test Size", default_value=0.2, min_value=0.0, max_value=1.0,  width=150)
+            #         dpg.add_input_int(label="Number of trees", default_value=100, width=150)
+            #         dpg.add_input_int(label="Depth of the tree", width=150)
+            #         dpg.add_spacer(height=20)
+            #         dpg.add_menu_item(label="Other", callback=print_me, check=True)
 
             with dpg.menu(label="Help"):
                 dpg.add_menu_item(label="Documentation", callback=print_me, check=True)
                 dpg.add_menu_item(label="Tutorials", callback=print_me, check=True)
-
 
         # File dialogs
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf",
@@ -148,8 +151,8 @@ class GWASApp:
 
     def show_lmm_results(self, df):
 
-        width, height, channels, data = dpg.load_image("manhatten.png")
-        width2, height2, channels2, data2 = dpg.load_image("qq.png")
+        width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
+        width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
 
         with dpg.texture_registry(show=False):
             dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
@@ -164,7 +167,7 @@ class GWASApp:
                     dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
                 if self.algorithm != "Random Forest (AI)" or self.algorithm != "XGBoost (AI)":
                     with dpg.tab(label="QQ-Plot"):
-                        dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=500, width=500)
+                        dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=450, width=450)
                 with dpg.tab(label="GWAS Results (Top 500)"):
                     df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
                     df = df.sort_values(by=['PValue'], ascending=True)
@@ -213,7 +216,8 @@ class GWASApp:
         """"""
         self.results_directory = app_data
         results_path, current_path = self.get_selection_path(self.results_directory)
-        self.helper.save_results(os.getcwd(), current_path)
+        self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
+                                 self.manhatten_plot_name, self.qq_plot_name)
         self.add_log('Results saved in: ' + current_path)
 
     def cancel_callback_directory(self, sender, app_data):
@@ -254,13 +258,9 @@ class GWASApp:
 
         dpg.delete_item("manhatten_image")
         dpg.delete_item("manhatten_tag")
-
         dpg.delete_item("qq_image")
         dpg.delete_item("qq_tag")
-
         dpg.delete_item("table_gwas")
-
-
 
         self.add_log('Reading Bed file...')
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
@@ -268,11 +268,12 @@ class GWASApp:
         pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
         # Replace chromosome names, they need to be numbers
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log, self.test_size, self.estimators)
+        gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+                                       self.test_size, self.estimators, self.gwas_result_name)
         if gwas_df is not None:
             self.add_log('GWAS Analysis done.')
             self.add_log('GWAS Results Plotting...')
-            self.gwas.plot_gwas(gwas_df, 10000, self.algorithm)
+            self.gwas.plot_gwas(gwas_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
             self.add_log('Done...')
             self.show_lmm_results(gwas_df)
         else:

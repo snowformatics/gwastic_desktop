@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from datetime import datetime
 import os
 import shutil
@@ -38,7 +39,12 @@ class HELPERS:
         print (dt_string)
         return dt_string
 
-    def save_results(self, current_dir, save_dir):
+    def save_raw_data(self, bed, pheno):
+        np.save('snp', bed.read().val)
+        np.savez_compressed('snp.npz', bed.read().val)
+        np.save('pheno', pheno.read().val)
+
+    def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name):
         ts = self.get_timestamp()
 
         # try:
@@ -49,14 +55,20 @@ class HELPERS:
         # #
         os.mkdir(os.path.join(save_dir, ts))
         save_dir = os.path.join(save_dir, ts)
-        shutil.copyfile(os.path.join(current_dir, "manhatten.png"), os.path.join(save_dir, "manhatten.png"))
-        shutil.copyfile(os.path.join(current_dir, "qq.png"), os.path.join(save_dir, "qq.png"))
+        shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
+        shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
         # We store also a trimmed version of single_snp with 10000 SNPs
-        df = pd.read_csv("single_snp.csv")
+        df = pd.read_csv(gwas_result_name)
         first_10000_rows = df.head(10000)
-        first_10000_rows.to_csv("single_snp_top10000.csv", index=False)
-        shutil.copyfile(os.path.join(current_dir, "single_snp.csv"), os.path.join(save_dir, "single_snp.csv"))
-        shutil.copyfile(os.path.join(current_dir, "single_snp_top10000.csv"), os.path.join(save_dir, "single_snp_top10000.csv"))
+        first_10000_rows.to_csv(gwas_result_name_top, index=False)
+        shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
+        shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
+
+    def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name):
+        os.remove(os.path.join(current_dir, manhatten_plot_name))
+        os.remove(os.path.join(current_dir, qq_plot_name))
+        os.remove(os.path.join(current_dir, gwas_result_name))
+        os.remove(os.path.join(current_dir, gwas_result_name_top))
 
 
 
