@@ -1,4 +1,5 @@
 import dearpygui.dearpygui as dpg
+import dearpygui_ext.themes as dpg_ext
 from dearpygui_ext import logger
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.helpers import HELPERS
@@ -30,6 +31,7 @@ class GWASApp:
 
         self.vcf_app_data = None
         self.variants_app_data = None
+        self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
         self.algorithm = "FaST-LMM"
@@ -89,6 +91,10 @@ class GWASApp:
                              tag="file_dialog_bed", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension(".bed", color=(255, 150, 150, 255))
             dpg.add_file_extension(".*")
+
+        dpg.add_file_dialog(
+            directory_selector=True, show=False, callback=self.callback_save_results, tag="select_directory",
+            cancel_callback=self.cancel_callback_directory, width=700, height=400)
 
         with dpg.window(label="GWAStic", width=1000, height=600, no_close=True):
             with dpg.tab_bar(label='tabbar'):
@@ -150,27 +156,26 @@ class GWASApp:
             dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
 
         with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
+            dpg.add_button(label="Download Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
+            dpg.add_spacer(height=60)
+
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label="Manhatten Plot"):
-                    #dpg.add_image("manhatten_tag")
                     dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
                 if self.algorithm != "Random Forest (AI)" or self.algorithm != "XGBoost (AI)":
                     with dpg.tab(label="QQ-Plot"):
                         dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=500, width=500)
                 with dpg.tab(label="GWAS Results (Top 500)"):
-
                     df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
                     df = df.sort_values(by=['PValue'], ascending=True)
                     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
                                    borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
-                        for i in range(df.shape[1]):  # Generates the correct amount of columns
-                            dpg.add_table_column(label=df.columns[i], parent='table_gwas')  # Adds the headers
-                        for i in range(500):  # Shows the first n rows
+                        for i in range(df.shape[1]):
+                            dpg.add_table_column(label=df.columns[i], parent='table_gwas')
+                        for i in range(500):
                             with dpg.table_row():
                                 for j in range(df.shape[1]):
-                                    dpg.add_text(f"{df.iloc[i, j]}")  # Displays the value of
-
-
+                                    dpg.add_text(f"{df.iloc[i, j]}")
 
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""
@@ -202,8 +207,19 @@ class GWASApp:
         k = app_data['selections']
         for key, value in k.items():
             file_path = value
-
         return file_path, current_path
+
+    def callback_save_results(self, sender, app_data):
+        """"""
+        self.results_directory = app_data
+        results_path, current_path = self.get_selection_path(self.results_directory)
+        self.helper.save_results(os.getcwd(), current_path)
+        self.add_log('Results saved in: ' + current_path)
+
+    def cancel_callback_directory(self, sender, app_data):
+        print('Cancel was clicked.')
+        print("Sender: ", sender)
+        print("App Data: ", app_data)
 
     def get_algorithm(self, sender, data):
         self.algorithm = data

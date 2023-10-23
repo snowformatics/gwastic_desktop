@@ -1,5 +1,7 @@
 import pandas as pd
-
+from datetime import datetime
+import os
+import shutil
 
 class HELPERS:
     def duplicate_column(self, input_file, output_file):
@@ -29,5 +31,36 @@ class HELPERS:
                         parts[0] = str(current_integer)
                         current_integer += 1
         return mapping
+
+    def get_timestamp(self):
+        now = datetime.now()
+        dt_string = now.strftime("%d%m%Y_%H%M%S")
+        print (dt_string)
+        return dt_string
+
+    def save_results(self, current_dir, save_dir):
+        ts = self.get_timestamp()
+
+        # try:
+        #     os.mkdir(os.path.join(save_dir, ts))
+        #     save_dir = os.path.join(save_dir, ts)
+        # except:
+        #     save_dir = save_dir
+        # #
+        os.mkdir(os.path.join(save_dir, ts))
+        save_dir = os.path.join(save_dir, ts)
+        shutil.copyfile(os.path.join(current_dir, "manhatten.png"), os.path.join(save_dir, "manhatten.png"))
+        shutil.copyfile(os.path.join(current_dir, "qq.png"), os.path.join(save_dir, "qq.png"))
+        # We store also a trimmed version of single_snp with 10000 SNPs
+        df = pd.read_csv("single_snp.csv")
+        first_10000_rows = df.head(10000)
+        first_10000_rows.to_csv("single_snp_top10000.csv", index=False)
+        shutil.copyfile(os.path.join(current_dir, "single_snp.csv"), os.path.join(save_dir, "single_snp.csv"))
+        shutil.copyfile(os.path.join(current_dir, "single_snp_top10000.csv"), os.path.join(save_dir, "single_snp_top10000.csv"))
+
+
+
+
+
 
 

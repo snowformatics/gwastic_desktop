@@ -1,7 +1,7 @@
 import subprocess
 import pandas as pd
 from gwastic_desktop.gwas_ai import GWASAI
-from datetime import datetime
+
 
 class GWAS:
     """GWAS class."""
@@ -152,8 +152,7 @@ class GWAS:
         import geneview as gv
 
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-            now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             chr_names = df['Chr'].unique()
@@ -183,7 +182,7 @@ class GWAS:
                               sign_marker_p=1e-6,
                               sign_marker_color="r",
 
-                              title="GWAS Manhatten Plot " + algorithm + '\n' + dt_string,
+                              title="GWAS Manhatten Plot " + algorithm + '\n',
                               #xtick_label_set=xtick,
 
                               xlabel="Chromosome",
@@ -203,7 +202,7 @@ class GWAS:
             f, ax = plt.subplots(figsize=(6, 6), facecolor="w", edgecolor="k")
             _ = gv.qqplot(data=df["PValue"],
                        marker="o",
-                       title="GWAS QQ Plot " + algorithm + '\n' + dt_string + '\n',
+                       title="GWAS QQ Plot " + algorithm + '\n',
                        xlabel=r"Expected $-log_{10}{(P)}$",
                        ylabel=r"Observed $-log_{10}{(P)}$",
                        ax=ax)
