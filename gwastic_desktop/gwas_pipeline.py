@@ -151,15 +151,18 @@ class GWAS:
         import geneview as gv
 
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-            dataset2 = df
-            dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-            #dataset = dataset.head(limit)
-            dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
+            df = df.sort_values(by=['Chr', 'ChrPos'])
+            df['Chr'] = df['Chr'].astype(int)
+            df['ChrPos'] = df['ChrPos'].astype(int)
+            # dataset2 = df
+            # dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
+            # #dataset = dataset.head(limit)
+            # dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
 
-            ax = gv.manhattanplot(data=dataset, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
+            ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP")
             plt.savefig("manhatten.png", dpi=100)
 
-            ax = gv.qqplot(data=dataset["PValue"])
+            ax = gv.qqplot(data=df["PValue"])
             ax.set(ylim=(0, 10), xlim=(0, 10))
             plt.savefig("qq.png", dpi=100)
 
@@ -168,17 +171,28 @@ class GWAS:
             #dataset2 = df
             #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'Value']]
             #df = df.head(limit)
-            df = df.sort_values(by=['Chr', 'ChrPos'])
-            df['Chr'] = df['Chr'].astype(int)
-            df['ChrPos'] = df['ChrPos'].astype(int)
-            #print (df)
-            #print (df.dtypes)
-            ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="Value", snp="SNP", logp=False)
-            plt.savefig("manhatten.png", dpi=100)
+            #dpg.delete_item("qq_image")
 
-            ax = gv.qqplot(data=df["Value"])
-            ax.set(ylim=(0, 10), xlim=(0, 10))
-            plt.savefig("qq.png", dpi=100)
+            # df = df.sort_values(by=['Chr', 'ChrPos'])
+            # df['Chr'] = df['Chr'].astype(int)
+            # df['ChrPos'] = df['ChrPos'].astype(int)
+            # #print (df)
+            # #print (df.dtypes)
+            # ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False)
+            # plt.savefig("manhatten.png", dpi=100)
+
+            #df.columns = ['snp', 'value']
+
+            # plt.savefig('out_xgboos_bridge.png')
+            feature_list = df['PValue'].to_numpy()
+            plt.plot(feature_list)
+            df = df.sort_values(by=['PValue'], ascending=False)
+            print(df)
+            plt.savefig("manhatten.png", dpi=100)
+            plt.show()
+
+
+
 
             # dataset2 = df
             # dataset2.columns = ['SNP', 'Value']

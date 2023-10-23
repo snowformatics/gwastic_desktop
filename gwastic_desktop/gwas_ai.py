@@ -38,7 +38,7 @@ class GWASAI:
             f.write(str(col) + ' ' + str(score) + '\n')
             data.append((col, score))
         # Convert the list of tuples into a DataFrame
-        df = pd.DataFrame(data, columns=['SNP', 'Value'])
+        df = pd.DataFrame(data, columns=['SNP', 'PValue'])
         df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
         return df
 
@@ -57,6 +57,8 @@ class GWASAI:
 
         # Define and train a Random Forest model
         xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=3, random_state=42)
+        #xgb_model = xgb.XGBRegressor(n_estimators=estimators, random_state=42)
+
 
 
         # Fit the model to the training data
@@ -67,13 +69,13 @@ class GWASAI:
         #test_loss = np.mean((test_predictions - y_test)**2)  # Mean squared error
         #print(f'Test Loss: {test_loss}')
 
-        f = open('out_rf_test.txt', 'w')
+        f = open('out_xg_test.txt', 'w')
         data = []
         for col, score in zip(snp_ids, xgb_model.feature_importances_):
             f.write(str(col) + ' ' + str(score) + '\n')
             data.append((col, score))
         # Convert the list of tuples into a DataFrame
-        df = pd.DataFrame(data, columns=['SNP', 'Value'])
+        df = pd.DataFrame(data, columns=['SNP', 'PValue'])
         df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
         return df
 

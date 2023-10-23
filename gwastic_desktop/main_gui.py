@@ -152,20 +152,23 @@ class GWASApp:
         with dpg.window(label="Results", width=950, height=600, pos=[1000, 1]):
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label="Manhatten Plot"):
-                    dpg.add_image("manhatten_tag")
-                with dpg.tab(label="QQ-Plot"):
-                    dpg.add_image("qq_tag")
-                with dpg.tab(label="GWAS Results"):
-                    dataset2 = df
-                    dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                    with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
-                                   borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
-                        for i in range(dataset.shape[1]):  # Generates the correct amount of columns
-                            dpg.add_table_column(label=dataset.columns[i], parent='table_gwas')  # Adds the headers
-                        for i in range(500):  # Shows the first n rows
-                            with dpg.table_row():
-                                for j in range(dataset.shape[1]):
-                                    dpg.add_text(f"{dataset.iloc[i, j]}")  # Displays the value of
+                    #dpg.add_image("manhatten_tag")
+                    dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image")
+                if self.algorithm != "Random Forest (AI)" or self.algorithm != "XGBoost (AI)":
+                    with dpg.tab(label="QQ-Plot"):
+                        dpg.add_image(texture_tag="qq_tag", tag="qq_image")
+                # with dpg.tab(label="GWAS Results"):
+                #     #dataset2 = df
+                #     df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                #     df = df.sort_values(by=['PValue'], ascending=False)
+                #     with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
+                #                    borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
+                #         for i in range(df.shape[1]):  # Generates the correct amount of columns
+                #             dpg.add_table_column(label=df.columns[i], parent='table_gwas')  # Adds the headers
+                #         for i in range(500):  # Shows the first n rows
+                #             with dpg.table_row():
+                #                 for j in range(df.shape[1]):
+                #                     dpg.add_text(f"{df.iloc[i, j]}")  # Displays the value of
                                     # each row/column combination
                     #dpg.delete_item("table_gwas")
                     #dpg.remove_alias("table_gwas")
@@ -240,7 +243,11 @@ class GWASApp:
 
     def run_gwas(self, sender, data, user_data):
 
-        #dpg.delete_item("manhatten_tag")
+        dpg.delete_item("manhatten_image")
+        dpg.delete_item("manhatten_tag")
+
+        dpg.delete_item("qq_image")
+        dpg.delete_item("qq_tag")
 
         self.add_log('Reading Bed file...')
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
