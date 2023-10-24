@@ -2,7 +2,7 @@
 
 GWAStic is a software for Genome-Wide Association Study (GWAS) that combines traditional statistical methods with the power of Artificial Intelligence (AI) for comprehensive genetic analysis.
 
-![](https://github.com/snowformatics/gwastic_desktop/blob/master/gwastic/images/screenshots.gif)
+![ALT TEXT](https://github.com/snowformatics/gwastic_desktop/blob/e0743e1f67e5300d083a96441bbf505b5d7a7696/gwastic_desktop/images/gui.PNG)
 
 Key Features:
 
