@@ -1,6 +1,5 @@
 import subprocess
 import pandas as pd
-import numpy as np
 from gwastic_desktop.gwas_ai import GWASAI
 
 
@@ -111,6 +110,9 @@ class GWAS:
             add_log(s3, warn=True)
             # run single_snp with the fixed file
             add_log('Starting GWAS Analysis, this might take a while...')
+
+            #self.plot_pheno(pheno.read().val)
+
             t1 = time.process_time()
             if algorithm == 'FaST-LMM':
                 df = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
@@ -144,12 +146,9 @@ class GWAS:
         import geneview as gv
 
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-            #df = df.head(limit)
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
-            #chr_names = df['Chr'].unique()
             df['ChrPos'] = df['ChrPos'].astype(int)
-
 
             # common parameters for plotting
             plt_params = {
@@ -165,7 +164,7 @@ class GWAS:
             # Create a manhattan plot
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
             #xtick = set(["chr" + i for i in list(map(str, chr_names))])
-            _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",
+            _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".", color=['#3B5488', '#d5536f'],
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
                               hline_kws={"linestyle": "--", "lw": 1.3},   # 50000 bp
@@ -185,86 +184,30 @@ class GWAS:
             plt.savefig(qq_plot_name, dpi=100)
 
         else:
-            #df = df.sort_values(by=['PValue'])
-            #df = df.head(limit)
 
-            #df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             # chr_names = df['Chr'].unique()
             df['ChrPos'] = df['ChrPos'].astype(int)
 
-            ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
-                                  title="GWAS Manhatten Plot " + algorithm + '\n',
+            f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
+
+            _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
+                                  title="GWAS Manhatten Plot " + algorithm + '\n',color=['#3B5488', '#d5536f'],
                                   xlabel="Chromosome", ylabel=r"Feature Importance")
 
-
-           # df = df.head(limit)
-
-            # # common parameters for plotting
-            # plt_params = {
-            #     "font.sans-serif": "Arial",
-            #     "legend.fontsize": 14,
-            #     "axes.titlesize": 18,
-            #     "axes.labelsize": 16,
-            #     "xtick.labelsize": 14,
-            #     "ytick.labelsize": 14
-            # }
-            # plt.rcParams.update(plt_params)
-            #
-            # # Create a manhattan plot
-            # f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
-            # # xtick = set(["chr" + i for i in list(map(str, chr_names))])
-            # _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker="."
-            #                      , logp=False,
-            #                      sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n',
-            #                      # xtick_label_set=xtick,
-            #                      xlabel="Chromosome", ylabel=r"Feature Importance", sign_line_cols=["#D62728", "#2CA02C"],
-            #                      hline_kws={"linestyle": "--", "lw": 1.3},
-            #                      text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
-            #                      ax=ax)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=200)
-            #
 
-            # Create QQ plot
+    def plot_pheno(self, data):
+        import matplotlib.pyplot as plt
+        import seaborn as sns
 
-            #print (df)
-            #dataset2 = df
-            #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'Value']]
-            #df = df.head(limit)
-            #dpg.delete_item("qq_image")
+        plt.hist(data, edgecolor='black')  # 'bins' defines the number of bins
+        plt.xlabel('Phenotype Value')
+        plt.ylabel('Frequency')
+        plt.title('Phenotype Distribution')
+        plt.show()
 
-            # df = df.sort_values(by=['Chr', 'ChrPos'])
-            # df['Chr'] = df['Chr'].astype(int)
-            # df['ChrPos'] = df['ChrPos'].astype(int)
-            # #print (df)
-            # #print (df.dtypes)
-            # ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False)
-            # plt.savefig("manhatten.png", dpi=100)
-
-            #df.columns = ['snp', 'value']
-
-            # plt.savefig('out_xgboos_bridge.png')
-            #feature_list = df['PValue'].to_numpy()
-            #plt.plot(feature_list)
-            #df = df.sort_values(by=['PValue'], ascending=False)
-            #print(df)
-            #plt.savefig("manhatten.png", dpi=100)
-            #plt.show()
-
-
-
-
-            # dataset2 = df
-            # dataset2.columns = ['SNP', 'Value']
-            # dataset2[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
-            #
-            # #dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-            #feature_list = df['Value'].to_numpy()
-            #plt.plot(feature_list)
-            #plt.show()
-            #dataset = dataset.head(limit)
-            #dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
 
 
 
