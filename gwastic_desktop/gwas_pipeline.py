@@ -56,7 +56,6 @@ class GWAS:
         """Validate the input file.
         Phenotypic file must be ID_space_ID_value.
         fam file ids must match phenotype ids."""
-        print (bed_file, pheno_file)
 
         fam_data = open(bed_file.replace('.bed', '.fam'), 'r').readlines()
         fam_ids = []
@@ -145,16 +144,12 @@ class GWAS:
         import geneview as gv
 
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-
+            #df = df.head(limit)
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             #chr_names = df['Chr'].unique()
             df['ChrPos'] = df['ChrPos'].astype(int)
 
-            # dataset2 = df
-            # dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-            # #dataset = dataset.head(limit)
-            # dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
 
             # common parameters for plotting
             plt_params = {
@@ -170,11 +165,14 @@ class GWAS:
             # Create a manhattan plot
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
             #xtick = set(["chr" + i for i in list(map(str, chr_names))])
-            _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".", sign_marker_p=1e-6,
+            _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
-                              hline_kws={"linestyle": "--", "lw": 1.3}, is_annotate_topsnp=True, ld_block_size=50000,  # 50000 bp
-                              text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
+                              hline_kws={"linestyle": "--", "lw": 1.3},   # 50000 bp
+                                # hline_kws={"linestyle": "--", "lw": 1.3}, is_annotate_topsnp=True, ld_block_size=50000,sign_marker_p=1e-6,
+                                 # 50000 bp
+
+                                 text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=100)
 
@@ -187,41 +185,46 @@ class GWAS:
             plt.savefig(qq_plot_name, dpi=100)
 
         else:
+            #df = df.sort_values(by=['PValue'])
+            #df = df.head(limit)
 
-            df = df.sort_values(by=['Chr', 'ChrPos'])
+            #df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             # chr_names = df['Chr'].unique()
             df['ChrPos'] = df['ChrPos'].astype(int)
 
-            # dataset2 = df
-            # dataset = dataset2[['SNP', 'Chr', 'ChrPos', 'PValue']]
-            # #dataset = dataset.head(limit)
-            # dataset = dataset.sort_values(by=['Chr', 'ChrPos'])
+            ax = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
+                                  title="GWAS Manhatten Plot " + algorithm + '\n',
+                                  xlabel="Chromosome", ylabel=r"Feature Importance")
 
-            # common parameters for plotting
-            plt_params = {
-                "font.sans-serif": "Arial",
-                "legend.fontsize": 14,
-                "axes.titlesize": 18,
-                "axes.labelsize": 16,
-                "xtick.labelsize": 14,
-                "ytick.labelsize": 14
-            }
-            plt.rcParams.update(plt_params)
 
-            # Create a manhattan plot
-            f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
-            # xtick = set(["chr" + i for i in list(map(str, chr_names))])
-            _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker="."
-                                 , logp=False, suggestiveline = 0.02,
-                                 sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n',
-                                 # xtick_label_set=xtick,
-                                 xlabel="Chromosome", ylabel=r"Feature Importance", sign_line_cols=["#D62728", "#2CA02C"],
-                                 hline_kws={"linestyle": "--", "lw": 1.3}, is_annotate_topsnp=False,
-                                 text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
-                                 ax=ax)
+           # df = df.head(limit)
+
+            # # common parameters for plotting
+            # plt_params = {
+            #     "font.sans-serif": "Arial",
+            #     "legend.fontsize": 14,
+            #     "axes.titlesize": 18,
+            #     "axes.labelsize": 16,
+            #     "xtick.labelsize": 14,
+            #     "ytick.labelsize": 14
+            # }
+            # plt.rcParams.update(plt_params)
+            #
+            # # Create a manhattan plot
+            # f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
+            # # xtick = set(["chr" + i for i in list(map(str, chr_names))])
+            # _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker="."
+            #                      , logp=False,
+            #                      sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n',
+            #                      # xtick_label_set=xtick,
+            #                      xlabel="Chromosome", ylabel=r"Feature Importance", sign_line_cols=["#D62728", "#2CA02C"],
+            #                      hline_kws={"linestyle": "--", "lw": 1.3},
+            #                      text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
+            #                      ax=ax)
             plt.tight_layout(pad=1)
-            plt.savefig(manhatten_plot_name, dpi=100)
+            plt.savefig(manhatten_plot_name, dpi=200)
+            #
 
             # Create QQ plot
 

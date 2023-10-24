@@ -150,6 +150,7 @@ class GWASApp:
             dpg.set_global_font_scale(0.6)
 
     def show_lmm_results(self, df, algorithm):
+        print (algorithm)
 
         width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
         width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
@@ -165,7 +166,8 @@ class GWASApp:
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label="Manhatten Plot"):
                     dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
-                if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+                if algorithm == "FaST-LMM" or algorithm == "Linear regression":
+
                     df = df.sort_values(by=['PValue'], ascending=True)
                     with dpg.tab(label="QQ-Plot"):
                         dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=450, width=450)
