@@ -28,12 +28,12 @@ class GWAS:
         if id_file == None:
             process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                        "--geno", geno, "--double-id"])
+                                        "--geno", geno, "--double-id"], shell=True)
 
         else:
             process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                        "--geno", geno, "--double-id", "--keep", id_file])
+                                        "--geno", geno, "--double-id", "--keep", id_file], shell=True)
 
         process.wait()
         # read the log file
