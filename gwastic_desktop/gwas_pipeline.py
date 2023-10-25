@@ -1,7 +1,7 @@
 import subprocess
 import pandas as pd
 from gwastic_desktop.gwas_ai import GWASAI
-
+import sys
 
 class GWAS:
     """GWAS class."""
@@ -11,14 +11,19 @@ class GWAS:
 
     def vcf_to_bed(self, vcf_file, id_file, file_out, maf, geno):
         """Converts the vcf to bed files."""
-        print (vcf_file)
+
+        if sys.platform.startswith('win'):
+            plink_call = "windows/plink"
+        elif sys.platform.startswith('linux'):
+            plink_call = "linux/plink"
+        print (plink_call)
         if id_file == None:
-            process = subprocess.Popen(["plink", "--vcf", vcf_file, "--make-bed", "--out", file_out,
+            process = subprocess.Popen([plink_call, "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
                                         "--geno", geno, "--double-id"])
 
         else:
-            process = subprocess.Popen(["plink", "--vcf", vcf_file, "--make-bed", "--out", file_out,
+            process = subprocess.Popen([plink_call, "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
                                         "--geno", geno, "--double-id", "--keep", id_file])
 

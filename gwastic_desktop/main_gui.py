@@ -260,7 +260,7 @@ class GWASApp:
         plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, vcf_path.split('.')[0], maf, geno)
 
         self.add_log(plink_log)
-        self.logz.log_debug('Converting done!')
+        #self.logz.log_debug('Converting done!')
 
     def run_gwas(self, sender, data, user_data):
 
