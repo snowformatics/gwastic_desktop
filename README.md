@@ -4,6 +4,12 @@ GWAStic is a software for Genome-Wide Association Study (GWAS) that combines tra
 
 ![ALT TEXT](https://github.com/snowformatics/gwastic_desktop/blob/e0743e1f67e5300d083a96441bbf505b5d7a7696/gwastic_desktop/images/gui.PNG)
 
+## Table of Contents  
+- [Installation](#1-installation)  
+- [References](#2-references)  
+- [Documentation](#3-documentation)  
+
+
 Key Features:
 
 - Comprehensive Genetic Analysis: GWAStic offers a wide range of methods to analyze your genomic data, allowing you to explore the associations between genetic variants and traits of interest comprehensively.
@@ -21,44 +27,31 @@ Key Features:
 
 ![myfile](https://github.com/snowformatics/gwastic_desktop/blob/08383abc5a0ba7920a542257b058094b85fe4446/gwastic_desktop/images/gui.gif)
 
-# Citation
 
-# Documentation
 
-# Installation
+# 1. Installation  
+
 GWAStic software was build and successfully tested on Windows operating system (Windows 7 and 10).
 
-->Install Anaconda (https://www.anaconda.com/distribution/)
+Windows:
+1. Install Anaconda (https://www.anaconda.com/distribution/)
+2. `conda create --name gwastic_env python=3.9`
+3. `conda activate gwastic_env`
+4. `conda install pip`
+5. `pip install gwastic_desktop`
+6. Open the Anaconda prompt and activate your GWAStic environment.<br/>`conda activate gwastic_env`<br/>
+7. Type `gwastic` in the command line to start the software.
 
-`conda create --name gwastic_env python=3.9`
+Linux:
 
-`conda activate gwastic_env`
-
-`conda install pip`
-
-`pip install gwastic_desktop`
-
-for linux after installation:
-
-`wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
-
-`chmod +x Miniconda3-latest-Linux-x86_64.sh`
-
-`./Miniconda3-latest-Linux-x86_64.sh`
-
-`cd /home/username/miniconda3`
-
-`source ~/miniconda3/bin/activate`
-
-`pip install gwastic_desktop`
-
-`apt-get install libgl1`
-
-
-# Usage:
-
-1. Open the Anaconda prompt and activate your GWAStic environment if you are not already there.<br/>`conda activate gwastic_env`<br/>
-2. Type `gwastic` in the command line to start the software.
+1. `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
+2. `chmod +x Miniconda3-latest-Linux-x86_64.sh`
+3. `./Miniconda3-latest-Linux-x86_64.sh`
+4. `cd /home/username/miniconda3`
+5. `source ~/miniconda3/bin/activate`
+6. `pip install gwastic_desktop`
+7. `apt-get install libgl1`
+8. Type `gwastic` in the command line to start the software.
 
 # Supported input file formats
 - VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format. 
@@ -68,6 +61,10 @@ for linux after installation:
 - Phenotypic data must be three columns (Family ID; Within-family ID; Value) text or CSV file delimited by *space*.
 
 [Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
+
+# 2. References
+
+# 3. Documentation
 
 
 
