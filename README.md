@@ -34,33 +34,32 @@ Key Features:
 GWAStic software was build and successfully tested on Windows operating system (Windows 7 and 10).
 
 Windows:
+
+We recommend to install Anaconda:
 1. Install Anaconda (https://www.anaconda.com/distribution/)
 2. `conda create --name gwastic_env python=3.9`
 3. `conda activate gwastic_env`
 4. `conda install pip`
+
+Then install GWAStic via pip:
 5. `pip install gwastic_desktop`
 6. Open the Anaconda prompt and activate your GWAStic environment.<br/>`conda activate gwastic_env`<br/>
 7. Type `gwastic` in the command line to start the software.
 
 Linux:
 
+We recommend to install Anaconda:
 1. `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
 2. `chmod +x Miniconda3-latest-Linux-x86_64.sh`
 3. `./Miniconda3-latest-Linux-x86_64.sh`
 4. `cd /home/username/miniconda3`
 5. `source ~/miniconda3/bin/activate`
+
+Then install GWAStic via pip:
 6. `pip install gwastic_desktop`
 7. `apt-get install libgl1`
 8. Type `gwastic` in the command line to start the software.
-9. Plink currently requires permission rights:
 
-Go to the folder which contains plink:
-
-`home/username/miniconda3/lib/python3.11/site-packages/gwastic_desktop/linux`
-
-Change to execute permission:
-
-`chmod 755 plink`
 
 # Supported input file formats
 - VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format. 
