@@ -150,7 +150,7 @@ class GWASApp:
             dpg.set_global_font_scale(0.6)
 
     def show_lmm_results(self, df, algorithm):
-        print (algorithm)
+
 
         width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
         width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)

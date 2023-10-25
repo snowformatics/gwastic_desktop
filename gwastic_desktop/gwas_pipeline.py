@@ -2,6 +2,7 @@ import subprocess
 import pandas as pd
 from gwastic_desktop.gwas_ai import GWASAI
 import sys
+import os
 
 class GWAS:
     """GWAS class."""
@@ -12,18 +13,25 @@ class GWAS:
     def vcf_to_bed(self, vcf_file, id_file, file_out, maf, geno):
         """Converts the vcf to bed files."""
 
+        script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
+
+
+
         if sys.platform.startswith('win'):
-            plink_call = "windows/plink"
+            #link_call = "windows/plink"
+            rel_path = "windows/plink"
         elif sys.platform.startswith('linux'):
-            plink_call = "linux/plink"
-        print (plink_call)
+            rel_path = "linux/plink"
+        #print (plink_call)
+        abs_file_path = os.path.join(script_dir, rel_path)
+        print (abs_file_path)
         if id_file == None:
-            process = subprocess.Popen([plink_call, "--vcf", vcf_file, "--make-bed", "--out", file_out,
+            process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
                                         "--geno", geno, "--double-id"])
 
         else:
-            process = subprocess.Popen([plink_call, "--vcf", vcf_file, "--make-bed", "--out", file_out,
+            process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
                                         "--geno", geno, "--double-id", "--keep", id_file])
 
