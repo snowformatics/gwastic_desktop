@@ -46,7 +46,7 @@ for linux after installation:
 
 `./Miniconda3-latest-Linux-x86_64.sh`
 
-`cd /home/stefanie/miniconda3`
+`cd /home/username/miniconda3`
 
 `source ~/miniconda3/bin/activate`
 

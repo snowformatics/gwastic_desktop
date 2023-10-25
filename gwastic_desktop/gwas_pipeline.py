@@ -11,6 +11,7 @@ class GWAS:
 
     def vcf_to_bed(self, vcf_file, id_file, file_out, maf, geno):
         """Converts the vcf to bed files."""
+        print (vcf_file)
         if id_file == None:
             process = subprocess.Popen(["plink", "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
