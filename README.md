@@ -52,6 +52,15 @@ Linux:
 6. `pip install gwastic_desktop`
 7. `apt-get install libgl1`
 8. Type `gwastic` in the command line to start the software.
+9. Plink currently requires permission rights:
+
+Go to the folder which contains plink:
+
+`home/username/miniconda3/lib/python3.11/site-packages/gwastic_desktop/linux`
+
+Change to execute permission:
+
+`chmod 755 plink`
 
 # Supported input file formats
 - VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format. 

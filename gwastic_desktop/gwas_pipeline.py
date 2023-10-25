@@ -15,8 +15,6 @@ class GWAS:
 
         script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 
-
-
         if sys.platform.startswith('win'):
             #link_call = "windows/plink"
             rel_path = "windows/plink"
@@ -25,6 +23,7 @@ class GWAS:
         elif sys.platform.startswith('linux'):
             rel_path = "linux/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
+            os.chmod(abs_file_path, 0o755)
 
 
         print (abs_file_path)
