@@ -21,30 +21,22 @@ class GWAS:
             #link_call = "windows/plink"
             rel_path = "windows/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
-            if id_file == None:
-                process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
-                                            "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                            "--geno", geno, "--double-id"], shell=True)
 
-            else:
-                process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
-                                            "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                            "--geno", geno, "--double-id", "--keep", id_file], shell=True)
         elif sys.platform.startswith('linux'):
             rel_path = "linux/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
-            if id_file == None:
-                process = subprocess.Popen(["sudo", abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
-                                            "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                            "--geno", geno, "--double-id"], shell=True)
 
-            else:
-                process = subprocess.Popen(["sudo", abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
-                                            "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                            "--geno", geno, "--double-id", "--keep", id_file], shell=True)
-        #print (plink_call)
 
         print (abs_file_path)
+        if id_file == None:
+            process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
+                                        "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
+                                        "--geno", geno, "--double-id"])
+
+        else:
+            process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
+                                        "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
+                                        "--geno", geno, "--double-id", "--keep", id_file])
 
 
         process.wait()
