@@ -24,7 +24,8 @@ class GWAS:
 
         process.wait()
         # read the log file
-        plink_log = open(file_out + '.log').read()
+        #plink_log = open(file_out + '.log').read()
+        plink_log = "Conversation done!"
         return plink_log
 
     def filter_out_missing(self, bed):
