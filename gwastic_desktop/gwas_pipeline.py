@@ -23,10 +23,9 @@ class GWAS:
         elif sys.platform.startswith('linux'):
             rel_path = "linux/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
-            os.chmod(abs_file_path, 0o755)
+            #os.chmod(abs_file_path, 0o755)
 
-
-        print (abs_file_path)
+        #print (abs_file_path)
         if id_file == None:
             process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
                                         "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
@@ -107,8 +106,8 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
-    def start_gwas(self, bed_file, pheno_file ,chrom_mapping, algorithm, add_log, test_size, estimators,
-                   gwas_result_name):
+    def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, estimators,
+                   gwas_result_name, genomic_predict=False):
         from fastlmm.association import single_snp, single_snp_linreg
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
@@ -119,6 +118,14 @@ class GWAS:
         if check_input_data[0]:
             bed = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_file))
+
+            if genomic_predict:
+                bed_gp = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+                pheno_gp = Pheno(str(pheno_file))
+            else:
+                bed_gp = None
+                pheno_gp = None
+
             # replace original bed with one that has the same iids as the pheno
             bed, pheno = pstutil.intersect_apply([bed, pheno])
             bed_fixed = self.filter_out_missing(bed)
@@ -128,8 +135,6 @@ class GWAS:
             add_log(s3, warn=True)
             # run single_snp with the fixed file
             add_log('Starting GWAS Analysis, this might take a while...')
-
-            #self.plot_pheno(pheno.read().val)
 
             t1 = time.process_time()
             if algorithm == 'FaST-LMM':
@@ -144,12 +149,13 @@ class GWAS:
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                                    estimators, gwas_result_name)
+                                                    estimators, gwas_result_name, genomic_predict)
             elif algorithm == 'XGBoost (AI)':
+                print ('Ok')
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                                    estimators, gwas_result_name)
+                                              estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict)
 
             t2 = time.process_time()
             t3 = round((t2-t1)/ 60, 2)

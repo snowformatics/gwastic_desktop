@@ -9,8 +9,8 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 
 
 class GWASAI:
-    def run_random_forest(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name):
-
+    def run_random_forest(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, predict):
+        print(predict)
         snp_data[np.isnan(snp_data)] = -1
 
         # Split data into training and testing sets
@@ -29,6 +29,7 @@ class GWASAI:
 
         # Evaluate the model on the test set
         #test_predictions = rf_model.predict(X_test)
+        #train_predictions = rf_model.predict(X_test)
         #test_loss = np.mean((test_predictions - y_test)**2)  # Mean squared error
         #print(f'Test Loss: {test_loss}')
 
@@ -43,8 +44,8 @@ class GWASAI:
         return df
 
 
-    def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name):
-
+    def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,predict ):
+        print (predict)
         snp_data[np.isnan(snp_data)] = -1
 
         # Split data into training and testing sets
@@ -64,6 +65,30 @@ class GWASAI:
         # Fit the model to the training data
         xgb_model.fit(X_train, y_train)
 
+        if predict:
+            print('Start GP')
+
+            bed_data = bed_gp.read().iid
+            pheno_data = pheno_gp.read().iid
+            df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+            predicted_values = xgb_model.predict(bed_gp.read().val)
+            df_gp['Predicted_Value'] = predicted_values
+            #print (df_gp)
+            df_pheno = pd.DataFrame(pheno_data, columns=['ID1', 'Pheno_ID2'])
+            df_pheno['Pheno_Value'] = pheno_gp.read().val
+            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df.to_csv('gp_out.csv', sep=';', index=False)
+
+            print (merged_df)
+            #print (bed_gp.read().iid)
+
+            #print (df_gp)
+
+
+            #test_predictions = xgb_model.predict(X_test)
+            #train_predictions = xgb_model.predict(X_train)
+            #print (y_test, test_predictions)
+            #print (y_train, train_predictions)
         # Evaluate the model on the test set
         #test_predictions = rf_model.predict(X_test)
         #test_loss = np.mean((test_predictions - y_test)**2)  # Mean squared error

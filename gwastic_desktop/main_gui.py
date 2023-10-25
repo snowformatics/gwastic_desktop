@@ -113,7 +113,20 @@ class GWASApp:
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
 
                 with dpg.tab(label='Genomic Prediction Analysis'):
-                    dpg.add_button(label="Comming soon", callback=self.gen_pred_callback, user_data=[geno, pheno])
+                    dpg.add_text("\nStart Genomic Prediction", indent=50)
+                    dpg.add_spacer(height=20)
+                    geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"),
+                                          indent=50)
+                    pheno = dpg.add_button(label="Choose Phenotype",
+                                           callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
+                    dpg.add_spacer(height=20)
+                    dpg.add_combo(label="Algorithm",
+                                  items=["Random Forest (AI)", "XGBoost (AI)"],
+                                  indent=50, width=200, default_value="Random Forest (AI)", callback=self.get_algorithm)
+                    dpg.add_spacer(height=20)
+                    gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
+                                              indent=50)
+                    dpg.bind_item_theme(gwas_btn, self.our_theme)
 
                 with dpg.tab(label='Convert VCF'):
                     dpg.add_text("\nConvert a VCF file into BED file format and apply MAF\nor missing genotype filter.", indent=50)
@@ -291,8 +304,27 @@ class GWASApp:
         except TypeError:
             self.add_log('Please select a phenotype and genotype file. ', error=True)
 
-    def gen_pred_callback(self, sender, data, user_data):
-        pass
+    def run_genomic_prediction(self, sender, data, user_data):
+        self.add_log('Reading Bed file...')
+        try:
+            bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
+            self.add_log('Reading Phenotypic file...')
+            pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+            # Replace chromosome names, they need to be numbers
+            chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+            gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+                                         self.test_size, self.estimators, self.gwas_result_name, genomic_predict=True)
+            # if gp_df is not None:
+            #     self.add_log('GWAS Analysis done.')
+            #     self.add_log('GWAS Results Plotting...')
+            #     self.gwas.plot_gwas(gp_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
+            #     self.add_log('Done...')
+            #     self.show_lmm_results(gp_df, self.algorithm)
+            # else:
+            #     self.add_log('Error, GWAS Analysis could not be started.', error=True)
+
+        except TypeError:
+            self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def run(self):
         dpg.setup_dearpygui()
