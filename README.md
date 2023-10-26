@@ -33,7 +33,7 @@ Key Features:
 
 GWAStic software was build and successfully tested on Windows operating system (Windows 7 and 10).
 
-Windows:
+### Windows:
 
 We recommend to install Anaconda:
 1. Install Anaconda (https://www.anaconda.com/distribution/)
@@ -49,7 +49,7 @@ Then install GWAStic via pip:
 
 7. Type `gwastic` in the command line to start the software.
 
-Linux:
+### Linux:
 
 We recommend to install Anaconda:
 1. `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
