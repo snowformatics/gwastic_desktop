@@ -100,14 +100,14 @@ class GWAS:
         check_ids = any(x in pheno_ids for x in fam_ids)
 
         if check_ids and columns == 3:
-            return (True, "Input files validated.")
+            return True, "Input files validated."
         elif columns != 3:
             return (False, "Invalid phenotypic file. File should contain 3 coloumns (FID IID Value)")
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
     def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, estimators,
-                   gwas_result_name, genomic_predict=False):
+                   gwas_result_name, genomic_predict, genomic_predict_name):
         from fastlmm.association import single_snp, single_snp_linreg
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
@@ -134,8 +134,8 @@ class GWAS:
             s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(pheno.iid_count)
             add_log(s3, warn=True)
             # run single_snp with the fixed file
-            add_log('Starting GWAS Analysis, this might take a while...')
-
+            add_log('Starting Analysis, this might take a while...')
+            print (algorithm)
             t1 = time.process_time()
             if algorithm == 'FaST-LMM':
                 df = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
@@ -146,16 +146,19 @@ class GWAS:
                 exchanged_dict = {v: k for k, v in chrom_mapping.items()}
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
             elif algorithm == 'Random Forest (AI)':
+                print ('ok')
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                                    estimators, gwas_result_name, genomic_predict)
+                                              estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                              genomic_predict_name)
             elif algorithm == 'XGBoost (AI)':
-                print ('Ok')
+                print ('xg')
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                              estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict)
+                                              estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                              genomic_predict_name)
 
             t2 = time.process_time()
             t3 = round((t2-t1)/ 60, 2)

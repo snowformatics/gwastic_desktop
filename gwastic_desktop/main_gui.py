@@ -38,6 +38,7 @@ class GWASApp:
         self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
+        self.genomic_predict_name = "genomic_prediction_results.csv"
         self.manhatten_plot_name = "manhatten_plot.png"
         self.qq_plot_name = "qq_plot.png"
         self.test_size = 0.2
@@ -162,43 +163,6 @@ class GWASApp:
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
-    def show_lmm_results(self, df, algorithm):
-
-
-        width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
-        width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
-
-        with dpg.texture_registry(show=False):
-            dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
-            dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
-
-        with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
-            dpg.add_button(label="Download Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
-            dpg.add_spacer(height=60)
-
-            with dpg.tab_bar(label='tabbar'):
-                with dpg.tab(label="Manhatten Plot"):
-                    dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
-                if algorithm == "FaST-LMM" or algorithm == "Linear regression":
-
-                    df = df.sort_values(by=['PValue'], ascending=True)
-                    with dpg.tab(label="QQ-Plot"):
-                        dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=450, width=450)
-                else:
-
-                    df = df.sort_values(by=['PValue'], ascending=False)
-
-                with dpg.tab(label="GWAS Results (Top 500)"):
-                    df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                    #df = df.sort_values(by=['PValue'], ascending=True)
-                    with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
-                                   borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
-                        for i in range(df.shape[1]):
-                            dpg.add_table_column(label=df.columns[i], parent='table_gwas')
-                        for i in range(500):
-                            with dpg.table_row():
-                                for j in range(df.shape[1]):
-                                    dpg.add_text(f"{df.iloc[i, j]}")
 
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""
@@ -238,16 +202,24 @@ class GWASApp:
         self.results_directory = app_data
         results_path, current_path = self.get_selection_path(self.results_directory)
         self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
-                                 self.manhatten_plot_name, self.qq_plot_name, self.algorithm)
+                                 self.manhatten_plot_name, self.qq_plot_name, self.algorithm, self.genomic_predict_name)
         self.add_log('Results saved in: ' + current_path)
 
     def cancel_callback_directory(self, sender, app_data):
-        print('Cancel was clicked.')
-        print("Sender: ", sender)
-        print("App Data: ", app_data)
+        self.add_log('Process Canceled')
 
     def get_algorithm(self, sender, data):
+        print (data)
         self.algorithm = data
+
+    def delete_files(self, genomic_predict):
+
+        dpg.delete_item("manhatten_image")
+        dpg.delete_item("manhatten_tag")
+        dpg.delete_item("qq_image")
+        dpg.delete_item("qq_tag")
+        dpg.delete_item("table_gwas")
+        dpg.delete_item("table_gp")
 
     def add_log(self, message, warn=False, error=False):
         """Adds a log message."""
@@ -276,12 +248,7 @@ class GWASApp:
         #self.logz.log_debug('Converting done!')
 
     def run_gwas(self, sender, data, user_data):
-
-        dpg.delete_item("manhatten_image")
-        dpg.delete_item("manhatten_tag")
-        dpg.delete_item("qq_image")
-        dpg.delete_item("qq_tag")
-        dpg.delete_item("table_gwas")
+        self.delete_files(genomic_predict = False)
 
         self.add_log('Reading Bed file...')
         try:
@@ -291,13 +258,13 @@ class GWASApp:
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
             gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                           self.test_size, self.estimators, self.gwas_result_name)
+                                           self.test_size, self.estimators, self.gwas_result_name, False, None)
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
                 self.gwas.plot_gwas(gwas_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
                 self.add_log('Done...')
-                self.show_lmm_results(gwas_df, self.algorithm)
+                self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
             else:
                 self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
@@ -305,7 +272,9 @@ class GWASApp:
             self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def run_genomic_prediction(self, sender, data, user_data):
+        self.delete_files(genomic_predict = True)
         self.add_log('Reading Bed file...')
+
         try:
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
             self.add_log('Reading Phenotypic file...')
@@ -313,18 +282,72 @@ class GWASApp:
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
             gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                         self.test_size, self.estimators, self.gwas_result_name, genomic_predict=True)
-            # if gp_df is not None:
-            #     self.add_log('GWAS Analysis done.')
-            #     self.add_log('GWAS Results Plotting...')
-            #     self.gwas.plot_gwas(gp_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
-            #     self.add_log('Done...')
-            #     self.show_lmm_results(gp_df, self.algorithm)
-            # else:
-            #     self.add_log('Error, GWAS Analysis could not be started.', error=True)
+                                         self.test_size, self.estimators, self.gwas_result_name, True,
+                                         self.genomic_predict_name)
+            if gp_df is not None:
+                self.add_log('Genomic Prediction done.')
+                self.add_log('Genomic Prediction Plotting...')
+                #self.gwas.plot_gwas(gp_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
+                self.add_log('Done...')
+                self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
+            else:
+                self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
         except TypeError:
             self.add_log('Please select a phenotype and genotype file. ', error=True)
+
+    def show_results_window(self, df, algorithm, genomic_predict):
+
+        width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
+        width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
+
+        with dpg.texture_registry(show=False):
+            dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
+            dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
+
+        with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
+            dpg.add_button(label="Download Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
+            dpg.add_spacer(height=60)
+
+            if genomic_predict:
+
+                with dpg.tab_bar(label='tabbar'):
+                    with dpg.tab(label="Genomic Prediction "):
+                        df = df[['ID1', 'BED_ID2', 'Predicted_Value', 'Pheno_Value']]
+                        df.columns = ['FID', 'IID', 'Predicted_Value', 'Pheno_Value']
+                        # df = df.sort_values(by=['PValue'], ascending=True)
+                        with dpg.table(label='DatasetTable2', row_background=True, borders_innerH=True,
+                                       borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gp'):
+                            for i in range(df.shape[1]):
+                                dpg.add_table_column(label=df.columns[i], parent='table_gp')
+                            for i in range(len(df)):
+                                with dpg.table_row():
+                                    for j in range(df.shape[1]):
+                                        dpg.add_text(f"{df.iloc[i, j]}")
+
+            else:
+                with dpg.tab_bar(label='tabbar'):
+                    with dpg.tab(label="Manhatten Plot"):
+                        dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
+                    if algorithm == "FaST-LMM" or algorithm == "Linear regression":
+                        df = df.sort_values(by=['PValue'], ascending=True)
+                        with dpg.tab(label="QQ-Plot"):
+                            dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=450, width=450)
+                    else:
+                        df = df.sort_values(by=['PValue'], ascending=False)
+
+                    with dpg.tab(label="GWAS Results (Top 500)"):
+                        df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                        #df = df.sort_values(by=['PValue'], ascending=True)
+                        with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
+                                       borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
+                            for i in range(df.shape[1]):
+                                dpg.add_table_column(label=df.columns[i], parent='table_gwas')
+                            for i in range(500):
+                                with dpg.table_row():
+                                    for j in range(df.shape[1]):
+                                        dpg.add_text(f"{df.iloc[i, j]}")
+
 
     def run(self):
         dpg.setup_dearpygui()

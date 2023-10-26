@@ -45,7 +45,7 @@ class HELPERS:
         np.save('pheno', pheno.read().val)
 
     def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
-                     algorithm):
+                     algorithm, genomic_predict_name):
         ts = self.get_timestamp()
 
         # try:
@@ -56,16 +56,21 @@ class HELPERS:
         # #
         os.mkdir(os.path.join(save_dir, ts))
         save_dir = os.path.join(save_dir, ts)
-        shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
-        # We store also a trimmed version of single_snp with 10000 SNPs
-        df = pd.read_csv(gwas_result_name)
-        first_10000_rows = df.head(10000)
-        first_10000_rows.to_csv(gwas_result_name_top, index=False)
-        shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
-        shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
+        try:
+            shutil.copyfile(os.path.join(current_dir, genomic_predict_name), os.path.join(save_dir, genomic_predict_name))
 
-        if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
-            shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
+        except FileNotFoundError:
+            shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
+            # We store also a trimmed version of single_snp with 10000 SNPs
+            df = pd.read_csv(gwas_result_name)
+            first_10000_rows = df.head(10000)
+            first_10000_rows.to_csv(gwas_result_name_top, index=False)
+
+            shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
+            shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
+
+            if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+                shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
 
     def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
                      algorithm):
