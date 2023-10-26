@@ -121,7 +121,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose Phenotype",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    dpg.add_combo(label="Algorithm",
+                    self.gp_combo = dpg.add_combo(label="Algorithm",
                                   items=["Random Forest (AI)", "XGBoost (AI)"],
                                   indent=50, width=200, default_value="Random Forest (AI)", callback=self.get_algorithm)
                     dpg.add_spacer(height=20)
@@ -282,6 +282,8 @@ class GWASApp:
     def run_genomic_prediction(self, sender, data, user_data):
         self.delete_files(genomic_predict = True)
         self.add_log('Reading Bed file...')
+        self.algorithm = dpg.get_value(self.gp_combo)
+        #print (self.algorithm)
 
         try:
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
