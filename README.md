@@ -57,7 +57,9 @@ We recommend to install Anaconda:
 
 Then install GWAStic via pip:
 6. `pip install gwastic_desktop`
+
 7. `apt-get install libgl1`
+
 8. Type `gwastic` in the command line to start the software.
 
 
