@@ -160,6 +160,7 @@ class GWAS:
                                               estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                               genomic_predict_name)
 
+
             t2 = time.process_time()
             t3 = round((t2-t1)/ 60, 2)
             add_log('Final run time (minutes): ' + str(t3), 2)

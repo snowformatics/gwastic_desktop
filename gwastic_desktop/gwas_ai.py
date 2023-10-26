@@ -95,12 +95,13 @@ class GWASAI:
         # print(f'Test Loss: {test_loss}')
 
         if genomic_predict:
+
             bed_data = bed_gp.read().iid
             pheno_data = pheno_gp.read().iid
             df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
             predicted_values = xgb_model.predict(bed_gp.read().val)
             df_gp['Predicted_Value'] = predicted_values
-            #print (df_gp)
+
             df_pheno = pd.DataFrame(pheno_data, columns=['ID1', 'Pheno_ID2'])
             df_pheno['Pheno_Value'] = pheno_gp.read().val
             merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')

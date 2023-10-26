@@ -209,7 +209,7 @@ class GWASApp:
         self.add_log('Process Canceled')
 
     def get_algorithm(self, sender, data):
-        print (data)
+
         self.algorithm = data
 
     def delete_files(self, genomic_predict):
@@ -220,6 +220,14 @@ class GWASApp:
         dpg.delete_item("qq_tag")
         dpg.delete_item("table_gwas")
         dpg.delete_item("table_gp")
+
+        # delete files
+        file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name,
+                      self.manhatten_plot_name, self.qq_plot_name]
+        for f in file_names:
+            if os.path.exists(f):
+                print (f)
+                os.remove(f)
 
     def add_log(self, message, warn=False, error=False):
         """Adds a log message."""
@@ -284,6 +292,7 @@ class GWASApp:
             gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
                                          self.test_size, self.estimators, self.gwas_result_name, True,
                                          self.genomic_predict_name)
+
             if gp_df is not None:
                 self.add_log('Genomic Prediction done.')
                 self.add_log('Genomic Prediction Plotting...')
@@ -298,19 +307,11 @@ class GWASApp:
 
     def show_results_window(self, df, algorithm, genomic_predict):
 
-        width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
-        width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
-
-        with dpg.texture_registry(show=False):
-            dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
-            dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
-
         with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
             dpg.add_button(label="Download Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
             dpg.add_spacer(height=60)
 
             if genomic_predict:
-
                 with dpg.tab_bar(label='tabbar'):
                     with dpg.tab(label="Genomic Prediction "):
                         df = df[['ID1', 'BED_ID2', 'Predicted_Value', 'Pheno_Value']]
@@ -326,10 +327,18 @@ class GWASApp:
                                         dpg.add_text(f"{df.iloc[i, j]}")
 
             else:
+
+                width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
+                with dpg.texture_registry(show=False):
+                    dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
+
                 with dpg.tab_bar(label='tabbar'):
                     with dpg.tab(label="Manhatten Plot"):
                         dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
                     if algorithm == "FaST-LMM" or algorithm == "Linear regression":
+                        width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
+                        with dpg.texture_registry(show=False):
+                            dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="qq_tag")
                         df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.tab(label="QQ-Plot"):
                             dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=450, width=450)
