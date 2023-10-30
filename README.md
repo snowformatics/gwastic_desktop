@@ -11,6 +11,7 @@ GWAStic is a software for Genome-Wide Association Study (GWAS) that combines tra
 
 
 Key Features:
+- Cross Platform 
 
 - Comprehensive Genetic Analysis: GWAStic offers a wide range of methods to analyze your genomic data, allowing you to explore the associations between genetic variants and traits of interest comprehensively.
 
