@@ -146,14 +146,14 @@ class GWAS:
                 exchanged_dict = {v: k for k, v in chrom_mapping.items()}
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
             elif algorithm == 'Random Forest (AI)':
-                print ('ok')
+
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
                                               estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                               genomic_predict_name)
             elif algorithm == 'XGBoost (AI)':
-                print ('xg')
+
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                 snp_ids = df.iloc[:, 1].tolist()
                 df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,

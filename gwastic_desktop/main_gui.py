@@ -316,11 +316,12 @@ class GWASApp:
             if genomic_predict:
                 with dpg.tab_bar(label='tabbar'):
                     with dpg.tab(label="Genomic Prediction "):
-                        df = df[['ID1', 'BED_ID2', 'Predicted_Value', 'Pheno_Value']]
-                        df.columns = ['FID', 'IID', 'Predicted_Value', 'Pheno_Value']
+                        df = df[['ID1', 'BED_ID2', 'Predicted_Value', 'Pheno_Value', 'Difference']]
+                        df.columns = ['FID', 'IID', 'Predicted_Value', 'Pheno_Value', 'Difference']
                         # df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.table(label='DatasetTable2', row_background=True, borders_innerH=True,
-                                       borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gp'):
+                                       borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gp',
+                                       sortable=True):
                             for i in range(df.shape[1]):
                                 dpg.add_table_column(label=df.columns[i], parent='table_gp')
                             for i in range(len(df)):
@@ -351,7 +352,8 @@ class GWASApp:
                         df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
                         #df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
-                                       borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas'):
+                                       borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas',
+                                       sortable=True):
                             for i in range(df.shape[1]):
                                 dpg.add_table_column(label=df.columns[i], parent='table_gwas')
                             for i in range(500):

@@ -49,7 +49,12 @@ class GWASAI:
             #print (df_gp)
             df_pheno = pd.DataFrame(pheno_data, columns=['ID1', 'Pheno_ID2'])
             df_pheno['Pheno_Value'] = pheno_gp.read().val
+
             merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df['Difference'] = (merged_df['Pheno_Value'] - merged_df['Predicted_Value']).abs()
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(3)
+            merged_df['Difference'] = merged_df['Difference'].round(3)
             merged_df.to_csv(genomic_predict_name, sep=';', index=False)
             return merged_df
 
@@ -105,6 +110,11 @@ class GWASAI:
             df_pheno = pd.DataFrame(pheno_data, columns=['ID1', 'Pheno_ID2'])
             df_pheno['Pheno_Value'] = pheno_gp.read().val
             merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df['Difference'] = (merged_df['Pheno_Value'] - merged_df['Predicted_Value']).abs()
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(3)
+            merged_df['Difference'] = merged_df['Difference'].round(3)
+
             merged_df.to_csv(genomic_predict_name, sep=';', index=False)
             return merged_df
 
