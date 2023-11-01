@@ -3,6 +3,8 @@ import pandas as pd
 from gwastic_desktop.gwas_ai import GWASAI
 import sys
 import os
+from functools import reduce
+
 
 class GWAS:
     """GWAS class."""
@@ -145,6 +147,7 @@ class GWAS:
                 df = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
                 exchanged_dict = {v: k for k, v in chrom_mapping.items()}
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
+
             elif algorithm == 'Random Forest (AI)':
 
                 df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
@@ -154,12 +157,19 @@ class GWAS:
                                               genomic_predict_name)
             elif algorithm == 'XGBoost (AI)':
 
-                df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
-                snp_ids = df.iloc[:, 1].tolist()
-                df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                              estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
-                                              genomic_predict_name)
-
+                dfs = []
+                for i in range(1):
+                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
+                    snp_ids = df.iloc[:, 1].tolist()
+                    df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                                                  estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                                  genomic_predict_name)
+                    #df['Predicted_Value'] = pd.to_numeric(df['Predicted_Value'], errors='coerce')
+                    #dfs.append(df)
+                #df2 = pd.concat(dfs, axis=0)
+                #mean_df = df2.groupby(['ID1', 'BED_ID2', 'Pheno_Value'], dropna=False)['Predicted_Value'].agg(['mean', 'std']).reset_index()
+                #df =
+                #rint (mean_df)
 
             t2 = time.process_time()
             t3 = round((t2-t1)/ 60, 2)

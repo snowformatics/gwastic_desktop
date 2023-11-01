@@ -100,6 +100,19 @@ class GWASApp:
             directory_selector=True, show=False, callback=self.callback_save_results, tag="select_directory",
             cancel_callback=self.cancel_callback_directory, width=700, height=400)
 
+        with dpg.window(label="Delete Files", modal=True, show=False, tag="modal_id", no_title_bar=True, pos=[500,300]):
+            dpg.add_text("Change Settings")
+            dpg.add_separator()
+            dpg.add_text("Linear Mixed Model Setting")
+            dpg.add_separator()
+            dpg.add_text("Machine Learning Settings")
+            dpg.add_checkbox(label="Scale ")
+            dpg.add_separator()
+            dpg.add_text("Plot Settings")
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="Save", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
+                dpg.add_button(label="Cancel", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
+
         with dpg.window(label="GWAStic", width=1000, height=600, no_close=True):
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label='GWAS Analysis'):
@@ -109,6 +122,8 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
                     dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
+                    dpg.add_spacer(height=20)
+                    dpg.add_button(label="Settings", callback=lambda: dpg.configure_item("modal_id", show=True), indent=50)
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
