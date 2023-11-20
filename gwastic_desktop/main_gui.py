@@ -34,7 +34,8 @@ class GWASApp:
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
-        self.algorithm = "FaST-LMM"
+        #self.algorithm = "FaST-LMM"
+        #self.algorithm = dpg.get_value(self.gp_combo)
         self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
@@ -49,6 +50,8 @@ class GWASApp:
         table_window = None
         # Set up GUI components and callbacks
         self.setup_gui()
+
+
 
     def save_callback(self):
         print("Save Clicked")
@@ -100,19 +103,6 @@ class GWASApp:
             directory_selector=True, show=False, callback=self.callback_save_results, tag="select_directory",
             cancel_callback=self.cancel_callback_directory, width=700, height=400)
 
-        with dpg.window(label="Delete Files", modal=True, show=False, tag="modal_id", no_title_bar=True, pos=[500,300]):
-            dpg.add_text("Change Settings")
-            dpg.add_separator()
-            dpg.add_text("Linear Mixed Model Setting")
-            dpg.add_separator()
-            dpg.add_text("Machine Learning Settings")
-            dpg.add_checkbox(label="Scale ")
-            dpg.add_separator()
-            dpg.add_text("Plot Settings")
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Save", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
-                dpg.add_button(label="Cancel", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
-
         with dpg.window(label="GWAStic", width=1000, height=600, no_close=True):
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label='GWAS Analysis'):
@@ -121,9 +111,9 @@ class GWASApp:
                     geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
                     pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
-                    dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
-                    dpg.add_spacer(height=20)
-                    dpg.add_button(label="Settings", callback=lambda: dpg.configure_item("modal_id", show=True), indent=50)
+                    self.gwas_combo = dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
+                    # print (self.gwas_combo)
+                    # print (dpg.get_value(self.gwas_combo))
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
@@ -161,6 +151,35 @@ class GWASApp:
                     convert_btn = dpg.add_button(label="Convert", callback=self.convert_vcf, user_data=[maf_input, geno_input, vcf, variant_ids], indent=50)
                     dpg.bind_item_theme(convert_btn, self.our_theme)
 
+                with dpg.tab(label='Settings'):
+                    dpg.add_spacer(height=20)
+                    dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
+                    dpg.add_spacer(height=20)
+                    dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50)
+                    dpg.add_spacer(height=10)
+                    dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True)
+                    dpg.add_spacer(height=20)
+                    dpg.add_separator()
+                    dpg.add_spacer(height=20)
+                    dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
+                    dpg.add_spacer(height=20)
+                    dpg.add_checkbox(label="Apply Standardization", indent=50)
+                    dpg.add_spacer(height=10)
+                    dpg.add_input_int(label="Training Size", width=150, default_value=80,step=10, indent=50,
+                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True)
+                    dpg.add_spacer(height=10)
+                    dpg.add_input_int(label="Number of Trees", width=150, default_value=100, step=10, indent=50,
+                                      min_value=1, min_clamped=True)
+                    dpg.add_spacer(height=10)
+                    dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50,
+                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True)
+                    dpg.add_spacer(height=10)
+                    #dpg.add_separator()
+                    #dpg.add_text("Plot Settings", indent=50)
+                    #dpg.add_spacer(height=20)
+
+
+
             # Tooltips
             with dpg.tooltip("tooltip_vcf"):
                 dpg.add_text("Choose a VCF file (.gz or .vcf).", color=[79,128,226])
@@ -178,6 +197,13 @@ class GWASApp:
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
+        print(self.gwas_combo)
+        print(dpg.get_value(self.gwas_combo))
+        #print ()
+            # Set default values
+            #self.algorithm = "FaST-LMM"
+
+            # self.algorithm = dpg.get_value(self.gp_combo)
 
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""

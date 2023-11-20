@@ -34,11 +34,26 @@ class GWASAI:
         # Fit the model to the training data
         rf_model.fit(X_train, y_train)
 
-        # Evaluate the model on the test set
-        #test_predictions = rf_model.predict(X_test)
-        #train_predictions = rf_model.predict(X_test)
-        #test_loss = np.mean((test_predictions - y_test)**2)  # Mean squared error
-        #print(f'Test Loss: {test_loss}')
+        # import seaborn as sns
+        # print(len(snp_data))
+        #
+        # importances = rf_model.feature_importances_
+        # indices = np.argsort(importances)[::-1]
+        #
+        # # Get the indices of the top 10 features
+        # top_10_indices = np.argsort(importances)[-50:]
+        #
+        # # Create a DataFrame with the top 10 SNPs
+        # top_10_snps = pd.DataFrame(snp_data[:, top_10_indices], columns=[f'SNP_{i}' for i in top_10_indices])
+        #
+        # # Calculate the correlation matrix
+        # corr = top_10_snps.corr()
+        #
+        # # Generate a heatmap
+        # plt.figure(figsize=(10, 8))
+        # sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", xticklabels=1, yticklabels=1)
+        # plt.title("Correlation Heatmap of Top 10 SNPs")
+        # plt.show()
 
         if genomic_predict:
             bed_data = bed_gp.read().iid
