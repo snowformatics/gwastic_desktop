@@ -1,6 +1,6 @@
 import subprocess
 import pandas as pd
-from gwastic_desktop.gwas_ai import GWASAI
+from gwas_ai import GWASAI
 import sys
 import os
 from functools import reduce
