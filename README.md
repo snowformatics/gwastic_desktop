@@ -41,12 +41,10 @@ We recommend to install Anaconda:
 2. `conda create --name gwastic_env python=3.9`
 3. `conda activate gwastic_env`
 4. `conda install pip`
+5. Open the Anaconda prompt and activate your GWAStic environment.<br/>`conda activate gwastic_env`<br/>
 
 Then install GWAStic via pip:
-
-5. `pip install gwastic_desktop`
-
-6. Open the Anaconda prompt and activate your GWAStic environment.<br/>`conda activate gwastic_env`<br/>
+6. `pip install gwastic_desktop`
 
 7. Type `gwastic` in the command line to start the software.
 
