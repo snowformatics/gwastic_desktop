@@ -78,7 +78,7 @@ Then install GWAStic via pip:
 # 2. References
 
 # 3. Documentation
-
+[Online Documentation](https://snowformatics.gitbook.io/product-docs/)
 
 
 

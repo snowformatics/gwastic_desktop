@@ -4,6 +4,7 @@ from dearpygui_ext import logger
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.helpers import HELPERS
 import os
+import webbrowser
 
 def main():
     app = GWASApp()
@@ -75,7 +76,8 @@ class GWASApp:
             #         dpg.add_menu_item(label="Other", callback=print_me, check=True)
 
             with dpg.menu(label="Help"):
-                dpg.add_menu_item(label="Documentation", callback=print_me, check=True)
+                #dpg.add_menu_item(label="Documentation", callback=print_me, check=True)
+                dpg.add_button(label="Documentation", callback=lambda: webbrowser.open("https://snowformatics.gitbook.io/product-docs/"))
                 dpg.add_menu_item(label="Tutorials", callback=print_me, check=True)
 
         # File dialogs
