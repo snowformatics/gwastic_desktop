@@ -39,14 +39,14 @@ jobs:
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-                pyinstaller -F -w -n gwastic_desktop/gwastic_desktop main_gui.py &&
+                pyinstaller -F -w -n gwastic_desktop main_gui.py &&
                 cd dist/ &&
                 zip -r9 gwastic_desktop gwastic_desktop.app/
             OUT_FILE_NAME: gwastic_desktop.zip
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: pyinstaller -F -w -n gwastic_desktop/gwastic_desktop main_gui.py
+            CMD_BUILD: pyinstaller -F -w -n gwastic_desktop main_gui.py
             OUT_FILE_NAME: gwastic_desktop.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
     steps:
