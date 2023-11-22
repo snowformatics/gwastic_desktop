@@ -111,9 +111,7 @@ class GWASApp:
                     geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
                     pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
-                    self.gwas_combo = dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm)
-                    # print (self.gwas_combo)
-                    # print (dpg.get_value(self.gwas_combo))
+                    self.gwas_combo = dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm, tag= 'tooltip_algorithm')
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
@@ -155,55 +153,67 @@ class GWASApp:
                     dpg.add_spacer(height=20)
                     dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=20)
-                    dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50)
+                    dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue')
                     dpg.add_spacer(height=10)
-                    dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True)
+                    dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
                     dpg.add_spacer(height=20)
                     dpg.add_separator()
                     dpg.add_spacer(height=20)
                     dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=20)
-                    dpg.add_checkbox(label="Apply Standardization", indent=50)
+                    dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
                     dpg.add_spacer(height=10)
                     dpg.add_input_int(label="Training Size", width=150, default_value=80,step=10, indent=50,
-                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True)
+                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_training')
                     dpg.add_spacer(height=10)
                     dpg.add_input_int(label="Number of Trees", width=150, default_value=100, step=10, indent=50,
-                                      min_value=1, min_clamped=True)
+                                      min_value=1, min_clamped=True, tag= 'tooltip_trees')
                     dpg.add_spacer(height=10)
                     dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50,
-                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True)
+                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_depth')
                     dpg.add_spacer(height=10)
                     #dpg.add_separator()
                     #dpg.add_text("Plot Settings", indent=50)
                     #dpg.add_spacer(height=20)
 
-
-
             # Tooltips
             with dpg.tooltip("tooltip_vcf"):
-                dpg.add_text("Choose a VCF file (.gz or .vcf).", color=[79,128,226])
+                dpg.add_text("Click to upload a Variant Call Format (VCF) file (.gz or .vcf).", color=[79,128,226])
             with dpg.tooltip("tooltip_variant"):
-                dpg.add_text("Choose a variant file.\nVariant IDs must match with IDs in the VCF file.\n By using a variant file, you can create a subset of your VCF file.\n Highly recommended if only a subset with phenotypic data is available).", color=[79,128,226])
+                dpg.add_text("Choose a variant file.\nVariant IDs must match with IDs in the VCF file.\nBy using a variant file, you can create a subset of your VCF file.\n Recommended if only a subset with phenotypic data is available.", color=[79,128,226])
             with dpg.tooltip("tooltip_maf"):
-                dpg.add_text("Filters out all variants with minor allele frequency below the provided threshold.", color=[79, 128, 226])
+                dpg.add_text("Set the Minor Allele Frequency (MAF) threshold for filtering variants.\nVariants with a MAF below this value will be excluded.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_missing"):
-                dpg.add_text("Filters out all variants with missing call rates exceeding the provided value to be removed.", color=[79, 128, 226])
+                dpg.add_text("Enter the maximum allowable rate of missing genotypes per variant. \nVariants with missing data above this rate will be excluded.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_bed"):
-                dpg.add_text("Choose a BED file.\nPrimary representation of genotype calls at biallelic variants. Must be accompanied by .bim and .fam files.\n", color=[79, 128, 226])
+                dpg.add_text("Click to select a Binary BED file containing genotype data.\nMust be accompanied by .bim and .fam files.\n", color=[79, 128, 226])
             with dpg.tooltip("tooltip_pheno"):
-                dpg.add_text("Choose a phenotype file.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
+                dpg.add_text("Click to select a file with phenotype data that will be used in the GWAS analysis.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_algorithm"):
+                dpg.add_text("Select the algorithm to be used for the analysis.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_pvalue"):
+                dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows with large p-values.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_chrom"):
+                dpg.add_text("Perform single SNP GWAS via cross validation over the chromosomes.\nDefault to True.\nWarning: setting False can cause proximal contamination.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_stand"):
+                dpg.add_text("Check this to standardize features by removing the mean and scaling to unit variance,\noften required for machine learning algorithms.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_training"):
+                dpg.add_text("Set the percentage of the dataset to be used for training the model.\nThe rest will be used for testing.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_trees"):
+                dpg.add_text("Specify the number of trees to be used in the forest.\nMore trees can increase accuracy but also computation time.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_depth"):
+                dpg.add_text("Determine the maximum depth of the trees.\nDeeper trees can model more complex relationships.", color=[79, 128, 226])
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
-        print(self.gwas_combo)
-        print(dpg.get_value(self.gwas_combo))
+        #print(self.gwas_combo)
+        #print(dpg.get_value(self.gwas_combo))
         #print ()
             # Set default values
             #self.algorithm = "FaST-LMM"
 
-            # self.algorithm = dpg.get_value(self.gp_combo)
+        #self.algorithm = dpg.get_value(self.gp_combo)
 
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""
