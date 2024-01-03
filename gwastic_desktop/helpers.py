@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 import os
 import shutil
-
+import configparser
 
 class HELPERS:
     def duplicate_column(self, input_file, output_file):
@@ -44,9 +44,28 @@ class HELPERS:
         np.savez_compressed('snp.npz', bed.read().val)
         np.save('pheno', pheno.read().val)
 
+    def save_settings(self, default_path):
+        """Save the user settings."""
+        config = configparser.ConfigParser()
+
+        # Add sections and settings
+        config['DefaultSettings'] = {'path': default_path}
+        # Write to a file
+        with open('settings.ini', 'w') as configfile:
+            config.write(configfile)
+
+    def get_settings(self):
+        config = configparser.ConfigParser()
+        config.read('settings.ini')
+
+        # Accessing values from DefaultSettings
+        default_path= config['DefaultSettings']['path']
+        return default_path
+
+
     def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
                      algorithm, genomic_predict_name):
-        ts = self.get_timestamp()
+        ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
 
         # try:
         #     os.mkdir(os.path.join(save_dir, ts))
@@ -56,6 +75,7 @@ class HELPERS:
         # #
         os.mkdir(os.path.join(save_dir, ts))
         save_dir = os.path.join(save_dir, ts)
+
         try:
             shutil.copyfile(os.path.join(current_dir, genomic_predict_name), os.path.join(save_dir, genomic_predict_name))
 
@@ -71,6 +91,7 @@ class HELPERS:
 
             if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
                 shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
+        return save_dir
 
     def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
                      algorithm):

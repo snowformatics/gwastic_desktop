@@ -35,9 +35,7 @@ class GWASApp:
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
-        #self.algorithm = "FaST-LMM"
-        #self.algorithm = dpg.get_value(self.gp_combo)
-        self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
+        self.default_path = self.helper.get_settings()
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
@@ -53,7 +51,6 @@ class GWASApp:
         self.setup_gui()
 
 
-
     def save_callback(self):
         print("Save Clicked")
 
@@ -66,14 +63,6 @@ class GWASApp:
 
     # Menu bar
         with dpg.viewport_menu_bar():
-            # with dpg.menu(label="Settings"):
-            #     with dpg.menu(label="Methods"):
-            #         dpg.add_menu_item(label="Decision Tree Options", callback=print_me, check=True)
-            #         dpg.add_input_float(label="Test Size", default_value=0.2, min_value=0.0, max_value=1.0,  width=150)
-            #         dpg.add_input_int(label="Number of trees", default_value=100, width=150)
-            #         dpg.add_input_int(label="Depth of the tree", width=150)
-            #         dpg.add_spacer(height=20)
-            #         dpg.add_menu_item(label="Other", callback=print_me, check=True)
 
             with dpg.menu(label="Help"):
                 #dpg.add_menu_item(label="Documentation", callback=print_me, check=True)
@@ -103,7 +92,7 @@ class GWASApp:
 
         dpg.add_file_dialog(
             directory_selector=True, show=False, callback=self.callback_save_results, tag="select_directory",
-            cancel_callback=self.cancel_callback_directory, width=700, height=400)
+            cancel_callback=self.cancel_callback_directory, width=700, height=400, default_path=self.default_path)
 
         with dpg.window(label="GWAStic", width=1000, height=600, no_close=True):
             with dpg.tab_bar(label='tabbar'):
@@ -152,6 +141,13 @@ class GWASApp:
                     dpg.bind_item_theme(convert_btn, self.our_theme)
 
                 with dpg.tab(label='Settings'):
+                    dpg.add_spacer(height=20)
+                    dpg.add_text("General Setting", indent=50, color=(72, 138, 199))
+                    dpg.add_spacer(height=20)
+                    default_path_input = dpg.add_input_text(label="Default Path", default_value=self.default_path, indent=50, tag= 'tooltip_path', width=250)
+                    default_path_btn = dpg.add_button(label="Save", callback=self.save_default_path, user_data=[default_path_input], indent=50)
+                    dpg.add_spacer(height=20)
+                    dpg.add_separator()
                     dpg.add_spacer(height=20)
                     dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=20)
@@ -205,17 +201,12 @@ class GWASApp:
                 dpg.add_text("Specify the number of trees to be used in the forest.\nMore trees can increase accuracy but also computation time.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_depth"):
                 dpg.add_text("Determine the maximum depth of the trees.\nDeeper trees can model more complex relationships.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_path"):
+                dpg.add_text("Set a default path.", color=[79, 128, 226])
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
-        #print(self.gwas_combo)
-        #print(dpg.get_value(self.gwas_combo))
-        #print ()
-            # Set default values
-            #self.algorithm = "FaST-LMM"
-
-        #self.algorithm = dpg.get_value(self.gp_combo)
 
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""
@@ -251,22 +242,28 @@ class GWASApp:
         return file_path, current_path
 
     def callback_save_results(self, sender, app_data):
-        """"""
+        """Save the results inside the folder including tables as csv and plots as png. """
         self.results_directory = app_data
         results_path, current_path = self.get_selection_path(self.results_directory)
-        self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
+        save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
                                  self.manhatten_plot_name, self.qq_plot_name, self.algorithm, self.genomic_predict_name)
-        self.add_log('Results saved in: ' + current_path)
+        self.add_log('Results saved in: ' + save_dir)
 
     def cancel_callback_directory(self, sender, app_data):
         self.add_log('Process Canceled')
 
     def get_algorithm(self, sender, data):
-
+        """Get the algorithm selected for GWAS or GP."""
         self.algorithm = data
 
-    def delete_files(self, genomic_predict):
+    def save_default_path(self, sender, data, user_data):
+        """Overwrite the default path. Restart necessary."""
+        default_path = str(dpg.get_value(user_data[0]))
+        self.helper.save_settings(default_path)
+        self.add_log('Settings saved. Please restart the software.', warn=True)
 
+    def delete_files(self, genomic_predict):
+        """Delete the temporary files after analysis."""
         dpg.delete_item("manhatten_image")
         dpg.delete_item("manhatten_tag")
         dpg.delete_item("qq_image")
@@ -279,7 +276,7 @@ class GWASApp:
                       self.manhatten_plot_name, self.qq_plot_name]
         for f in file_names:
             if os.path.exists(f):
-                print (f)
+                #print (f)
                 os.remove(f)
 
     def add_log(self, message, warn=False, error=False):
@@ -335,8 +332,7 @@ class GWASApp:
     def run_genomic_prediction(self, sender, data, user_data):
         self.delete_files(genomic_predict = True)
         self.add_log('Reading Bed file...')
-        self.algorithm = dpg.get_value(self.gp_combo)
-        #print (self.algorithm)
+
 
         try:
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)

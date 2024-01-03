@@ -77,6 +77,10 @@ Then install GWAStic via pip:
 
 # 2. References
 
+ 2.1 - Purcell S, Neale B, Todd-Brown K, Thomas L, Ferreira MAR, Bender D, Maller J, de Bakker PIW:
+ Daly MJ & Sham PC (in press) PLINK: a toolset for whole-genome association and population-based linkage analysis. American Journal of Human Genetics.
+
+ 2.2 -  Lippert, C., Listgarten, J., Liu, Y. et al. FaST linear mixed models for genome-wide association studies. Nat Methods 8, 833–835 (2011). https://doi.org/10.1038/nmeth.1681
 # 3. Documentation
 [Online Documentation](https://snowformatics.gitbook.io/product-docs/)
 
