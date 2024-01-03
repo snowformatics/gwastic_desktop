@@ -4,4 +4,4 @@ pandas
 fastlmm
 geneview
 matplotlib
-fastlmm
+numpy
