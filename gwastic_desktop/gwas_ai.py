@@ -28,7 +28,7 @@ class GWASAI:
         #X_test = scaler.transform(X_test)
 
         # Define and train a Random Forest model
-        rf_model = RandomForestRegressor(n_estimators=estimators, random_state=42)
+        rf_model = RandomForestRegressor(n_estimators=estimators, random_state=0) #42
         #rf_model = RandomForestClassifier(n_estimators=estimators,max_depth=2, random_state=0)
 
         # Fit the model to the training data
@@ -74,15 +74,29 @@ class GWASAI:
             return merged_df
 
         else:
-            f = open(gwas_result_name, 'w')
-            data = []
-            for col, score in zip(snp_ids, rf_model.feature_importances_):
-                f.write(str(col) + ' ' + str(score) + '\n')
-                data.append((col, score))
-            # Convert the list of tuples into a DataFrame
-            df = pd.DataFrame(data, columns=['SNP', 'PValue'])
-            df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
-            return df
+
+            features_dict = dict(zip(snp_ids, rf_model.feature_importances_))
+
+            # Sort the dictionary by importance
+            sorted_features = sorted(features_dict.items(), key=lambda x: x[1], reverse=True)
+
+            # Convert to a DataFrame for easy saving
+            sorted_features_df = pd.DataFrame(sorted_features, columns=['Feature', 'Importance'])
+
+            # Save to a CSV file
+            sorted_features_df.to_csv(gwas_result_name, index=False)
+            sorted_features_df.columns = ['SNP', 'PValue']
+            sorted_features_df[['Chr', 'ChrPos']] = sorted_features_df['SNP'].str.split(':', expand=True)
+
+            # f = open(gwas_result_name, 'w')
+            # data = []
+            # for col, score in zip(snp_ids, rf_model.feature_importances_):
+            #     f.write(str(col) + ' ' + str(score) + '\n')
+            #     data.append((col, score))
+            # # Convert the list of tuples into a DataFrame
+            # df = pd.DataFrame(data, columns=['SNP', 'PValue'])
+            # df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
+            return sorted_features_df
 
     def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
                     genomic_predict, genomic_predict_name):
@@ -90,7 +104,7 @@ class GWASAI:
         snp_data[np.isnan(snp_data)] = -1
 
         # Split data into training and testing sets
-        X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno_data, test_size=test_size, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno_data, test_size=test_size)#, random_state=42)
 
         if genomic_predict:
             print ('no scaling')

@@ -5,6 +5,7 @@ import os
 import shutil
 import configparser
 
+
 class HELPERS:
     def duplicate_column(self, input_file, output_file):
         # Read the text file with one column
@@ -35,6 +36,7 @@ class HELPERS:
         return mapping
 
     def get_timestamp(self):
+        """Get timestamp."""
         now = datetime.now()
         dt_string = now.strftime("%d%m%Y_%H%M%S")
         return dt_string
@@ -49,30 +51,25 @@ class HELPERS:
         config = configparser.ConfigParser()
 
         # Add sections and settings
-        config['DefaultSettings'] = {'path': default_path}
+        config['DefaultSettings'] = {'path': default_path, 'algorithm':'FaST-LMM'}
         # Write to a file
         with open('settings.ini', 'w') as configfile:
             config.write(configfile)
 
-    def get_settings(self):
+    def get_settings(self, setting):
+        """Get the user settings."""
         config = configparser.ConfigParser()
         config.read('settings.ini')
 
         # Accessing values from DefaultSettings
-        default_path= config['DefaultSettings']['path']
+        default_path= config['DefaultSettings'][setting]
         return default_path
 
-
-    def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
-                     algorithm, genomic_predict_name):
+    def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name,
+                     qq_plot_name, algorithm, genomic_predict_name):
+        """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
 
-        # try:
-        #     os.mkdir(os.path.join(save_dir, ts))
-        #     save_dir = os.path.join(save_dir, ts)
-        # except:
-        #     save_dir = save_dir
-        # #
         os.mkdir(os.path.join(save_dir, ts))
         save_dir = os.path.join(save_dir, ts)
 
@@ -82,6 +79,7 @@ class HELPERS:
         except FileNotFoundError:
             shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
             # We store also a trimmed version of single_snp with 10000 SNPs
+            # todo if ai first sort
             df = pd.read_csv(gwas_result_name)
             first_10000_rows = df.head(10000)
             first_10000_rows.to_csv(gwas_result_name_top, index=False)
@@ -93,13 +91,14 @@ class HELPERS:
                 shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
         return save_dir
 
-    def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
-                     algorithm):
-        os.remove(os.path.join(current_dir, manhatten_plot_name))
-        os.remove(os.path.join(current_dir, gwas_result_name))
-        os.remove(os.path.join(current_dir, gwas_result_name_top))
-        if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
-            os.remove(os.path.join(current_dir, qq_plot_name))
+    # def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
+    #                  algorithm):
+    #     """Delete all temp files."""
+    #     os.remove(os.path.join(current_dir, manhatten_plot_name))
+    #     os.remove(os.path.join(current_dir, gwas_result_name))
+    #     os.remove(os.path.join(current_dir, gwas_result_name_top))
+    #     if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+    #         os.remove(os.path.join(current_dir, qq_plot_name))
 
 
 

@@ -2,7 +2,6 @@ dearpygui
 dearpygui-ext
 pandas
 numpy
-fastlmm
 geneview
 matplotlib
 fastlmm

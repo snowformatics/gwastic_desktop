@@ -5,6 +5,7 @@ from gwas_pipeline import GWAS
 from helpers import HELPERS
 import os
 import webbrowser
+import time
 
 def main():
     app = GWASApp()
@@ -35,14 +36,15 @@ class GWASApp:
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
-        self.default_path = self.helper.get_settings()
+        self.default_path = self.helper.get_settings('path')
+        self.algorithm =  self.helper.get_settings('algorithm')
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
         self.manhatten_plot_name = "manhatten_plot.png"
         self.qq_plot_name = "qq_plot.png"
-        self.test_size = 0.2
-        self.estimators = 100
+        self.test_size = 0.3 #0.3
+        self.estimators = 200 #200
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500)
         self.logz = logger.mvLogger(self.log_win)
@@ -50,24 +52,17 @@ class GWASApp:
         # Set up GUI components and callbacks
         self.setup_gui()
 
-
-    def save_callback(self):
-        print("Save Clicked")
+    # def save_callback(self):
+    #     print("Save Clicked")
 
     def setup_gui(self):
         dpg.create_viewport(title='GWAStic Desktop Software', width=2000, height=1200)
 
-        def print_me(sender):
-            print(f"Menu Item: {sender}")
-
 
     # Menu bar
         with dpg.viewport_menu_bar():
-
             with dpg.menu(label="Help"):
-                #dpg.add_menu_item(label="Documentation", callback=print_me, check=True)
                 dpg.add_button(label="Documentation", callback=lambda: webbrowser.open("https://snowformatics.gitbook.io/product-docs/"))
-                dpg.add_menu_item(label="Tutorials", callback=print_me, check=True)
 
         # File dialogs
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf",
@@ -141,24 +136,24 @@ class GWASApp:
                     dpg.bind_item_theme(convert_btn, self.our_theme)
 
                 with dpg.tab(label='Settings'):
-                    dpg.add_spacer(height=20)
+                    dpg.add_spacer(height=10)
                     dpg.add_text("General Setting", indent=50, color=(72, 138, 199))
-                    dpg.add_spacer(height=20)
+                    dpg.add_spacer(height=10)
                     default_path_input = dpg.add_input_text(label="Default Path", default_value=self.default_path, indent=50, tag= 'tooltip_path', width=250)
-                    default_path_btn = dpg.add_button(label="Save", callback=self.save_default_path, user_data=[default_path_input], indent=50)
-                    dpg.add_spacer(height=20)
+                    dpg.add_button(label="Save", callback=self.save_default_path, user_data=[default_path_input], indent=50)
+                    dpg.add_spacer(height=10)
                     dpg.add_separator()
                     dpg.add_spacer(height=20)
                     dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
-                    dpg.add_spacer(height=20)
+                    dpg.add_spacer(height=10)
                     dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue')
                     dpg.add_spacer(height=10)
                     dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
-                    dpg.add_spacer(height=20)
+                    dpg.add_spacer(height=10)
                     dpg.add_separator()
                     dpg.add_spacer(height=20)
                     dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
-                    dpg.add_spacer(height=20)
+                    dpg.add_spacer(height=10)
                     dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
                     dpg.add_spacer(height=10)
                     dpg.add_input_int(label="Training Size", width=150, default_value=80,step=10, indent=50,
@@ -207,7 +202,6 @@ class GWASApp:
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
 
-
     def callback_vcf(self, sender, app_data):
         """Get vcf file path selected from the user."""
         self.vcf_app_data = app_data
@@ -237,17 +231,23 @@ class GWASApp:
 
         current_path = app_data['current_path'] + '/'
         k = app_data['selections']
-        for key, value in k.items():
-            file_path = value
-        return file_path, current_path
+        try:
+            for key, value in k.items():
+                file_path = value
+            return file_path, current_path
+        except UnboundLocalError:
+            pass
 
     def callback_save_results(self, sender, app_data):
         """Save the results inside the folder including tables as csv and plots as png. """
         self.results_directory = app_data
-        results_path, current_path = self.get_selection_path(self.results_directory)
-        save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
-                                 self.manhatten_plot_name, self.qq_plot_name, self.algorithm, self.genomic_predict_name)
-        self.add_log('Results saved in: ' + save_dir)
+        try:
+            results_path, current_path = self.get_selection_path(self.results_directory)
+            save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
+                                     self.manhatten_plot_name, self.qq_plot_name, self.algorithm, self.genomic_predict_name)
+            self.add_log('Results saved in: ' + save_dir)
+        except TypeError:
+            self.add_log('Please select a valid directory.', error=True)
 
     def cancel_callback_directory(self, sender, app_data):
         self.add_log('Process Canceled')
@@ -306,7 +306,7 @@ class GWASApp:
         #self.logz.log_debug('Converting done!')
 
     def run_gwas(self, sender, data, user_data):
-        self.delete_files(genomic_predict = False)
+        #self.delete_files(genomic_predict = False)
 
         self.add_log('Reading Bed file...')
         try:
@@ -323,6 +323,7 @@ class GWASApp:
                 self.gwas.plot_gwas(gwas_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
                 self.add_log('Done...')
                 self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
+
             else:
                 self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
@@ -332,8 +333,6 @@ class GWASApp:
     def run_genomic_prediction(self, sender, data, user_data):
         self.delete_files(genomic_predict = True)
         self.add_log('Reading Bed file...')
-
-
         try:
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
             self.add_log('Reading Phenotypic file...')
@@ -357,7 +356,6 @@ class GWASApp:
             self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def show_results_window(self, df, algorithm, genomic_predict):
-
         with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
             dpg.add_button(label="Download Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
             dpg.add_spacer(height=60)

@@ -137,7 +137,7 @@ class GWAS:
             add_log(s3, warn=True)
             # run single_snp with the fixed file
             add_log('Starting Analysis, this might take a while...')
-            print (algorithm)
+            #print (algorithm)
             t1 = time.process_time()
             if algorithm == 'FaST-LMM':
                 df = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
@@ -149,12 +149,12 @@ class GWAS:
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
 
             elif algorithm == 'Random Forest (AI)':
-
-                df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
-                snp_ids = df.iloc[:, 1].tolist()
-                df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                              estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
-                                              genomic_predict_name)
+                for i in range(1):
+                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
+                    snp_ids = df.iloc[:, 1].tolist()
+                    df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                                                  estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                                  genomic_predict_name)
             elif algorithm == 'XGBoost (AI)':
 
                 dfs = []
@@ -173,7 +173,8 @@ class GWAS:
 
             t2 = time.process_time()
             t3 = round((t2-t1)/ 60, 2)
-            add_log('Final run time (minutes): ' + str(t3), 2)
+           # print (t1, t2, t3)
+            add_log('Final run time (minutes): ' + str(t3))
             return df
         else:
             add_log(check_input_data[1], error=True)
