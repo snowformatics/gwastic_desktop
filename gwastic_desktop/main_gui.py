@@ -37,14 +37,14 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         self.default_path = self.helper.get_settings('path')
-        self.algorithm =  self.helper.get_settings('algorithm')
+        #self.algorithm =  self.helper.get_settings('algorithm')
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
         self.manhatten_plot_name = "manhatten_plot.png"
         self.qq_plot_name = "qq_plot.png"
-        self.test_size = 0.3 #0.3
-        self.estimators = 200 #200
+        #self.test_size = 0.3 #0.3
+        #self.estimators = 200 #200
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500)
         self.logz = logger.mvLogger(self.log_win)
@@ -97,7 +97,7 @@ class GWASApp:
                     geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
                     pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
-                    self.gwas_combo = dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", callback=self.get_algorithm, tag= 'tooltip_algorithm')
+                    self.gwas_combo = dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", tag= 'tooltip_algorithm')
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
@@ -110,9 +110,8 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose Phenotype",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gp_combo = dpg.add_combo(label="Algorithm",
-                                  items=["Random Forest (AI)", "XGBoost (AI)"],
-                                  indent=50, width=200, default_value="Random Forest (AI)", callback=self.get_algorithm)
+                    self.gp_combo = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)"],
+                                  indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
                                               indent=50)
@@ -146,28 +145,29 @@ class GWASApp:
                     dpg.add_spacer(height=20)
                     dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=10)
-                    dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue')
+                    self.pvalue_set = dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue')
                     dpg.add_spacer(height=10)
-                    dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
+                    self.leave_chr_set = dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
                     dpg.add_spacer(height=10)
                     dpg.add_separator()
                     dpg.add_spacer(height=20)
                     dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=10)
-                    dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
+                    self.std_set = dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
                     dpg.add_spacer(height=10)
-                    dpg.add_input_int(label="Training Size", width=150, default_value=80,step=10, indent=50,
+                    self.train_size_set = dpg.add_input_int(label="Training Size", width=150, default_value=70,step=10, indent=50,
                                       min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_training')
                     dpg.add_spacer(height=10)
-                    dpg.add_input_int(label="Number of Trees", width=150, default_value=100, step=10, indent=50,
+                    self.estim_set = dpg.add_input_int(label="Number of Trees", width=150, default_value=200, step=10, indent=50,
                                       min_value=1, min_clamped=True, tag= 'tooltip_trees')
                     dpg.add_spacer(height=10)
-                    dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50,
+                    self.max_dep_set = dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50,
                                       min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_depth')
                     dpg.add_spacer(height=10)
                     #dpg.add_separator()
                     #dpg.add_text("Plot Settings", indent=50)
                     #dpg.add_spacer(height=20)
+
 
             # Tooltips
             with dpg.tooltip("tooltip_vcf"):
@@ -185,7 +185,7 @@ class GWASApp:
             with dpg.tooltip("tooltip_algorithm"):
                 dpg.add_text("Select the algorithm to be used for the analysis.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_pvalue"):
-                dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows with large p-values.", color=[79, 128, 226])
+                dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows for large datasets.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_chrom"):
                 dpg.add_text("Perform single SNP GWAS via cross validation over the chromosomes.\nDefault to True.\nWarning: setting False can cause proximal contamination.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_stand"):
@@ -252,9 +252,9 @@ class GWASApp:
     def cancel_callback_directory(self, sender, app_data):
         self.add_log('Process Canceled')
 
-    def get_algorithm(self, sender, data):
-        """Get the algorithm selected for GWAS or GP."""
-        self.algorithm = data
+    # def get_algorithm(self, sender, data):
+    #     """Get the algorithm selected for GWAS or GP."""
+    #     self.algorithm = data
 
     def save_default_path(self, sender, data, user_data):
         """Overwrite the default path. Restart necessary."""
@@ -276,7 +276,6 @@ class GWASApp:
                       self.manhatten_plot_name, self.qq_plot_name]
         for f in file_names:
             if os.path.exists(f):
-                #print (f)
                 os.remove(f)
 
     def add_log(self, message, warn=False, error=False):
@@ -301,14 +300,22 @@ class GWASApp:
             variants_path, current_path = self.get_selection_path(self.variants_app_data)
         self.add_log('Start converting VCF to BED...')
         plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, vcf_path.split('.')[0], maf, geno)
-
         self.add_log(plink_log)
-        #self.logz.log_debug('Converting done!')
 
     def run_gwas(self, sender, data, user_data):
-        #self.delete_files(genomic_predict = False)
-
+        self.delete_files(genomic_predict = False)
         self.add_log('Reading Bed file...')
+
+        # Get all settings
+        train_size_set = (100-dpg.get_value(self.train_size_set))/100
+        estimators = dpg.get_value(self.estim_set)
+        pvalue_set = dpg.get_value(self.pvalue_set)
+        #std_set = dpg.get_value(self.std_set)
+        leave_chr_set = dpg.get_value(self.leave_chr_set)
+        max_dep_set = dpg.get_value(self.max_dep_set)
+        self.algorithm = dpg.get_value(self.gwas_combo)
+
+
         try:
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
             self.add_log('Reading Phenotypic file...')
@@ -316,7 +323,7 @@ class GWASApp:
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
             gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                           self.test_size, self.estimators, self.gwas_result_name, False, None)
+                                           train_size_set, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, False, None)
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
@@ -333,6 +340,15 @@ class GWASApp:
     def run_genomic_prediction(self, sender, data, user_data):
         self.delete_files(genomic_predict = True)
         self.add_log('Reading Bed file...')
+
+        # Get settings
+        self.algorithm = dpg.get_value(self.gwas_gp)
+        test_size = (100 - dpg.get_value(self.train_size_set)) / 100
+        estimators = dpg.get_value(self.estim_set)
+        leave_chr_set = dpg.get_value(self.leave_chr_set)
+        max_dep_set = dpg.get_value(self.max_dep_set)
+
+
         try:
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
             self.add_log('Reading Phenotypic file...')
@@ -340,7 +356,7 @@ class GWASApp:
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
             gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                         self.test_size, self.estimators, self.gwas_result_name, True,
+                                         test_size, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, True,
                                          self.genomic_predict_name)
 
             if gp_df is not None:

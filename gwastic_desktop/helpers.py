@@ -79,7 +79,6 @@ class HELPERS:
         except FileNotFoundError:
             shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
             # We store also a trimmed version of single_snp with 10000 SNPs
-            # todo if ai first sort
             df = pd.read_csv(gwas_result_name)
             first_10000_rows = df.head(10000)
             first_10000_rows.to_csv(gwas_result_name_top, index=False)

@@ -108,12 +108,14 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
-    def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, estimators,
-                   gwas_result_name, genomic_predict, genomic_predict_name):
+    def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, estimators, leave_chr_set,
+                   max_dep_set, gwas_result_name, genomic_predict, genomic_predict_name):
         from fastlmm.association import single_snp, single_snp_linreg
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
         import time
+
+        print (test_size, estimators)
         # First we have to validate the input files
         check_input_data = self.validate_gwas_input_files(bed_file, pheno_file)
 
@@ -140,7 +142,7 @@ class GWAS:
             #print (algorithm)
             t1 = time.process_time()
             if algorithm == 'FaST-LMM':
-                df = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
+                df = single_snp(bed_fixed, pheno, leave_out_one_chrom=leave_chr_set, output_file_name=gwas_result_name)
                 exchanged_dict = {v: k for k, v in chrom_mapping.items()}
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
             elif algorithm == 'Linear regression':
@@ -159,11 +161,12 @@ class GWAS:
 
                 dfs = []
                 for i in range(1):
+                    print (i)
                     df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                     snp_ids = df.iloc[:, 1].tolist()
                     df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                                  estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
-                                                  genomic_predict_name)
+                                                  estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                                  genomic_predict_name, max_dep_set)
                     #df['Predicted_Value'] = pd.to_numeric(df['Predicted_Value'], errors='coerce')
                     #dfs.append(df)
                 #df2 = pd.concat(dfs, axis=0)
@@ -206,10 +209,7 @@ class GWAS:
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".", color=['#3B5488', '#d5536f'],
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
-                              hline_kws={"linestyle": "--", "lw": 1.3},   # 50000 bp
-                                # hline_kws={"linestyle": "--", "lw": 1.3}, is_annotate_topsnp=True, ld_block_size=50000,sign_marker_p=1e-6,
-                                 # 50000 bp
-
+                              hline_kws={"linestyle": "--", "lw": 1.3},sign_marker_p=1e-6, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=100)

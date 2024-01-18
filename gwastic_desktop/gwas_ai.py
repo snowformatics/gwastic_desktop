@@ -75,31 +75,29 @@ class GWASAI:
 
         else:
 
-            features_dict = dict(zip(snp_ids, rf_model.feature_importances_))
+            # features_dict = dict(zip(snp_ids, rf_model.feature_importances_))
+            # # Sort the dictionary by importance
+            # sorted_features = sorted(features_dict.items(), key=lambda x: x[1], reverse=True)
+            # # Convert to a DataFrame for easy saving
+            # sorted_features_df = pd.DataFrame(sorted_features, columns=['Feature', 'Importance'])
+            # # Save to a CSV file
+            # sorted_features_df.to_csv(gwas_result_name, index=False)
+            # sorted_features_df.columns = ['SNP', 'PValue']
+            # sorted_features_df[['Chr', 'ChrPos']] = sorted_features_df['SNP'].str.split(':', expand=True)
 
-            # Sort the dictionary by importance
-            sorted_features = sorted(features_dict.items(), key=lambda x: x[1], reverse=True)
-
-            # Convert to a DataFrame for easy saving
-            sorted_features_df = pd.DataFrame(sorted_features, columns=['Feature', 'Importance'])
-
-            # Save to a CSV file
-            sorted_features_df.to_csv(gwas_result_name, index=False)
-            sorted_features_df.columns = ['SNP', 'PValue']
-            sorted_features_df[['Chr', 'ChrPos']] = sorted_features_df['SNP'].str.split(':', expand=True)
-
-            # f = open(gwas_result_name, 'w')
-            # data = []
-            # for col, score in zip(snp_ids, rf_model.feature_importances_):
-            #     f.write(str(col) + ' ' + str(score) + '\n')
-            #     data.append((col, score))
-            # # Convert the list of tuples into a DataFrame
-            # df = pd.DataFrame(data, columns=['SNP', 'PValue'])
-            # df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
-            return sorted_features_df
+            f = open(gwas_result_name, 'w')
+            data = []
+            for col, score in zip(snp_ids, rf_model.feature_importances_):
+                f.write(str(col) + ' ' + str(score) + '\n')
+                data.append((col, score))
+            # Convert the list of tuples into a DataFrame
+            df = pd.DataFrame(data, columns=['SNP', 'PValue'])
+            df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
+            return df
+            #return sorted_features_df
 
     def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
-                    genomic_predict, genomic_predict_name):
+                    genomic_predict, genomic_predict_name, max_dep_set):
 
         snp_data[np.isnan(snp_data)] = -1
 
@@ -118,7 +116,7 @@ class GWASAI:
         #X_test = scaler.transform(X_test)
 
         # Define and train a Random Forest model
-        xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=3, random_state=42)
+        xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set, random_state=42)
         #xgb_model = xgb.XGBRegressor(n_estimators=estimators, random_state=42)
 
         # Fit the model to the training data
@@ -129,7 +127,6 @@ class GWASAI:
         # print(f'Test Loss: {test_loss}')
 
         if genomic_predict:
-
             bed_data = bed_gp.read().iid
             pheno_data = pheno_gp.read().iid
             df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
@@ -148,6 +145,16 @@ class GWASAI:
             return merged_df
 
         else:
+            # features_dict = dict(zip(snp_ids, xgb_model.feature_importances_))
+            # # Sort the dictionary by importance
+            # sorted_features = sorted(features_dict.items(), key=lambda x: x[1], reverse=True)
+            # # Convert to a DataFrame for easy saving
+            # sorted_features_df = pd.DataFrame(sorted_features, columns=['Feature', 'Importance'])
+            # # Save to a CSV file
+            # sorted_features_df.to_csv(gwas_result_name, index=False)
+            # sorted_features_df.columns = ['SNP', 'PValue']
+            # sorted_features_df[['Chr', 'ChrPos']] = sorted_features_df['SNP'].str.split(':', expand=True)
+
             f = open(gwas_result_name, 'w')
             data = []
             for col, score in zip(snp_ids, xgb_model.feature_importances_):
