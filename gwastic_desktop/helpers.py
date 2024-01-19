@@ -90,6 +90,30 @@ class HELPERS:
                 shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
         return save_dir
 
+    def merge_models(self, dataframes):
+        """Combine RF or XG models and calculate the sum of the SNP effect."""
+
+
+        df_combined = pd.concat(dataframes)
+
+        df_combined = df_combined[df_combined['PValue'] > 0]
+        #print(df_combined)
+        # Grouping by 'snp' and summing the values
+        df_result_sum = df_combined.groupby('SNP').sum().reset_index()
+        #print (df_result_sum)
+        #df_result_sum = df_result_sum.sort_values(by=['SNP'])
+       # print(df_result_sum)
+        df_result_sum[['Chr', 'ChrPos']] = df_result_sum['SNP'].str.split(':', expand=True)
+        df_result_sum = df_result_sum[['SNP', 'PValue','Chr', 'ChrPos']]
+        df_result_sum['Chr'] = df_result_sum['Chr'].astype(int)
+        df_result_sum['ChrPos'] = df_result_sum['ChrPos'].astype(int)
+        df_result_sum = df_result_sum.sort_values(by=['Chr', 'ChrPos'])
+        #df_result_sum.to_csv('out.csv')
+        #print (df_result_sum)
+
+        return df_result_sum
+        #df_result_sum.to_csv("rf_all_sum10.csv", index=False)
+
     # def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
     #                  algorithm):
     #     """Delete all temp files."""

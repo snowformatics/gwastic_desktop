@@ -10,8 +10,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 
 class GWASAI:
     def run_random_forest(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
-                    genomic_predict, genomic_predict_name):
-       # print ('ok')
+                    genomic_predict, genomic_predict_name, model_nr):
         snp_data[np.isnan(snp_data)] = -1
 
         # Split data into training and testing sets
@@ -28,7 +27,7 @@ class GWASAI:
         #X_test = scaler.transform(X_test)
 
         # Define and train a Random Forest model
-        rf_model = RandomForestRegressor(n_estimators=estimators, random_state=0) #42
+        rf_model = RandomForestRegressor(n_estimators=estimators, n_jobs=None)#, random_state=0) #42
         #rf_model = RandomForestClassifier(n_estimators=estimators,max_depth=2, random_state=0)
 
         # Fit the model to the training data
@@ -97,7 +96,7 @@ class GWASAI:
             #return sorted_features_df
 
     def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
-                    genomic_predict, genomic_predict_name, max_dep_set):
+                    genomic_predict, genomic_predict_name, max_dep_set, model_nr):
 
         snp_data[np.isnan(snp_data)] = -1
 
@@ -116,7 +115,7 @@ class GWASAI:
         #X_test = scaler.transform(X_test)
 
         # Define and train a Random Forest model
-        xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set, random_state=42)
+        xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set)#, random_state=0)
         #xgb_model = xgb.XGBRegressor(n_estimators=estimators, random_state=42)
 
         # Fit the model to the training data

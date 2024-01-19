@@ -153,10 +153,15 @@ class GWASApp:
                     dpg.add_spacer(height=20)
                     dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=10)
-                    self.std_set = dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
-                    dpg.add_spacer(height=10)
+                    #self.std_set = dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
+                    #dpg.add_spacer(height=10)
                     self.train_size_set = dpg.add_input_int(label="Training Size", width=150, default_value=70,step=10, indent=50,
                                       min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_training')
+                    dpg.add_spacer(height=10)
+                    self.model_nr = dpg.add_input_int(label="Nr. of models", width=150, default_value=1, step=1,
+                                                            indent=50,
+                                                            min_value=1, max_value=50, min_clamped=True,
+                                                            max_clamped=True, tag='tooltip_model')
                     dpg.add_spacer(height=10)
                     self.estim_set = dpg.add_input_int(label="Number of Trees", width=150, default_value=200, step=10, indent=50,
                                       min_value=1, min_clamped=True, tag= 'tooltip_trees')
@@ -188,12 +193,14 @@ class GWASApp:
                 dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows for large datasets.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_chrom"):
                 dpg.add_text("Perform single SNP GWAS via cross validation over the chromosomes.\nDefault to True.\nWarning: setting False can cause proximal contamination.", color=[79, 128, 226])
-            with dpg.tooltip("tooltip_stand"):
-                dpg.add_text("Check this to standardize features by removing the mean and scaling to unit variance,\noften required for machine learning algorithms.", color=[79, 128, 226])
+            #with dpg.tooltip("tooltip_stand"):
+                #dpg.add_text("Check this to standardize features by removing the mean and scaling to unit variance,\noften required for machine learning algorithms.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_training"):
                 dpg.add_text("Set the percentage of the dataset to be used for training the model.\nThe rest will be used for testing.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_trees"):
                 dpg.add_text("Specify the number of trees to be used in the forest.\nMore trees can increase accuracy but also computation time.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_model"):
+                dpg.add_text("Specify the number of models to be used in the analysis.\nMore models can increase accuracy but also computation time.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_depth"):
                 dpg.add_text("Determine the maximum depth of the trees.\nDeeper trees can model more complex relationships.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_path"):
@@ -309,6 +316,7 @@ class GWASApp:
         # Get all settings
         train_size_set = (100-dpg.get_value(self.train_size_set))/100
         estimators = dpg.get_value(self.estim_set)
+        model_nr = dpg.get_value(self.model_nr)
         pvalue_set = dpg.get_value(self.pvalue_set)
         #std_set = dpg.get_value(self.std_set)
         leave_chr_set = dpg.get_value(self.leave_chr_set)
@@ -323,7 +331,7 @@ class GWASApp:
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
             gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                           train_size_set, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, False, None)
+                                           train_size_set, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, False, None)
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
@@ -413,13 +421,14 @@ class GWASApp:
 
                     with dpg.tab(label="GWAS Results (Top 500)"):
                         df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                        #print (len(df))
                         #df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
                                        borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas',
                                        sortable=True):
                             for i in range(df.shape[1]):
                                 dpg.add_table_column(label=df.columns[i], parent='table_gwas')
-                            for i in range(500):
+                            for i in range(300):
                                 with dpg.table_row():
                                     for j in range(df.shape[1]):
                                         dpg.add_text(f"{df.iloc[i, j]}")

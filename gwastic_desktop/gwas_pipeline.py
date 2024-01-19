@@ -3,7 +3,7 @@ import pandas as pd
 from gwas_ai import GWASAI
 import sys
 import os
-from functools import reduce
+from helpers import HELPERS
 
 
 class GWAS:
@@ -11,6 +11,7 @@ class GWAS:
 
     def __init__(self):
         self.gwas_ai = GWASAI()
+        self.helper = HELPERS()
 
     def vcf_to_bed(self, vcf_file, id_file, file_out, maf, geno):
         """Converts the vcf to bed files."""
@@ -108,14 +109,14 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
-    def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, estimators, leave_chr_set,
+    def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, model_nr, estimators, leave_chr_set,
                    max_dep_set, gwas_result_name, genomic_predict, genomic_predict_name):
         from fastlmm.association import single_snp, single_snp_linreg
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
         import time
 
-        print (test_size, estimators)
+        print (test_size, estimators, model_nr)
         # First we have to validate the input files
         check_input_data = self.validate_gwas_input_files(bed_file, pheno_file)
 
@@ -151,32 +152,31 @@ class GWAS:
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
 
             elif algorithm == 'Random Forest (AI)':
-                for i in range(1):
+                dataframes = []
+                for i in range(int(model_nr)):
+                    print(i)
                     df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                     snp_ids = df.iloc[:, 1].tolist()
                     df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
                                                   estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
-                                                  genomic_predict_name)
+                                                  genomic_predict_name, model_nr)
+                    dataframes.append(df)
+                # We merge the models and calculate the sum effect
+                df = self.helper.merge_models(dataframes)
             elif algorithm == 'XGBoost (AI)':
-
-                dfs = []
-                for i in range(1):
+                dataframes = []
+                for i in range(model_nr):
                     print (i)
                     df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                     snp_ids = df.iloc[:, 1].tolist()
                     df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
                                                   estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
-                                                  genomic_predict_name, max_dep_set)
-                    #df['Predicted_Value'] = pd.to_numeric(df['Predicted_Value'], errors='coerce')
-                    #dfs.append(df)
-                #df2 = pd.concat(dfs, axis=0)
-                #mean_df = df2.groupby(['ID1', 'BED_ID2', 'Pheno_Value'], dropna=False)['Predicted_Value'].agg(['mean', 'std']).reset_index()
-                #df =
-                #rint (mean_df)
+                                                  genomic_predict_name, max_dep_set, model_nr)
+                    dataframes.append(df)
+                df = self.helper.merge_models(dataframes)
 
             t2 = time.process_time()
             t3 = round((t2-t1)/ 60, 2)
-           # print (t1, t2, t3)
             add_log('Final run time (minutes): ' + str(t3))
             return df
         else:
@@ -209,7 +209,7 @@ class GWAS:
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".", color=['#3B5488', '#d5536f'],
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
-                              hline_kws={"linestyle": "--", "lw": 1.3},sign_marker_p=1e-6, is_annotate_topsnp=True,
+                              hline_kws={"linestyle": "--", "lw": 1.3}, sign_marker_p=1e-6, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=100)
@@ -225,15 +225,16 @@ class GWAS:
         else:
 
             df['Chr'] = df['Chr'].astype(int)
-            # chr_names = df['Chr'].unique()
             df['ChrPos'] = df['ChrPos'].astype(int)
+            #print(df)
+            #print (type(df))
+            #print(df.dtypes)
+            #print (df.info())
 
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
-
             _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
                                   title="GWAS Manhatten Plot " + algorithm + '\n',color=['#3B5488', '#d5536f'],
-                                  xlabel="Chromosome", ylabel=r"Feature Importance")
-
+                                  xlabel="Chromosome", ylabel=r"Feature Importance")#, sign_marker_p=0.05, is_annotate_topsnp=True)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=200)
 
