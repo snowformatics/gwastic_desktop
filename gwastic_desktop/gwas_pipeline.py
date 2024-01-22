@@ -121,6 +121,8 @@ class GWAS:
         check_input_data = self.validate_gwas_input_files(bed_file, pheno_file)
 
         if check_input_data[0]:
+            t1 = time.time()
+
             bed = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_file))
 
@@ -141,7 +143,7 @@ class GWAS:
             # run single_snp with the fixed file
             add_log('Starting Analysis, this might take a while...')
             #print (algorithm)
-            t1 = time.process_time()
+
             if algorithm == 'FaST-LMM':
                 df = single_snp(bed_fixed, pheno, leave_out_one_chrom=leave_chr_set, output_file_name=gwas_result_name)
                 exchanged_dict = {v: k for k, v in chrom_mapping.items()}
@@ -175,8 +177,9 @@ class GWAS:
                     dataframes.append(df)
                 df = self.helper.merge_models(dataframes)
 
-            t2 = time.process_time()
+            t2 = time.time()
             t3 = round((t2-t1)/ 60, 2)
+            df.to_csv(gwas_result_name, index=0)
             add_log('Final run time (minutes): ' + str(t3))
             return df
         else:
@@ -186,7 +189,10 @@ class GWAS:
         """Manhatten and qq-plot."""
         import matplotlib.pyplot as plt
         import geneview as gv
-
+        sign_limit = df.nsmallest(10, 'PValue')
+        print(sign_limit)
+        sign_limit = sign_limit.tail(1)
+        print (float(sign_limit['PValue']))
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
@@ -206,10 +212,10 @@ class GWAS:
             # Create a manhattan plot
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
             #xtick = set(["chr" + i for i in list(map(str, chr_names))])
-            _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".", color=['#3B5488', '#d5536f'],
+            _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
-                              hline_kws={"linestyle": "--", "lw": 1.3}, sign_marker_p=1e-6, is_annotate_topsnp=True,
+                              hline_kws={"linestyle": "--", "lw": 1.3}, sign_marker_p=3.0e-27, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=100)
@@ -233,7 +239,7 @@ class GWAS:
 
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
             _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
-                                  title="GWAS Manhatten Plot " + algorithm + '\n',color=['#3B5488', '#d5536f'],
+                                  title="GWAS Manhatten Plot " + algorithm + '\n',color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
                                   xlabel="Chromosome", ylabel=r"Feature Importance")#, sign_marker_p=0.05, is_annotate_topsnp=True)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=200)

@@ -110,7 +110,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose Phenotype",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gp_combo = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)"],
+                    self.gp_combo = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'LMM'],
                                   indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
