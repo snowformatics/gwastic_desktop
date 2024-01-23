@@ -66,7 +66,7 @@ class HELPERS:
         return default_path
 
     def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name,
-                     qq_plot_name, algorithm, genomic_predict_name):
+                     qq_plot_name, algorithm, genomic_predict_name, gp_plot_name):
         """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
 
@@ -75,6 +75,8 @@ class HELPERS:
 
         try:
             shutil.copyfile(os.path.join(current_dir, genomic_predict_name), os.path.join(save_dir, genomic_predict_name))
+            shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
+
 
         except FileNotFoundError:
             shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))

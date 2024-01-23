@@ -252,7 +252,7 @@ class GWASApp:
         try:
             results_path, current_path = self.get_selection_path(self.results_directory)
             save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
-                                     self.manhatten_plot_name, self.qq_plot_name, self.algorithm, self.genomic_predict_name)
+                                     self.manhatten_plot_name, self.qq_plot_name, self.algorithm, self.genomic_predict_name, self.gp_plot_name)
             self.add_log('Results saved in: ' + save_dir)
         except TypeError:
             self.add_log('Please select a valid directory.', error=True)
@@ -281,9 +281,10 @@ class GWASApp:
         dpg.delete_item("ba_tag")
 
         # delete files
-        file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name,
+        file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name, self.gp_plot_name,
                       self.manhatten_plot_name, self.qq_plot_name]
         for f in file_names:
+
             if os.path.exists(f):
                 os.remove(f)
 
