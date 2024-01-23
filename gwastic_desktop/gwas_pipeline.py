@@ -156,7 +156,7 @@ class GWAS:
             elif algorithm == 'Random Forest (AI)':
                 dataframes = []
                 for i in range(int(model_nr)):
-                    print(i)
+                    #print(i)
                     df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                     snp_ids = df.iloc[:, 1].tolist()
                     df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
@@ -164,18 +164,24 @@ class GWAS:
                                                   genomic_predict_name, model_nr)
                     dataframes.append(df)
                 # We merge the models and calculate the sum effect
-                df = self.helper.merge_models(dataframes)
+                if genomic_predict:
+                    df = df
+                else:
+                    df = self.helper.merge_models(dataframes)
             elif algorithm == 'XGBoost (AI)':
                 dataframes = []
                 for i in range(model_nr):
-                    print (i)
+                    #print (i)
                     df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
                     snp_ids = df.iloc[:, 1].tolist()
                     df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
                                                   estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, max_dep_set, model_nr)
                     dataframes.append(df)
-                df = self.helper.merge_models(dataframes)
+                if genomic_predict:
+                    df = df
+                else:
+                    df = self.helper.merge_models(dataframes)
 
             t2 = time.time()
             t3 = round((t2-t1)/ 60, 2)
@@ -193,9 +199,9 @@ class GWAS:
         # Extract the top10 SNPs and use the value as significant marker label threshold
 
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-            sign_limit = df.nsmallest(125, 'PValue')
-            sign_limit = sign_limit.tail(1)
-            sign_limit = float(sign_limit['PValue'])
+            # sign_limit = df.nsmallest(125, 'PValue')
+            # sign_limit = sign_limit.tail(1)
+            # sign_limit = float(sign_limit['PValue'])
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
@@ -217,10 +223,10 @@ class GWAS:
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
-                              hline_kws={"linestyle": "--", "lw": 1.3}, sign_marker_p=1e-9, is_annotate_topsnp=True,
+                              hline_kws={"linestyle": "--", "lw": 1.3},#, sign_marker_p=1e-9, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
             plt.tight_layout(pad=1)
-            plt.savefig(manhatten_plot_name, dpi=100)
+            plt.savefig(manhatten_plot_name)
 
             # Create QQ plot
             f, ax = plt.subplots(figsize=(6, 6), facecolor="w", edgecolor="k")
@@ -228,7 +234,7 @@ class GWAS:
                           xlabel=r"Expected $-log_{10}{(P)}$", ylabel=r"Observed $-log_{10}{(P)}$", ax=ax)
             #ax.set(ylim=(0, 20), xlim=(0, 20))
             plt.tight_layout(pad=1)
-            plt.savefig(qq_plot_name, dpi=100)
+            plt.savefig(qq_plot_name)
 
         else:
             # sign_limit = df.nlargest(5, 'PValue')
@@ -248,17 +254,60 @@ class GWAS:
                                   title="GWAS Manhatten Plot " + algorithm + '\n',color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
                                   xlabel="Chromosome", ylabel=r"Feature Importance)")#, sign_marker_p=sign_limit, is_annotate_topsnp=True)
             plt.tight_layout(pad=1)
-            plt.savefig(manhatten_plot_name, dpi=200)
+            plt.savefig(manhatten_plot_name)
 
     def plot_pheno(self, data):
         import matplotlib.pyplot as plt
-        import seaborn as sns
 
         plt.hist(data, edgecolor='black')  # 'bins' defines the number of bins
         plt.xlabel('Phenotype Value')
         plt.ylabel('Frequency')
         plt.title('Phenotype Distribution')
         plt.show()
+
+    def plot_gp(self, data, gp_plot_name, algorithm):
+        """Bland-Altman Plot for the real and predicted phenotype values."""
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        # Calculate means and differences
+        means = (data['Predicted_Value'] + data['Pheno_Value']) / 2
+        differences = data['Predicted_Value'] - data['Pheno_Value']
+        mean_difference = np.mean(differences)
+        std_difference = np.std(differences)
+
+        # Plotting the Bland-Altman plot
+        plt.figure(figsize=(10, 6))
+        plt.scatter(means, differences, color='blue')
+        plt.axhline(mean_difference, color='red', linestyle='--', label='Mean Difference')
+        plt.axhline(mean_difference + 1.96 * std_difference, color='green', linestyle='--', label='Upper Limit of Agreement')
+        plt.axhline(mean_difference - 1.96 * std_difference, color='green', linestyle='--', label='Lower Limit of Agreement')
+        plt.xlabel('Mean Value')
+        plt.ylabel('Difference')
+        plt.title('Bland-Altman Plot (' + algorithm + ')')
+        plt.legend()
+        plt.tight_layout(pad=1)
+        plt.savefig(gp_plot_name)
+        #plt.show()
+
+        # data = data.sort_values(by='Difference', ascending=False)
+        # # Plotting
+        # plt.figure(figsize=(10, 6))
+        # # Scatter plot of predicted values
+        # plt.scatter(data['ID1'], data['Predicted_Value'], label='Predicted Values')
+        # # Adding error bars
+        # #plt.errorbar(range(len(data['Predicted_Value'])), data['Predicted_Value'], yerr=data['Difference'], fmt='o',
+        #              #ecolor='red', capsize=5)
+        # # Optional: plot real values
+        # plt.scatter(data['ID1'], data['Pheno_Value'], color='green', label='Real Values')
+        # # Labels and Title
+        # plt.xlabel('Sample IDs')
+        # plt.ylabel('Values')
+        # plt.title('Genomic Prediction Plot')
+        # plt.xticks(rotation=90)
+        # plt.legend()
+        # #plt.grid(True)
+        # plt.show()
 
 
 

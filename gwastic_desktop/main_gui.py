@@ -43,6 +43,7 @@ class GWASApp:
         self.genomic_predict_name = "genomic_prediction_results.csv"
         self.manhatten_plot_name = "manhatten_plot.png"
         self.qq_plot_name = "qq_plot.png"
+        self.gp_plot_name = "Bland_Altman_plot.png"
         #self.test_size = 0.3 #0.3
         #self.estimators = 200 #200
 
@@ -110,7 +111,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose Phenotype",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gp_combo = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'LMM'],
+                    self.gwas_gp = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)"],
                                   indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
@@ -277,6 +278,7 @@ class GWASApp:
         dpg.delete_item("qq_tag")
         dpg.delete_item("table_gwas")
         dpg.delete_item("table_gp")
+        dpg.delete_item("ba_tag")
 
         # delete files
         file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name,
@@ -355,7 +357,7 @@ class GWASApp:
         estimators = dpg.get_value(self.estim_set)
         leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
-
+        model_nr = dpg.get_value(self.model_nr)
 
         try:
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
@@ -364,13 +366,15 @@ class GWASApp:
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
             gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                         test_size, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, True,
+                                         test_size, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, True,
                                          self.genomic_predict_name)
+
+
 
             if gp_df is not None:
                 self.add_log('Genomic Prediction done.')
                 self.add_log('Genomic Prediction Plotting...')
-                #self.gwas.plot_gwas(gp_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
+                self.gwas.plot_gp(gp_df, self.gp_plot_name, self.algorithm)
                 self.add_log('Done...')
                 self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
             else:
@@ -385,8 +389,11 @@ class GWASApp:
             dpg.add_spacer(height=60)
 
             if genomic_predict:
+                width, height, channels, data = dpg.load_image(self.gp_plot_name)
+                with dpg.texture_registry(show=False):
+                    dpg.add_static_texture(width=width, height=height, default_value=data, tag="ba_tag")
                 with dpg.tab_bar(label='tabbar'):
-                    with dpg.tab(label="Genomic Prediction "):
+                    with dpg.tab(label="Genomic Prediction Results"):
                         df = df[['ID1', 'BED_ID2', 'Predicted_Value', 'Pheno_Value', 'Difference']]
                         df.columns = ['FID', 'IID', 'Predicted_Value', 'Pheno_Value', 'Difference']
                         # df = df.sort_values(by=['PValue'], ascending=True)
@@ -399,13 +406,14 @@ class GWASApp:
                                 with dpg.table_row():
                                     for j in range(df.shape[1]):
                                         dpg.add_text(f"{df.iloc[i, j]}")
+                    with dpg.tab(label="Genomic Prediction Plot"):
+                        dpg.add_image(texture_tag="ba_tag", tag="ba_image", width=750, height=450)
+                        #dpg.add_text(" Each blue dot represents a pair of predicted and real values for an individual instance.", pos=[770, 130], color=(72, 138, 199))
 
             else:
-
                 width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
                 with dpg.texture_registry(show=False):
                     dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
-
                 with dpg.tab_bar(label='tabbar'):
                     with dpg.tab(label="Manhatten Plot"):
                         dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
