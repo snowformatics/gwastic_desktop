@@ -189,11 +189,13 @@ class GWAS:
         """Manhatten and qq-plot."""
         import matplotlib.pyplot as plt
         import geneview as gv
-        sign_limit = df.nsmallest(10, 'PValue')
-        print(sign_limit)
-        sign_limit = sign_limit.tail(1)
-        print (float(sign_limit['PValue']))
+
+        # Extract the top10 SNPs and use the value as significant marker label threshold
+
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
+            sign_limit = df.nsmallest(125, 'PValue')
+            sign_limit = sign_limit.tail(1)
+            sign_limit = float(sign_limit['PValue'])
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
@@ -215,7 +217,7 @@ class GWAS:
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
-                              hline_kws={"linestyle": "--", "lw": 1.3}, sign_marker_p=3.0e-27, is_annotate_topsnp=True,
+                              hline_kws={"linestyle": "--", "lw": 1.3}, sign_marker_p=1e-9, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=100)
@@ -229,7 +231,11 @@ class GWAS:
             plt.savefig(qq_plot_name, dpi=100)
 
         else:
-
+            # sign_limit = df.nlargest(5, 'PValue')
+            # print(sign_limit)
+            # sign_limit = sign_limit.tail(1)
+            # sign_limit = float(sign_limit['PValue'])
+            # print (sign_limit)
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
             #print(df)
@@ -240,7 +246,7 @@ class GWAS:
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
             _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
                                   title="GWAS Manhatten Plot " + algorithm + '\n',color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
-                                  xlabel="Chromosome", ylabel=r"Feature Importance")#, sign_marker_p=0.05, is_annotate_topsnp=True)
+                                  xlabel="Chromosome", ylabel=r"Feature Importance)")#, sign_marker_p=sign_limit, is_annotate_topsnp=True)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name, dpi=200)
 
