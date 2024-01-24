@@ -164,35 +164,68 @@ class GWASAI:
             return df
 
     def run_lmm_gp(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
-                    genomic_predict, genomic_predict_name, model_nr):
+                    genomic_predict, genomic_predict_name, max_dep_set, model_nr):
+        import statsmodels.api as sm
+        from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
+        def calculate_grm(snp_data):
+            """ Calculate the Genomic Relationship Matrix (GRM) """
+            # Center and scale SNP data
+            snp_data = (snp_data - np.mean(snp_data, axis=0)) / np.std(snp_data, axis=0)
+            # Calculate GRM
+            grm = np.dot(snp_data, snp_data.T) / snp_data.shape[1]
+            return grm
+
+
         snp_data[np.isnan(snp_data)] = -1
 
         # Split data into training and testing sets
         X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno_data, test_size=test_size)#, random_state=42)
 
-        # # Standardize the input features
-        ### for GP scalling might be not good
-        if genomic_predict:
-            print ('no scaling')
-        else:
-            print ('scaling')
-            scaler = StandardScaler()
-            X_train = scaler.fit_transform(X_train)
-        #X_test = scaler.transform(X_test)
+        # Calculate GRM
+        K = calculate_grm(X_train)
 
-        # Define and train a Random Forest model
-        fastlmm_model = FastLMM(GB_goal=2)
-        fastlmm_model.fit(K0_train=X_train, y=y_train)
+        # Add a column of ones to X_train to represent the fixed effects (intercept)
+        X_train_with_intercept = sm.add_constant(X_train)
 
-        #mean, covariance = fastlmm.predict(K0_whole_test=X_test)
-        bed_data = bed_gp.read().iid
-        pheno_data = pheno_gp.read().iid
-        df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
-        predicted_values = fastlmm_model.predict(bed_gp.read().val)
-        df_gp['Predicted_Value'] = predicted_values
-        print (df_gp)
-
-
+        # Fit the linear mixed model
+        model = sm.MixedLM(y_train, X_train_with_intercept, groups=np.ones(len(y_train)), exog_re=np.eye(len(y_train)),
+                           re_formula="~0 + x")
+        fit = model.fit()
+    #
+    #     # # Standardize the input features
+    #     ### for GP scalling might be not good
+    #     if genomic_predict:
+    #         print ('no scaling')
+    #     else:
+    #         print ('scaling')
+    #         #scaler = StandardScaler()
+    #         #X_train = scaler.fit_transform(X_train)
+    #     #X_test = scaler.transform(X_test)
+    #     #train = snp_data[:-10, :]
+    #     #test = snp_data[-10:, :]
+    #
+    #     #print (pheno_data)
+    #
+    #     # Define and train a Random Forest model
+    #     fastlmm_model = FastLMM(GB_goal=2)
+    #     fastlmm_model.fit(X=snp_data, y=pheno_data)
+    #     print ('ok')
+    #     #mean, covariance = fastlmm_model.predict(K0_whole_test=test)
+    #
+    #
+    #     "Predicted means and stdevs"
+    #     print (mean.val[:, 0])
+    #     print (np.sqrt(np.diag(covariance.val)))
+    #
+    #     # #mean, covariance = fastlmm.predict(K0_whole_test=X_test)
+    #     # bed_data = bed_gp.read().iid
+    #     # pheno_data = pheno_gp.read().iid
+    #     # df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+    #     # predicted_values = fastlmm_model.predict(bed_gp.read().val)
+    #     # df_gp['Predicted_Value'] = predicted_values
+    #     # print (df_gp)
+    #
+    #
 
         # # Plot actual phenotype and predicted phenotype
         # whole_pheno = Pheno(pheno_fn)

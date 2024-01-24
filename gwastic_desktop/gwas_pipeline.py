@@ -182,6 +182,24 @@ class GWAS:
                     df = df
                 else:
                     df = self.helper.merge_models(dataframes)
+            elif algorithm == 'GP_LMM':
+                #dataframes = []
+                print (algorithm)
+                for i in range(model_nr):
+                    #print (i)
+                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
+                    snp_ids = df.iloc[:, 1].tolist()
+                    #df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                                                 # estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                                 # genomic_predict_name, max_dep_set, model_nr)
+                    df = self.gwas_ai.run_lmm_gp(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                                                  estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                                  genomic_predict_name, max_dep_set, model_nr)
+                    #dataframes.append(df)
+                if genomic_predict:
+                    df = df
+                #else:
+                    #df = self.helper.merge_models(dataframes)
 
             t2 = time.time()
             t3 = round((t2-t1)/ 60, 2)

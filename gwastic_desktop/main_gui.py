@@ -360,29 +360,29 @@ class GWASApp:
         max_dep_set = dpg.get_value(self.max_dep_set)
         model_nr = dpg.get_value(self.model_nr)
 
-        try:
-            bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
-            self.add_log('Reading Phenotypic file...')
-            pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
-            # Replace chromosome names, they need to be numbers
-            chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-            gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                         test_size, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, True,
-                                         self.genomic_predict_name)
+        #try:
+        bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
+        self.add_log('Reading Phenotypic file...')
+        pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+        # Replace chromosome names, they need to be numbers
+        chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+        gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+                                     test_size, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, True,
+                                     self.genomic_predict_name)
 
 
 
-            if gp_df is not None:
-                self.add_log('Genomic Prediction done.')
-                self.add_log('Genomic Prediction Plotting...')
-                self.gwas.plot_gp(gp_df, self.gp_plot_name, self.algorithm)
-                self.add_log('Done...')
-                self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
-            else:
-                self.add_log('Error, GWAS Analysis could not be started.', error=True)
+        if gp_df is not None:
+            self.add_log('Genomic Prediction done.')
+            self.add_log('Genomic Prediction Plotting...')
+            self.gwas.plot_gp(gp_df, self.gp_plot_name, self.algorithm)
+            self.add_log('Done...')
+            self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
+        else:
+            self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
-        except TypeError:
-            self.add_log('Please select a phenotype and genotype file. ', error=True)
+        #except TypeError:
+            #self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def show_results_window(self, df, algorithm, genomic_predict):
         with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
