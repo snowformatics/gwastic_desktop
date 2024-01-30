@@ -7,6 +7,9 @@ import os
 import webbrowser
 import time
 
+#poetry build
+#poetry publish
+
 def main():
     app = GWASApp()
     app.run()

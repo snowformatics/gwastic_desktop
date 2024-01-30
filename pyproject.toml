@@ -21,3 +21,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 gwastic = "gwastic_desktop.main_gui:main"
+
+[pypi]
+username = "__token__"
+password = "pypi-AgEIcHlwaS5vcmcCJDhjODhiNThmLWM5ZTUtNDc3Ny1hNzYwLTM1NjYxYTU5ZjEzOQACKlszLCI2NWNmODYyYS02MzNjLTQ5NWQtYjUyYS0zODcyZTZkYzExYmUiXQAABiBa9rV4pCgb9Yg2QsGWLzXkW_F4HcYxqSX8DJPutsnxfg"
