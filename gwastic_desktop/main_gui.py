@@ -39,7 +39,8 @@ class GWASApp:
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
-        self.default_path = self.helper.get_settings('path')
+        #self.default_path = self.helper.get_settings('path')
+        self.default_path = ""
         #self.algorithm =  self.helper.get_settings('algorithm')
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
