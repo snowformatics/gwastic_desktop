@@ -1,9 +1,9 @@
 import subprocess
 import pandas as pd
-from gwas_ai import GWASAI
+from gwastic_desktop.gwas_ai import GWASAI
 import sys
 import os
-from helpers import HELPERS
+from gwastic_desktop.helpers import HELPERS
 
 
 class GWAS:

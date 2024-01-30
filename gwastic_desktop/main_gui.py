@@ -1,8 +1,8 @@
 import dearpygui.dearpygui as dpg
 import dearpygui_ext.themes as dpg_ext
 from dearpygui_ext import logger
-from gwas_pipeline import GWAS
-from helpers import HELPERS
+from gwastic_desktop.gwas_pipeline import GWAS
+from gwastic_desktop.helpers import HELPERS
 import os
 import webbrowser
 import time
