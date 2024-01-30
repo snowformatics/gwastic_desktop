@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 from fastlmm.inference import FastLMM
 
 class GWASAI:
-    def run_random_forest(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
+    def run_random_forest(self, snp_data, pheno_data, df_bim, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
                     genomic_predict, genomic_predict_name, model_nr):
         snp_data[np.isnan(snp_data)] = -1
 
@@ -84,17 +84,19 @@ class GWASAI:
             # sorted_features_df[['Chr', 'ChrPos']] = sorted_features_df['SNP'].str.split(':', expand=True)
 
             # f = open(gwas_result_name, 'w')
+
             data = []
+            snp_ids = df_bim.iloc[:, 1].tolist()
             for col, score in zip(snp_ids, rf_model.feature_importances_):
-                #f.write(str(col) + ' ' + str(score) + '\n')
                 data.append((col, score))
             # Convert the list of tuples into a DataFrame
             df = pd.DataFrame(data, columns=['SNP', 'PValue'])
-            df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
+            df = pd.merge(df, df_bim, on='SNP', how='left')
+            del df['NA']
+            #df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
             return df
-            #return sorted_features_df
 
-    def run_xgboost(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
+    def run_xgboost(self, snp_data, pheno_data, df_bim, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
                     genomic_predict, genomic_predict_name, max_dep_set, model_nr):
 
         snp_data[np.isnan(snp_data)] = -1
@@ -155,12 +157,15 @@ class GWASAI:
 
             #f = open(gwas_result_name, 'w')
             data = []
+            snp_ids = df_bim.iloc[:, 1].tolist()
             for col, score in zip(snp_ids, xgb_model.feature_importances_):
                 #f.write(str(col) + ' ' + str(score) + '\n')
                 data.append((col, score))
             # Convert the list of tuples into a DataFrame
             df = pd.DataFrame(data, columns=['SNP', 'PValue'])
-            df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
+            df = pd.merge(df, df_bim, on='SNP', how='left')
+            del df['NA']
+            #df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
             return df
 
     def run_lmm_gp(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,

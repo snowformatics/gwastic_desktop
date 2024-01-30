@@ -10,6 +10,8 @@ import time
 #poetry build
 #poetry publish
 
+
+
 def main():
     app = GWASApp()
     app.run()
@@ -39,8 +41,8 @@ class GWASApp:
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
-        #self.default_path = self.helper.get_settings('path')
-        self.default_path = ""
+        #self.default_path = self.helper.get_settings('path') #todo add settings
+        self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
         #self.algorithm =  self.helper.get_settings('algorithm')
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
@@ -434,14 +436,16 @@ class GWASApp:
 
                     with dpg.tab(label="GWAS Results (Top 500)"):
                         df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                        #print (len(df))
+                        max_rows= len(df)
+                        if max_rows > 501:
+                            max_rows = 500
                         #df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
                                        borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas',
                                        sortable=True):
                             for i in range(df.shape[1]):
                                 dpg.add_table_column(label=df.columns[i], parent='table_gwas')
-                            for i in range(300):
+                            for i in range(max_rows):
                                 with dpg.table_row():
                                     for j in range(df.shape[1]):
                                         dpg.add_text(f"{df.iloc[i, j]}")

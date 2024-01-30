@@ -116,13 +116,12 @@ class GWAS:
         import pysnptools.util as pstutil
         import time
 
-        print (test_size, estimators, model_nr)
+        #print (test_size, estimators, model_nr)
         # First we have to validate the input files
         check_input_data = self.validate_gwas_input_files(bed_file, pheno_file)
 
         if check_input_data[0]:
             t1 = time.time()
-
             bed = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_file))
 
@@ -154,12 +153,13 @@ class GWAS:
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
 
             elif algorithm == 'Random Forest (AI)':
+
                 dataframes = []
                 for i in range(int(model_nr)):
                     #print(i)
-                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
-                    snp_ids = df.iloc[:, 1].tolist()
-                    df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                    df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+                    df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+                    df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, model_nr)
                     dataframes.append(df)
@@ -172,9 +172,9 @@ class GWAS:
                 dataframes = []
                 for i in range(model_nr):
                     #print (i)
-                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
-                    snp_ids = df.iloc[:, 1].tolist()
-                    df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                    df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+                    df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+                    df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, max_dep_set, model_nr)
                     dataframes.append(df)
@@ -187,7 +187,7 @@ class GWAS:
                 print (algorithm)
                 for i in range(model_nr):
                     #print (i)
-                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t')
+                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
                     snp_ids = df.iloc[:, 1].tolist()
                     #df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
                                                  # estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
