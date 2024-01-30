@@ -146,7 +146,7 @@ class GWASApp:
                     dpg.add_spacer(height=20)
                     dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=10)
-                    self.pvalue_set = dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue')
+                    #self.pvalue_set = dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue', enabled=False)
                     dpg.add_spacer(height=10)
                     self.leave_chr_set = dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
                     dpg.add_spacer(height=10)
@@ -190,8 +190,8 @@ class GWASApp:
                 dpg.add_text("Click to select a file with phenotype data that will be used in the GWAS analysis.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
             with dpg.tooltip("tooltip_algorithm"):
                 dpg.add_text("Select the algorithm to be used for the analysis.", color=[79, 128, 226])
-            with dpg.tooltip("tooltip_pvalue"):
-                dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows for large datasets.", color=[79, 128, 226])
+           # with dpg.tooltip("tooltip_pvalue"):
+                #dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows for large datasets.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_chrom"):
                 dpg.add_text("Perform single SNP GWAS via cross validation over the chromosomes.\nDefault to True.\nWarning: setting False can cause proximal contamination.", color=[79, 128, 226])
             #with dpg.tooltip("tooltip_stand"):
@@ -320,7 +320,7 @@ class GWASApp:
         train_size_set = (100-dpg.get_value(self.train_size_set))/100
         estimators = dpg.get_value(self.estim_set)
         model_nr = dpg.get_value(self.model_nr)
-        pvalue_set = dpg.get_value(self.pvalue_set)
+        #pvalue_set = dpg.get_value(self.pvalue_set)
         #std_set = dpg.get_value(self.std_set)
         leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
