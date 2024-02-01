@@ -18,9 +18,9 @@ class GWASAI:
         # # Standardize the input features
         ### for GP scalling might be not good
         if genomic_predict:
-            print ('no scaling')
+            pass
         else:
-            print ('scaling')
+            #print ('scaling')
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
         #X_test = scaler.transform(X_test)
@@ -105,9 +105,9 @@ class GWASAI:
         X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno_data, test_size=test_size)#, random_state=42)
 
         if genomic_predict:
-            print ('no scaling')
+            pass
         else:
-            print ('scaling')
+
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
         # # Standardize the input features

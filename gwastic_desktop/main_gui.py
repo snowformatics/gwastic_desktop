@@ -43,6 +43,7 @@ class GWASApp:
         self.pheno_app_data = None
         #self.default_path = self.helper.get_settings('path') #todo add settings
         self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
+        self.default_path = "Z:/PrimedPlant_Plant2030/"
         #self.algorithm =  self.helper.get_settings('algorithm')
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"

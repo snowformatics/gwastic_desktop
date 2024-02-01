@@ -153,10 +153,9 @@ class GWAS:
                 df['Chr'] = df['Chr'].replace(exchanged_dict)
 
             elif algorithm == 'Random Forest (AI)':
-
                 dataframes = []
                 for i in range(int(model_nr)):
-                    #print(i)
+                    add_log('Model Iteration: ' + str(i +1))
                     df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
                     df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
                     df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
@@ -168,10 +167,11 @@ class GWAS:
                     df = df
                 else:
                     df = self.helper.merge_models(dataframes)
+                #df = df.sort_values(by='PValue', ascending=False)
             elif algorithm == 'XGBoost (AI)':
                 dataframes = []
                 for i in range(model_nr):
-                    #print (i)
+                    add_log('Model Iteration: ' + str(i + 1))
                     df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
                     df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
                     df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
@@ -182,6 +182,10 @@ class GWAS:
                     df = df
                 else:
                     df = self.helper.merge_models(dataframes)
+                #print (df)
+                #df = df.sort_values(by='PValue', ascending=False)
+                #print(df)
+
             elif algorithm == 'GP_LMM':
                 #dataframes = []
                 print (algorithm)
@@ -203,6 +207,8 @@ class GWAS:
 
             t2 = time.time()
             t3 = round((t2-t1)/ 60, 2)
+            if algorithm == 'XGBoost (AI)' or algorithm == 'Random Forest (AI)':
+                df = df.sort_values(by='PValue', ascending=False)
             df.to_csv(gwas_result_name, index=0)
             add_log('Final run time (minutes): ' + str(t3))
             return df
@@ -260,6 +266,7 @@ class GWAS:
             # sign_limit = sign_limit.tail(1)
             # sign_limit = float(sign_limit['PValue'])
             # print (sign_limit)
+            df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
             #print(df)
