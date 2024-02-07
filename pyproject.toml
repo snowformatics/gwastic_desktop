@@ -14,6 +14,7 @@ fastlmm = "0.6.7"
 geneview = "0.2.1"
 matplotlib = "3.8.0"
 xgboost = "2.0.0"
+scikit-learn="1.4.0"
 
 [build-system]
 requires = ["poetry-core"]

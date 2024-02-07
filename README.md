@@ -5,9 +5,10 @@ GWAStic is a software for Genome-Wide Association Study (GWAS) that combines tra
 ![ALT TEXT](https://github.com/snowformatics/gwastic_desktop/blob/e0743e1f67e5300d083a96441bbf505b5d7a7696/gwastic_desktop/images/gui.PNG)
 
 ## Table of Contents  
-- [Installation](#1-installation)  
+- [Installation](#1-installation) 
+- [Documentation](#1-installation)  
 - [References](#2-references)  
-- [Documentation](#3-documentation)  
+- [Acknowledgment](https://snowformatics.gitbook.io/product-docs/)  
 
 
 Key Features:
@@ -84,8 +85,10 @@ Then install GWAStic via pip:
  Daly MJ & Sham PC (in press) PLINK: a toolset for whole-genome association and population-based linkage analysis. American Journal of Human Genetics.
 
  2.2 -  Lippert, C., Listgarten, J., Liu, Y. et al. FaST linear mixed models for genome-wide association studies. Nat Methods 8, 833–835 (2011). https://doi.org/10.1038/nmeth.1681
-# 3. Documentation
-[Online Documentation](https://snowformatics.gitbook.io/product-docs/)
+
+# 3. Acknowledgment
+Gwastic has incorporated the FaST-LMM library (fastlmm.github.io), to enhance its Linear Mixed Models (LMM) feature. 
+We thank Carl Kadie and David Heckerman for not only creating this exceptional tool but also providing outstanding support and discussions.
 
 
 

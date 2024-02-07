@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.metrics import accuracy_score, mean_squared_error
 from fastlmm.inference import FastLMM
 
+
 class GWASAI:
     def run_random_forest(self, snp_data, pheno_data, df_bim, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
                     genomic_predict, genomic_predict_name, model_nr):

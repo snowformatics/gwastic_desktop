@@ -208,7 +208,10 @@ class GWAS:
             t2 = time.time()
             t3 = round((t2-t1)/ 60, 2)
             if algorithm == 'XGBoost (AI)' or algorithm == 'Random Forest (AI)':
-                df = df.sort_values(by='PValue', ascending=False)
+                if genomic_predict:
+                    df = df.sort_values(by='Pheno_Value', ascending=False)
+                else:
+                    df = df.sort_values(by='PValue', ascending=False)
             df.to_csv(gwas_result_name, index=0)
             add_log('Final run time (minutes): ' + str(t3))
             return df

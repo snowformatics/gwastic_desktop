@@ -286,6 +286,8 @@ class GWASApp:
         dpg.delete_item("table_gwas")
         dpg.delete_item("table_gp")
         dpg.delete_item("ba_tag")
+        dpg.delete_item("ba_image")
+
 
         # delete files
         file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name, self.gp_plot_name,
