@@ -128,6 +128,7 @@ class GWAS:
             if genomic_predict:
                 bed_gp = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
                 pheno_gp = Pheno(str(pheno_file))
+
             else:
                 bed_gp = None
                 pheno_gp = None
@@ -174,6 +175,7 @@ class GWAS:
                     add_log('Model Iteration: ' + str(i + 1))
                     df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
                     df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+                    #print(pheno_gp.iid[0:10], bed_gp.iid[0:10])
                     df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, max_dep_set, model_nr)
