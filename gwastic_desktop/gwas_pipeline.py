@@ -146,12 +146,10 @@ class GWAS:
 
             if algorithm == 'FaST-LMM':
                 df = single_snp(bed_fixed, pheno, leave_out_one_chrom=leave_chr_set, output_file_name=gwas_result_name)
-                exchanged_dict = {v: k for k, v in chrom_mapping.items()}
-                df['Chr'] = df['Chr'].replace(exchanged_dict)
+
             elif algorithm == 'Linear regression':
                 df = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
-                exchanged_dict = {v: k for k, v in chrom_mapping.items()}
-                df['Chr'] = df['Chr'].replace(exchanged_dict)
+
 
             elif algorithm == 'Random Forest (AI)':
                 dataframes = []
@@ -162,6 +160,7 @@ class GWAS:
                     df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, model_nr)
+                    df['Chr'] = df['Chr'].replace(chrom_mapping)
                     dataframes.append(df)
                 # We merge the models and calculate the sum effect
                 if genomic_predict:
@@ -179,6 +178,9 @@ class GWAS:
                     df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, max_dep_set, model_nr)
+
+                    df['Chr'] = df['Chr'].replace(chrom_mapping)
+
                     dataframes.append(df)
                 if genomic_predict:
                     df = df
@@ -190,7 +192,7 @@ class GWAS:
 
             elif algorithm == 'GP_LMM':
                 #dataframes = []
-                print (algorithm)
+
                 for i in range(model_nr):
                     #print (i)
                     df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
@@ -214,13 +216,23 @@ class GWAS:
                     df = df.sort_values(by='Pheno_Value', ascending=False)
                 else:
                     df = df.sort_values(by='PValue', ascending=False)
+
+
+            df.dropna(subset=['PValue'], inplace=True)
+            # we create one df for the plotting with ints as chr
+            df_plot = df.copy(deep=True)
+
+            if len(chrom_mapping) > 0:
+                reversed_chrom_map = {value: key for key, value in chrom_mapping.items()}
+                df["Chr"] = df["Chr"].apply(lambda x: reversed_chrom_map[x])
+
             df.to_csv(gwas_result_name, index=0)
             add_log('Final run time (minutes): ' + str(t3))
-            return df
+            return df, df_plot
         else:
             add_log(check_input_data[1], error=True)
 
-    def plot_gwas(self, df, limit, algorithm, manhatten_plot_name, qq_plot_name):
+    def plot_gwas(self, df, limit, algorithm, manhatten_plot_name, qq_plot_name, chrom_mapping):
         """Manhatten and qq-plot."""
         import matplotlib.pyplot as plt
         import geneview as gv
@@ -232,6 +244,8 @@ class GWAS:
             # sign_limit = sign_limit.tail(1)
             # sign_limit = float(sign_limit['PValue'])
             df = df.sort_values(by=['Chr', 'ChrPos'])
+            #print (df)
+
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
 
@@ -248,9 +262,14 @@ class GWAS:
 
             # Create a manhattan plot
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
-            #xtick = set(["chr" + i for i in list(map(str, chr_names))])
+            #print (chrom_mapping)
+            #flipped_dict = {value: key for key, value in chrom_mapping.items()}
+            #print (flipped_dict)
+            #print(chrom_mapping)
+            #xtick = set(["chr" + i for i in list(map(str, range(1, 23)))])
+            #print (xtick )
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
-                              sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n', #xtick_label_set=xtick,
+                              sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n',# xtick_label_set=xtick,
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
                               hline_kws={"linestyle": "--", "lw": 1.3},#, sign_marker_p=1e-9, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
@@ -259,11 +278,14 @@ class GWAS:
 
             # Create QQ plot
             f, ax = plt.subplots(figsize=(6, 6), facecolor="w", edgecolor="k")
+            #
+
             _ = gv.qqplot(data=df["PValue"], marker="o", title="GWAS QQ Plot " + algorithm + '\n',
                           xlabel=r"Expected $-log_{10}{(P)}$", ylabel=r"Observed $-log_{10}{(P)}$", ax=ax)
-            #ax.set(ylim=(0, 20), xlim=(0, 20))
+            # #ax.set(ylim=(0, 20), xlim=(0, 20))
             plt.tight_layout(pad=1)
             plt.savefig(qq_plot_name)
+
 
         else:
             # sign_limit = df.nlargest(5, 'PValue')

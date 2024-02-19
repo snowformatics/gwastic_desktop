@@ -342,14 +342,15 @@ class GWASApp:
             pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-            gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+            #print (chrom_mapping)
+            gwas_df, df_plot = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
                                            train_size_set, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, False, None)
-            print (gwas_df)
-            gwas_df.to_csv('out.csv')
+
+            #gwas_df.to_csv('out.csv')
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
-                self.gwas.plot_gwas(gwas_df, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name)
+                self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
                 self.add_log('Done...')
                 self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
 

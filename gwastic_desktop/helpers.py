@@ -24,7 +24,9 @@ class HELPERS:
                 col1_value = parts[0]
                 try:
                     col1_value = int(col1_value)
+
                 except ValueError:
+
                     # Check if the string in column 1 is already mapped to an integer
                     if col1_value in mapping:
                         parts[0] = str(mapping[col1_value])
@@ -33,6 +35,7 @@ class HELPERS:
                         mapping[col1_value] = current_integer
                         parts[0] = str(current_integer)
                         current_integer += 1
+
         return mapping
 
     def get_timestamp(self):
