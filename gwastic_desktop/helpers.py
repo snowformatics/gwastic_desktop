@@ -84,6 +84,17 @@ class HELPERS:
             shutil.copyfile(os.path.join(current_dir, genomic_predict_name),
                             os.path.join(save_dir, genomic_predict_name))
             shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
+
+        elif algorithm == "Random Forest (AI)":
+            shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
+            df = pd.read_csv(gwas_result_name)
+            first_10000_rows = df.head(10000)
+            first_10000_rows.to_csv(gwas_result_name_top, index=False)
+
+            shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
+            shutil.copyfile(os.path.join(current_dir, gwas_result_name_top),
+                            os.path.join(save_dir, gwas_result_name_top))
+
         else:
             shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
             # We store also a trimmed version of single_snp with 10000 SNPs
@@ -94,8 +105,10 @@ class HELPERS:
             shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
             shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
 
-            if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+            if algorithm == "FaST-LMM" or algorithm == "Linear regression":
                 shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
+            elif algorithm == "Random Forest (AI)":
+                pass
 
 
         # try:
@@ -127,6 +140,7 @@ class HELPERS:
         df_result = df_result.rename(columns={'Predicted_Value_y': 'Mean_Predicted_Value'})
         df_result['Difference'] = (df_result['Pheno_Value'] - df_result['Mean_Predicted_Value']).abs()
         df_result['Difference'] = df_result['Difference'].round(5)
+        df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(5)
         df_result.to_csv('out.csv')
 
 
