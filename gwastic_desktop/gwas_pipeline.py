@@ -1,11 +1,14 @@
 import subprocess
 import pandas as pd
-from gwastic_desktop.gwas_ai import GWASAI
 import sys
 import os
 from gwastic_desktop.helpers import HELPERS
-
-
+from gwastic_desktop.gwas_ai import GWASAI
+from fastlmm.association import single_snp, single_snp_linreg
+from pysnptools.snpreader import Bed, Pheno
+import pysnptools.util as pstutil
+import time
+from fastlmm.inference import FastLMM
 class GWAS:
     """GWAS class."""
 
@@ -71,7 +74,7 @@ class GWAS:
         bed_fixed = bed[:, ~all_nan]
         return bed_fixed
 
-    def validate_gwas_input_files(self, bed_file, pheno_file):
+    def validate_gwas_input_files(self, bed_file, pheno_file, ):
         """Validate the input file.
         Phenotypic file must be ID_space_ID_value.
         fam file ids must match phenotype ids."""
@@ -109,13 +112,86 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
+
+
+
+    def run_gwas_lmm(self, bed_fixed, pheno, chrom_mapping, add_log, leave_chr_set, gwas_result_name, algorithm):
+        t1 = time.time()
+        if algorithm == 'FaST-LMM':
+            df_lmm_gwas = single_snp(bed_fixed, pheno, leave_out_one_chrom=leave_chr_set, output_file_name=gwas_result_name)
+
+        elif algorithm == 'Linear regression':
+            df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
+
+        df_lmm_gwas.dropna(subset=['PValue'], inplace=True)
+        # we create one df for the plotting with ints as chr
+        df_plot = df_lmm_gwas.copy(deep=True)
+
+        if len(chrom_mapping) > 0:
+            reversed_chrom_map = {value: key for key, value in chrom_mapping.items()}
+            df_lmm_gwas["Chr"] = df_lmm_gwas["Chr"].apply(lambda x: reversed_chrom_map[x])
+
+        df_lmm_gwas.to_csv(gwas_result_name, index=0)
+        t2 = time.time()
+        t3 = round((t2 - t1) / 60, 2)
+        add_log('Final run time (minutes): ' + str(t3))
+        return df_lmm_gwas, df_plot
+
+    def run_lmm_gp(self, bed_path, pheno_path, bed_fixed, pheno, gwas_result_name, model_nr):
+        from sklearn.model_selection import KFold
+
+        df_snps = pd.read_csv(bed_path.replace('bed', 'bim'), delimiter='\t', header=None)
+        #snp_ids = df_snps.iloc[:, 1].tolist()
+        #df_lmm_gp = self.gwas_ai.run_lmm_gp(bed_fixed, pheno, gwas_result_name, None, None, model_nr)
+
+        kf = KFold(n_splits=model_nr + 1)
+
+        results = []
+        # counter = 1
+        # Start cross-validation
+        for train_indices, test_indices in kf.split(range(bed_fixed.iid_count)):
+            # Split data into training and testing
+
+            train = bed_fixed[train_indices, :]
+            #test = bed_fixed[test_indices, :]
+
+            # Train the model
+            fastlmm = FastLMM(GB_goal=2)
+            fastlmm.fit(K0_train=train, y=pheno)
+
+            # Test the model
+            mean, covariance = fastlmm.predict(K0_whole_test=bed_fixed)
+            df = pd.DataFrame({'Column1': mean.val[:, 0], 'Column2': mean.iid[:, 0]})
+            # df.to_csv(str(counter) + '_lmm_gp_priming2.csv', index=False)
+            # counter += 1
+            #print(df)
+            #print (pheno, pheno_path)
+
+            bed_data = bed_fixed.iid
+            pheno_data2 = pheno.iid
+            df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+            predicted_values = df['Column1']
+            df_gp['Predicted_Value'] = predicted_values
+
+            df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
+            df_pheno['Pheno_Value'] = pheno.read().val
+            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            #merged_df['Difference'] = (merged_df['Pheno_Value'] - merged_df['Predicted_Value']).abs()
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(5)
+            #merged_df['Difference'] = merged_df['Difference'].round(5)
+            results.append(merged_df)
+            #print(merged_df)
+        df_all = self.helper.merge_gp_models(results)
+        df_all.to_csv(gwas_result_name, index=False)
+        return df_all
+
+
+
     def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, model_nr, estimators, leave_chr_set,
                    max_dep_set, gwas_result_name, genomic_predict, genomic_predict_name):
-        from fastlmm.association import single_snp, single_snp_linreg
-        from pysnptools.snpreader import Bed, Pheno
-        import pysnptools.util as pstutil
-        import time
 
+        #print (chrom_mapping)
         #print (test_size, estimators, model_nr)
         # First we have to validate the input files
         check_input_data = self.validate_gwas_input_files(bed_file, pheno_file)
@@ -178,13 +254,15 @@ class GWAS:
                     df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, max_dep_set, model_nr)
-
-                    df['Chr'] = df['Chr'].replace(chrom_mapping)
+                    #print (df)
+                    #df['Chr'] = df['Chr'].replace(chrom_mapping)
 
                     dataframes.append(df)
                 if genomic_predict:
                     df = df
+                    print (df)
                 else:
+                    df['Chr'] = df['Chr'].replace(chrom_mapping)
                     df = self.helper.merge_models(dataframes)
                 #print (df)
                 #df = df.sort_values(by='PValue', ascending=False)
@@ -193,16 +271,16 @@ class GWAS:
             elif algorithm == 'GP_LMM':
                 #dataframes = []
 
-                for i in range(model_nr):
+                #for i in range(model_nr):
                     #print (i)
-                    df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
-                    snp_ids = df.iloc[:, 1].tolist()
-                    #df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                                 # estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
-                                                 # genomic_predict_name, max_dep_set, model_nr)
-                    df = self.gwas_ai.run_lmm_gp(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
-                                                  estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
-                                                  genomic_predict_name, max_dep_set, model_nr)
+                df = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+                snp_ids = df.iloc[:, 1].tolist()
+                #df = self.gwas_ai.run_xgboost(bed_fixed.read().val, pheno.read().val, snp_ids, test_size,
+                                             # estimators, str(i) + gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                             # genomic_predict_name, max_dep_set, model_nr)
+                df = self.gwas_ai.run_lmm_gp(bed_fixed, pheno, snp_ids, test_size,
+                                              estimators,gwas_result_name, bed_gp, pheno_gp, genomic_predict,
+                                              genomic_predict_name, max_dep_set, model_nr)
                     #dataframes.append(df)
                 if genomic_predict:
                     df = df
@@ -211,14 +289,16 @@ class GWAS:
 
             t2 = time.time()
             t3 = round((t2-t1)/ 60, 2)
-            if algorithm == 'XGBoost (AI)' or algorithm == 'Random Forest (AI)':
+            if algorithm == 'XGBoost (AI)' or algorithm == 'Random Forest (AI)' or algorithm == 'GP_LMM':
                 if genomic_predict:
                     df = df.sort_values(by='Pheno_Value', ascending=False)
+                    #df.dropna(subset=['Pheno_Value'], inplace=True)
                 else:
                     df = df.sort_values(by='PValue', ascending=False)
+                    #df.dropna(subset=['PValue'], inplace=True)
 
 
-            df.dropna(subset=['PValue'], inplace=True)
+            print (df)
             # we create one df for the plotting with ints as chr
             df_plot = df.copy(deep=True)
 
@@ -296,10 +376,7 @@ class GWAS:
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
-            #print(df)
-            #print (type(df))
-            #print(df.dtypes)
-            #print (df.info())
+
 
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
             _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
@@ -317,29 +394,55 @@ class GWAS:
         plt.title('Phenotype Distribution')
         plt.show()
 
-    def plot_gp(self, data, gp_plot_name, algorithm):
+    def plot_gp(self, df, gp_plot_name, algorithm):
         """Bland-Altman Plot for the real and predicted phenotype values."""
         import matplotlib.pyplot as plt
         import numpy as np
 
-        # Calculate means and differences
-        means = (data['Predicted_Value'] + data['Pheno_Value']) / 2
-        differences = data['Predicted_Value'] - data['Pheno_Value']
-        mean_difference = np.mean(differences)
-        std_difference = np.std(differences)
+        # Calculate mean and difference (redundant here, but for demonstration)
+        df['Mean'] = (df['Pheno_Value'] + df['Mean_Predicted_Value']) / 2
+        df['Difference'] = df['Pheno_Value'] - df['Mean_Predicted_Value']
 
-        # Plotting the Bland-Altman plot
+        # Plotting the Bland-Altman Plot
         plt.figure(figsize=(10, 6))
-        plt.scatter(means, differences, color='blue')
-        plt.axhline(mean_difference, color='red', linestyle='--', label='Mean Difference')
-        plt.axhline(mean_difference + 1.96 * std_difference, color='green', linestyle='--', label='Upper Limit of Agreement')
-        plt.axhline(mean_difference - 1.96 * std_difference, color='green', linestyle='--', label='Lower Limit of Agreement')
+        plt.scatter(df['Mean'], df['Difference'], color='blue')
+
+        # Calculate and plot the mean difference
+        mean_diff = df['Difference'].mean()
+        plt.axhline(mean_diff, color='red', linestyle='--')
+
+        # Calculate and plot the limits of agreement
+        std_diff = df['Difference'].std()
+        #upper_limit = mean_diff + 1.96 * std_diff
+        #lower_limit = mean_diff - 1.96 * std_diff
+        plt.axhline(mean_diff, color='red', linestyle='--', label='Mean Difference')
+        plt.axhline(mean_diff + 1.96 * std_diff, color='green', linestyle='--', label='Upper Limit of Agreement')
+        plt.axhline(mean_diff - 1.96 * std_diff, color='green', linestyle='--', label='Lower Limit of Agreement')
         plt.xlabel('Mean Value')
         plt.ylabel('Difference')
         plt.title('Bland-Altman Plot (' + algorithm + ')')
         plt.legend()
         plt.tight_layout(pad=1)
         plt.savefig(gp_plot_name)
+
+        # # Calculate means and differences
+        # means = (data['Mean_Predicted_Value'] + data['Pheno_Value']) / 2
+        # differences = data['Mean_Predicted_Value'] - data['Pheno_Value']
+        # mean_difference = np.mean(differences)
+        # std_difference = np.std(differences)
+        #
+        # # Plotting the Bland-Altman plot
+        # plt.figure(figsize=(10, 6))
+        # plt.scatter(means, differences, color='blue')
+        # plt.axhline(mean_difference, color='red', linestyle='--', label='Mean Difference')
+        # plt.axhline(mean_difference + 1.96 * std_difference, color='green', linestyle='--', label='Upper Limit of Agreement')
+        # plt.axhline(mean_difference - 1.96 * std_difference, color='green', linestyle='--', label='Lower Limit of Agreement')
+        # plt.xlabel('Mean Value')
+        # plt.ylabel('Difference')
+        # plt.title('Bland-Altman Plot (' + algorithm + ')')
+        # plt.legend()
+        # plt.tight_layout(pad=1)
+        # plt.savefig(gp_plot_name)
         #plt.show()
 
         # data = data.sort_values(by='Difference', ascending=False)

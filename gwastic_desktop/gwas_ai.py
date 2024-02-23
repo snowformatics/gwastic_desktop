@@ -169,100 +169,45 @@ class GWASAI:
             #df[['Chr', 'ChrPos']] = df['SNP'].str.split(':', expand=True)
             return df
 
-    def run_lmm_gp(self, snp_data, pheno_data, snp_ids, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
-                    genomic_predict, genomic_predict_name, max_dep_set, model_nr):
-        import statsmodels.api as sm
-        from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
-        def calculate_grm(snp_data):
-            """ Calculate the Genomic Relationship Matrix (GRM) """
-            # Center and scale SNP data
-            snp_data = (snp_data - np.mean(snp_data, axis=0)) / np.std(snp_data, axis=0)
-            # Calculate GRM
-            grm = np.dot(snp_data, snp_data.T) / snp_data.shape[1]
-            return grm
-
-
-        snp_data[np.isnan(snp_data)] = -1
-
-        # Split data into training and testing sets
-        X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno_data, test_size=test_size)#, random_state=42)
-
-        # Calculate GRM
-        K = calculate_grm(X_train)
-
-        # Add a column of ones to X_train to represent the fixed effects (intercept)
-        X_train_with_intercept = sm.add_constant(X_train)
-
-        # Fit the linear mixed model
-        model = sm.MixedLM(y_train, X_train_with_intercept, groups=np.ones(len(y_train)), exog_re=np.eye(len(y_train)),
-                           re_formula="~0 + x")
-        fit = model.fit()
+    # def run_lmm_gp(self, snp_data, pheno_data, gwas_result_name, bed_gp, pheno_gp,
+    #                  model_nr):
+    #     from sklearn.model_selection import KFold
+    #     kf = KFold(n_splits=model_nr + 1)
+    #     print (pheno_data)
+    #     results = []
+    #     #counter = 1
+    #     # Start cross-validation
+    #     for train_indices, test_indices in kf.split(range(snp_data.iid_count)):
+    #         # Split data into training and testing
     #
-    #     # # Standardize the input features
-    #     ### for GP scalling might be not good
-    #     if genomic_predict:
-    #         print ('no scaling')
-    #     else:
-    #         print ('scaling')
-    #         #scaler = StandardScaler()
-    #         #X_train = scaler.fit_transform(X_train)
-    #     #X_test = scaler.transform(X_test)
-    #     #train = snp_data[:-10, :]
-    #     #test = snp_data[-10:, :]
+    #         train = snp_data[train_indices, :]
+    #         test = snp_data[test_indices, :]
     #
-    #     #print (pheno_data)
+    #         # Train the model
+    #         fastlmm = FastLMM(GB_goal=2)
+    #         fastlmm.fit(K0_train=train, y=pheno_data)
     #
-    #     # Define and train a Random Forest model
-    #     fastlmm_model = FastLMM(GB_goal=2)
-    #     fastlmm_model.fit(X=snp_data, y=pheno_data)
-    #     print ('ok')
-    #     #mean, covariance = fastlmm_model.predict(K0_whole_test=test)
+    #         # Test the model
+    #         mean, covariance = fastlmm.predict(K0_whole_test=snp_data)
+    #         df = pd.DataFrame({'Column1': mean.val[:, 0], 'Column2': mean.iid[:, 0]})
+    #         #df.to_csv(str(counter) + '_lmm_gp_priming2.csv', index=False)
+    #         #counter += 1
+    #         print(df)
     #
+    #         bed_data = bed_gp.read().iid
+    #         pheno_data2 = pheno_gp.read().iid
+    #         df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+    #         predicted_values = df['Column1']
+    #         df_gp['Predicted_Value'] = predicted_values
     #
-    #     "Predicted means and stdevs"
-    #     print (mean.val[:, 0])
-    #     print (np.sqrt(np.diag(covariance.val)))
+    #         df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
+    #         df_pheno['Pheno_Value'] = pheno_gp.read().val
+    #         merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+    #         merged_df['Difference'] = (merged_df['Pheno_Value'] - merged_df['Predicted_Value']).abs()
+    #         merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+    #         merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(5)
+    #         merged_df['Difference'] = merged_df['Difference'].round(5)
+    #         results.append(merged_df)
+    #         print (merged_df)
+    #     return results
     #
-    #     # #mean, covariance = fastlmm.predict(K0_whole_test=X_test)
-    #     # bed_data = bed_gp.read().iid
-    #     # pheno_data = pheno_gp.read().iid
-    #     # df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
-    #     # predicted_values = fastlmm_model.predict(bed_gp.read().val)
-    #     # df_gp['Predicted_Value'] = predicted_values
-    #     # print (df_gp)
-    #
-    #
-
-        # # Plot actual phenotype and predicted phenotype
-        # whole_pheno = Pheno(pheno_fn)
-        # actual_pheno = whole_pheno[whole_pheno.iid_to_index(mean.iid), :].read()
-        # pylab.plot(actual_pheno.val, "r.")
-        # pylab.plot(mean.val, "b.")
-        # pylab.errorbar(np.arange(mean.iid_count), mean.val, yerr=np.sqrt(np.diag(covariance.val)), fmt='.')
-        # pylab.xlabel('testing examples')
-        # pylab.ylabel('phenotype, actual (red) and predicted (blue with stdev)')
-        # pylab.show()
-
-
-
-        #
-        # if genomic_predict:
-        #     bed_data = bed_gp.read().iid
-        #     pheno_data = pheno_gp.read().iid
-        #     df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
-        #     predicted_values = rf_model.predict(bed_gp.read().val)
-        #     df_gp['Predicted_Value'] = predicted_values
-        #     #print (df_gp)
-        #     df_pheno = pd.DataFrame(pheno_data, columns=['ID1', 'Pheno_ID2'])
-        #     df_pheno['Pheno_Value'] = pheno_gp.read().val
-        #
-        #     merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
-        #     merged_df['Difference'] = (merged_df['Pheno_Value'] - merged_df['Predicted_Value']).abs()
-        #     merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
-        #     merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(3)
-        #     merged_df['Difference'] = merged_df['Difference'].round(3)
-        #     merged_df.to_csv(genomic_predict_name, sep=';', index=False)
-        #     return merged_df
-
-
-

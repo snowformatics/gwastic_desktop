@@ -69,19 +69,22 @@ class HELPERS:
         return default_path
 
     def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name,
-                     qq_plot_name, algorithm, genomic_predict_name, gp_plot_name):
+                     qq_plot_name, algorithm, genomic_predict_name, gp_plot_name, add_log):
         """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
 
-        os.mkdir(os.path.join(save_dir, ts))
+        try:
+            os.mkdir(os.path.join(save_dir, ts))
+        except OSError:
+            self.add_log('Can not create folder. Please select a valid directory.')
+
         save_dir = os.path.join(save_dir, ts)
 
-        try:
-            shutil.copyfile(os.path.join(current_dir, genomic_predict_name), os.path.join(save_dir, genomic_predict_name))
+        if algorithm == 'GP_LMM':
+            shutil.copyfile(os.path.join(current_dir, genomic_predict_name),
+                            os.path.join(save_dir, genomic_predict_name))
             shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
-
-
-        except FileNotFoundError:
+        else:
             shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
             # We store also a trimmed version of single_snp with 10000 SNPs
             df = pd.read_csv(gwas_result_name)
@@ -93,13 +96,51 @@ class HELPERS:
 
             if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
                 shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
+
+
+        # try:
+        #     shutil.copyfile(os.path.join(current_dir, genomic_predict_name), os.path.join(save_dir, genomic_predict_name))
+        #     shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
+        #
+        #
+        # except FileNotFoundError:
+        #     shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
+        #     # We store also a trimmed version of single_snp with 10000 SNPs
+        #     df = pd.read_csv(gwas_result_name)
+        #     first_10000_rows = df.head(10000)
+        #     first_10000_rows.to_csv(gwas_result_name_top, index=False)
+        #
+        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
+        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
+        #
+        #     if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
+        #         shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
         return save_dir
+
+    def merge_gp_models(self, dataframes):
+        df_combined = pd.concat(dataframes)
+        #print (dataframes[0])
+        #print(dataframes[1])
+        df_result = df_combined.groupby(['ID1', 'BED_ID2'])['Predicted_Value'].mean().reset_index()
+        df_result = pd.merge(dataframes[0], df_result, on='ID1', how='left')
+        df_result = df_result.drop(['Predicted_Value_x', 'BED_ID2_y', 'Pheno_ID2'], axis=1)
+        df_result = df_result.rename(columns={'Predicted_Value_y': 'Mean_Predicted_Value'})
+        df_result['Difference'] = (df_result['Pheno_Value'] - df_result['Mean_Predicted_Value']).abs()
+        df_result['Difference'] = df_result['Difference'].round(5)
+        df_result.to_csv('out.csv')
+
+
+        #print('ok', df_result)
+
+        #print (df_result)
+        return df_result
+
 
     def merge_models(self, dataframes):
         """Combine RF or XG models and calculate the sum of the SNP effect."""
         df_combined = pd.concat(dataframes)
         df_combined = df_combined[df_combined['PValue'] > 0]
-        df_combined.to_csv('out.csv')
+        #df_combined.to_csv('out.csv')
         # Grouping by 'snp' and summing the values
         df2 = df_combined.groupby('SNP')['PValue'].sum().reset_index()
         #print (df2)

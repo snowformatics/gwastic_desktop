@@ -118,7 +118,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose Phenotype",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)"],
+                    self.gwas_gp = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM'],
                                   indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
@@ -226,8 +226,11 @@ class GWASApp:
     def callback_bed(self, sender, app_data):
         """Get vcf file path selected from the user."""
         self.bed_app_data = app_data
-        bed_path, current_path = self.get_selection_path(self.bed_app_data)
-        self.add_log('BED file Selected: ' + bed_path)
+        try:
+            bed_path, current_path = self.get_selection_path(self.bed_app_data)
+            self.add_log('BED file Selected: ' + bed_path)
+        except TypeError:
+            self.add_log('Invalid BED file Selected', error=True)
 
     def callback_variants(self, sender, app_data):
         """Get variant file path selected from the user."""
@@ -256,13 +259,16 @@ class GWASApp:
     def callback_save_results(self, sender, app_data):
         """Save the results inside the folder including tables as csv and plots as png. """
         self.results_directory = app_data
-        try:
-            results_path, current_path = self.get_selection_path(self.results_directory)
-            save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
-                                     self.manhatten_plot_name, self.qq_plot_name, self.algorithm, self.genomic_predict_name, self.gp_plot_name)
-            self.add_log('Results saved in: ' + save_dir)
-        except TypeError:
-            self.add_log('Please select a valid directory.', error=True)
+        #print(self.results_directory)
+       # try:
+
+        results_path, current_path = self.get_selection_path(self.results_directory)
+        save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
+                                 self.manhatten_plot_name, self.qq_plot_name, self.algorithm,
+                                            self.genomic_predict_name, self.gp_plot_name, self.add_log)
+        self.add_log('Results saved in: ' + save_dir)
+        #except TypeError:
+            #self.add_log('Please select a valid directory.', error=True)
 
     def cancel_callback_directory(self, sender, app_data):
         self.add_log('Process Canceled')
@@ -322,8 +328,10 @@ class GWASApp:
         self.add_log(plink_log)
 
     def run_gwas(self, sender, data, user_data):
+        from pysnptools.snpreader import Bed, Pheno
+        import pysnptools.util as pstutil
         self.delete_files(genomic_predict = False)
-        self.add_log('Reading Bed file...')
+        #self.add_log('Reading Bed file...')
 
         # Get all settings
         train_size_set = (100-dpg.get_value(self.train_size_set))/100
@@ -334,17 +342,41 @@ class GWASApp:
         leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
-
+        #print (self.algorithm)
 
         try:
+            self.add_log('Reading files...')
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
-            self.add_log('Reading Phenotypic file...')
             pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+            self.add_log('Validating files...')
+            check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
             # Replace chromosome names, they need to be numbers
             chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-            #print (chrom_mapping)
-            gwas_df, df_plot = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                           train_size_set, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, False, None)
+            if check_input_data[0]:
+                bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
+                pheno = Pheno(str(pheno_path))
+                # replace original bed with one that has the same iids as the pheno
+                bed, pheno = pstutil.intersect_apply([bed, pheno])
+                bed_fixed = self.gwas.filter_out_missing(bed)
+
+                # format numbers with commas and no decimals
+                s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
+                    pheno.iid_count)
+                self.add_log(s3, warn=True)
+                # run single_snp with the fixed file
+                self.add_log('Starting Analysis, this might take a while...')
+
+                if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
+                    gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log,
+                                                             leave_chr_set, self.gwas_result_name, self.algorithm)
+                #elif self.algorithm == 'GP_LMM':
+                    #gwas_df, df_plot =self.gwas.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name)
+            else:
+                self.add_log(check_input_data[1], error=True)
+
+            # else:
+            #     gwas_df, df_plot = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+            #                                    train_size_set, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, False, None)
 
             #gwas_df.to_csv('out.csv')
             if gwas_df is not None:
@@ -361,6 +393,9 @@ class GWASApp:
             self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def run_genomic_prediction(self, sender, data, user_data):
+        from pysnptools.snpreader import Bed, Pheno
+        import pysnptools.util as pstutil
+
         self.delete_files(genomic_predict = True)
         self.add_log('Reading Bed file...')
 
@@ -372,15 +407,41 @@ class GWASApp:
         max_dep_set = dpg.get_value(self.max_dep_set)
         model_nr = dpg.get_value(self.model_nr)
 
-        #try:
+        self.add_log('Reading files...')
         bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
-        self.add_log('Reading Phenotypic file...')
         pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+        self.add_log('Validating files...')
+        check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
         # Replace chromosome names, they need to be numbers
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-        gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                     test_size, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, True,
-                                     self.genomic_predict_name)
+        if check_input_data[0]:
+            bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
+            pheno = Pheno(str(pheno_path))
+            # replace original bed with one that has the same iids as the pheno
+            bed, pheno = pstutil.intersect_apply([bed, pheno])
+            bed_fixed = self.gwas.filter_out_missing(bed)
+
+            # format numbers with commas and no decimals
+            s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
+                pheno.iid_count)
+            self.add_log(s3, warn=True)
+            # run single_snp with the fixed file
+            self.add_log('Starting Analysis, this might take a while...')
+
+            if self.algorithm == 'GP_LMM':
+                gp_df = self.gwas.run_lmm_gp(bed_path, pheno_path, bed_fixed, pheno, self.genomic_predict_name, model_nr)
+        else:
+            self.add_log(check_input_data[1], error=True)
+
+        # #try:
+        # bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
+        # self.add_log('Reading Phenotypic file...')
+        # pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+        # # Replace chromosome names, they need to be numbers
+        # chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+        # gp_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+        #                              test_size, model_nr, estimators, leave_chr_set, max_dep_set, self.gwas_result_name, True,
+        #                              self.genomic_predict_name)
 
 
 
@@ -407,7 +468,7 @@ class GWASApp:
                     dpg.add_static_texture(width=width, height=height, default_value=data, tag="ba_tag")
                 with dpg.tab_bar(label='tabbar'):
                     with dpg.tab(label="Genomic Prediction Results"):
-                        df = df[['ID1', 'BED_ID2', 'Predicted_Value', 'Pheno_Value', 'Difference']]
+                        df = df[['ID1', 'BED_ID2_x', 'Mean_Predicted_Value', 'Pheno_Value', 'Difference']]
                         df.columns = ['FID', 'IID', 'Predicted_Value', 'Pheno_Value', 'Difference']
                         # df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.table(label='DatasetTable2', row_background=True, borders_innerH=True,
