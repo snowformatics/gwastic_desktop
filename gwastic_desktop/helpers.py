@@ -72,43 +72,62 @@ class HELPERS:
                      qq_plot_name, algorithm, genomic_predict_name, gp_plot_name, add_log):
         """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
+        save_dir = os.path.join(save_dir, ts)
+        print (save_dir)
 
         try:
-            os.mkdir(os.path.join(save_dir, ts))
+            os.mkdir(save_dir)
         except OSError:
-            self.add_log('Can not create folder. Please select a valid directory.')
+            add_log('Can not create folder. Please select a valid directory.')
 
-        save_dir = os.path.join(save_dir, ts)
+        # Create a list with source files
+        df = pd.read_csv(gwas_result_name)
+        first_10000_rows = df.head(10000)
+        first_10000_rows.to_csv(gwas_result_name_top, index=False)
 
-        if algorithm == 'GP_LMM':
-            shutil.copyfile(os.path.join(current_dir, genomic_predict_name),
-                            os.path.join(save_dir, genomic_predict_name))
-            shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
+        src_files = [gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name, genomic_predict_name, gp_plot_name]
+        for src_file in src_files:
 
-        elif algorithm == "Random Forest (AI)":
-            shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
-            df = pd.read_csv(gwas_result_name)
-            first_10000_rows = df.head(10000)
-            first_10000_rows.to_csv(gwas_result_name_top, index=False)
+            if os.path.exists(os.path.join(current_dir, src_file)):
 
-            shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
-            shutil.copyfile(os.path.join(current_dir, gwas_result_name_top),
-                            os.path.join(save_dir, gwas_result_name_top))
-
-        else:
-            shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
-            # We store also a trimmed version of single_snp with 10000 SNPs
-            df = pd.read_csv(gwas_result_name)
-            first_10000_rows = df.head(10000)
-            first_10000_rows.to_csv(gwas_result_name_top, index=False)
-
-            shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
-            shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
-
-            if algorithm == "FaST-LMM" or algorithm == "Linear regression":
-                shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
-            elif algorithm == "Random Forest (AI)":
+                shutil.copy(os.path.join(current_dir,src_file), os.path.join(save_dir,src_file))
+                add_log(f"File saved: {src_file}")
+            else:
                 pass
+                #print(f"File does not exist and will be skipped: {src_file}")
+
+
+
+
+        # if algorithm == 'GP_LMM' or algorithm == 'XGBoost (AI)':
+        #     shutil.copyfile(os.path.join(current_dir, genomic_predict_name),
+        #                     os.path.join(save_dir, genomic_predict_name))
+        #     shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
+        #
+        # elif algorithm == "Random Forest (AI)" or algorithm == 'XGBoost (AI)':
+        #     shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
+        #     df = pd.read_csv(gwas_result_name)
+        #     first_10000_rows = df.head(10000)
+        #     first_10000_rows.to_csv(gwas_result_name_top, index=False)
+        #
+        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
+        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name_top),
+        #                     os.path.join(save_dir, gwas_result_name_top))
+        #
+        # else:
+        #     shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
+        #     # We store also a trimmed version of single_snp with 10000 SNPs
+        #     df = pd.read_csv(gwas_result_name)
+        #     first_10000_rows = df.head(10000)
+        #     first_10000_rows.to_csv(gwas_result_name_top, index=False)
+        #
+        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
+        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
+        #
+        #     if algorithm == "FaST-LMM" or algorithm == "Linear regression":
+        #         shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
+        #     elif algorithm == "Random Forest (AI)":
+        #         pass
 
 
         # try:

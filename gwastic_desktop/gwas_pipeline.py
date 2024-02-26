@@ -183,7 +183,7 @@ class GWAS:
     def run_gwas_xg(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
                     model_nr, max_dep_set):
         """GWAS using Random Forest with cross validation."""
-        print (test_size)
+
         t1 = time.time()
         dataframes = []
         df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
@@ -228,6 +228,7 @@ class GWAS:
         t3 = round((t2 - t1) / 60, 2)
         add_log('Final run time (minutes): ' + str(t3))
         return df_all_xg, df_plot
+
     def run_gwas_rf(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
                     model_nr):
         """GWAS using Random Forest with cross validation."""
@@ -275,6 +276,98 @@ class GWAS:
         t3 = round((t2 - t1) / 60, 2)
         add_log('Final run time (minutes): ' + str(t3))
         return df_all_rf, df_plot
+
+    def run_gp_rf(self, bed_fixed, pheno, bed_file, test_size, estimators, genomic_predict_name, chrom_mapping, add_log,
+                    model_nr):
+        """Genomic Prediction using Random Forest with cross validation."""
+        t1 = time.time()
+        dataframes = []
+        df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+        df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+
+        for i in range(int(model_nr)):
+            add_log('Model Iteration: ' + str(i + 1))
+            bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
+
+            # Split data into training and testing sets
+            X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
+                                                                test_size=test_size)
+
+            #scaler = StandardScaler()
+            #X_train = scaler.fit_transform(X_train)
+            rf_model = RandomForestRegressor(n_estimators=estimators)
+            rf_model.fit(X_train, y_train)
+
+            bed_data = bed_fixed.iid
+            pheno_data2 = pheno.iid
+            predicted_values = rf_model.predict(bed_fixed.read().val)
+            df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+            df_gp['Predicted_Value'] = predicted_values
+
+            df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
+            df_pheno['Pheno_Value'] = pheno.read().val
+            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(5)
+            #print (merged_df)
+            dataframes.append(merged_df)
+
+
+        df_all = self.helper.merge_gp_models(dataframes)
+        #df_all = df_all.sort_values(by='Pheno_Value', ascending=False)
+        df_all.to_csv(genomic_predict_name, index=False)
+
+        t2 = time.time()
+        t3 = round((t2 - t1) / 60, 2)
+        add_log('Final run time (minutes): ' + str(t3))
+        return df_all
+
+    def run_gp_xg(self, bed_fixed, pheno, bed_file, test_size, estimators, genomic_predict_name, chrom_mapping, add_log,
+                    model_nr, max_dep_set):
+        """Genomic Prediction using XgBOOST with cross validation."""
+        #print ('ok')
+        t1 = time.time()
+        dataframes = []
+        df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+        df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+
+        for i in range(int(model_nr)):
+            add_log('Model Iteration: ' + str(i + 1))
+            bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
+
+            # Split data into training and testing sets
+            X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
+                                                                test_size=test_size)
+
+            #scaler = StandardScaler()
+            #X_train = scaler.fit_transform(X_train)
+            xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set)
+            xgb_model.fit(X_train, y_train)
+
+            bed_data = bed_fixed.iid
+            pheno_data2 = pheno.iid
+            predicted_values = xgb_model.predict(bed_fixed.read().val)
+            df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+            df_gp['Predicted_Value'] = predicted_values
+
+            df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
+            df_pheno['Pheno_Value'] = pheno.read().val
+            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(5)
+            #print (merged_df)
+            dataframes.append(merged_df)
+
+
+        df_all = self.helper.merge_gp_models(dataframes)
+        #df_all = df_all.sort_values(by='Pheno_Value', ascending=False)
+        df_all.to_csv(genomic_predict_name, index=False)
+
+        t2 = time.time()
+        t3 = round((t2 - t1) / 60, 2)
+        add_log('Final run time (minutes): ' + str(t3))
+        return df_all
+
 
     def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, model_nr, estimators, leave_chr_set,
                    max_dep_set, gwas_result_name, genomic_predict, genomic_predict_name):
@@ -386,7 +479,7 @@ class GWAS:
                     #df.dropna(subset=['PValue'], inplace=True)
 
 
-            print (df)
+            #print (df)
             # we create one df for the plotting with ints as chr
             df_plot = df.copy(deep=True)
 

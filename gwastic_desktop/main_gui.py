@@ -427,6 +427,12 @@ class GWASApp:
 
             if self.algorithm == 'GP_LMM':
                 gp_df = self.gwas.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr)
+            elif self.algorithm == 'Random Forest (AI)':
+                gp_df = self.gwas.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
+                                            self.genomic_predict_name, chrom_mapping, self.add_log,model_nr)
+            elif self.algorithm == 'XGBoost (AI)':
+                gp_df = self.gwas.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
+                                            self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set)
         else:
             self.add_log(check_input_data[1], error=True)
 
