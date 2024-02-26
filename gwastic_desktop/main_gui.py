@@ -281,7 +281,7 @@ class GWASApp:
         self.helper.save_settings(default_path)
         self.add_log('Settings saved. Please restart the software.', warn=True)
 
-    def delete_files(self, genomic_predict):
+    def delete_files(self):
         """Delete the temporary files after analysis."""
         dpg.delete_item("manhatten_image")
         dpg.delete_item("manhatten_tag")
@@ -393,7 +393,7 @@ class GWASApp:
         from pysnptools.snpreader import Bed, Pheno
         import pysnptools.util as pstutil
 
-        self.delete_files(genomic_predict = True)
+        self.delete_files()
         self.add_log('Reading Bed file...')
 
         # Get settings

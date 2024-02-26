@@ -73,7 +73,6 @@ class HELPERS:
         """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
         save_dir = os.path.join(save_dir, ts)
-        print (save_dir)
 
         try:
             os.mkdir(save_dir)
@@ -87,9 +86,7 @@ class HELPERS:
 
         src_files = [gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name, genomic_predict_name, gp_plot_name]
         for src_file in src_files:
-
             if os.path.exists(os.path.join(current_dir, src_file)):
-
                 shutil.copy(os.path.join(current_dir,src_file), os.path.join(save_dir,src_file))
                 add_log(f"File saved: {src_file}")
             else:
