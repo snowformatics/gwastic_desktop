@@ -325,7 +325,7 @@ class GWASApp:
 
     def run_gwas(self, sender, data, user_data):
 
-        self.delete_files(genomic_predict = False)
+        self.delete_files()
         #self.add_log('Reading Bed file...')
 
         # Get all settings
