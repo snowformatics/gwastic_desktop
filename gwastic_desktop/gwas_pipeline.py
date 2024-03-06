@@ -29,7 +29,7 @@ class GWAS:
         script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 
         if sys.platform.startswith('win'):
-            #link_call = "windows/plink"
+
             rel_path = "windows/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
 

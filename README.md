@@ -60,14 +60,14 @@ We recommend to install Anaconda and create an environment:
 3. `./Miniconda3-latest-Linux-x86_64.sh`
 4. `cd /home/username/miniconda3`
 5. `source ~/miniconda3/bin/activate`
+6. `conda create --name gwastic_env python=3.9`
+7. `conda activate gwastic_env`
 
 Then install GWAStic via pip:
 
-6. `pip install gwastic_desktop`
+8. `pip install gwastic_desktop`
 
-7. `apt-get install libgl1`
-
-8. Type `gwastic` in the command line to start the software.
+9. Type `gwastic` in the command line to start the software.
 
 
 # Supported input file formats
