@@ -36,6 +36,10 @@ class GWAS:
         elif sys.platform.startswith('linux'):
             rel_path = "linux/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
+            os.chmod(abs_file_path, 0o755)
+        elif sys.platform.startswith('darwin'):
+            rel_path = "mac/plink"
+            abs_file_path = os.path.join(script_dir, rel_path)
             #os.chmod(abs_file_path, 0o755)
 
         #print (abs_file_path)
