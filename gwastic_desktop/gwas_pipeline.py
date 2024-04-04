@@ -304,13 +304,14 @@ class GWAS:
             #X_train = scaler.fit_transform(X_train)
             rf_model = RandomForestRegressor(n_estimators=estimators)
             rf_model.fit(X_train, y_train)
-
+            print (rf_model)
             #bed_data = bed_fixed.iid
             bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
             bed_data2 = bed_data.iid
             pheno_data2 = pheno.iid
             #predicted_values = rf_model.predict(bed_fixed.read().val)
             predicted_values = rf_model.predict(bed_data.read().val)
+            print (predicted_values)
             df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
             df_gp['Predicted_Value'] = predicted_values
 

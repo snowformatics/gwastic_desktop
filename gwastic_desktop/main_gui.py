@@ -11,8 +11,8 @@ import pysnptools.util as pstutil
 #poetry build
 #poetry publish
 
-# todo rf error for bride
-# todo line 355
+
+
 
 def main():
     app = GWASApp()
