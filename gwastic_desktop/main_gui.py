@@ -12,8 +12,7 @@ import pysnptools.util as pstutil
 #poetry publish
 
 # todo rf error for bride
-# line 355
-# min axe FT bridge with LR
+# todo line 355
 
 def main():
     app = GWASApp()
@@ -245,8 +244,11 @@ class GWASApp:
     def callback_pheno(self, sender, app_data):
         """Get phenotype file path selected from the user."""
         self.pheno_app_data = app_data
-        pheno_path, current_path = self.get_selection_path(self.pheno_app_data)
-        self.add_log('Pheno File Selected: ' + pheno_path)
+        try:
+            pheno_path, current_path = self.get_selection_path(self.pheno_app_data)
+            self.add_log('Pheno File Selected: ' + pheno_path)
+        except TypeError:
+            self.add_log('Wrong Pheno File Selected: ' + pheno_path, error=True)
 
     def get_selection_path(self, app_data):
         """Extract path from the app_data dictionary selections key."""
@@ -500,7 +502,11 @@ class GWASApp:
                     dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
                 with dpg.tab_bar(label='tabbar'):
                     with dpg.tab(label="Manhatten Plot"):
-                        dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
+                        if algorithm == "FaST-LMM" or algorithm == "Linear regression":
+                            dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
+                        else:
+                            dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=900, height=300)
+                        #dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=width, height=height)
                     if algorithm == "FaST-LMM" or algorithm == "Linear regression":
                         width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
                         with dpg.texture_registry(show=False):

@@ -518,12 +518,13 @@ class GWAS:
 
         # Extract the top10 SNPs and use the value as significant marker label threshold
 
+
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-            # sign_limit = df.nsmallest(125, 'PValue')
-            # sign_limit = sign_limit.tail(1)
-            # sign_limit = float(sign_limit['PValue'])
+
+            # Remove rows where column 'A' has a value of 0.0
+
             df = df.sort_values(by=['Chr', 'ChrPos'])
-            #print (df)
+            df = df[df['PValue'] != 0.0]
 
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
@@ -541,17 +542,16 @@ class GWAS:
 
             # Create a manhattan plot
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
-            #print (chrom_mapping)
-            #flipped_dict = {value: key for key, value in chrom_mapping.items()}
-            #print (flipped_dict)
-            #print(chrom_mapping)
-            #xtick = set(["chr" + i for i in list(map(str, range(1, 23)))])
-            #print (xtick )
+
+            flipped_dict = {value: key for key, value in chrom_mapping.items()}
+            df['Chr'] = df['Chr'].astype(float).replace(flipped_dict)
+
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
-                              sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n',# xtick_label_set=xtick,
+                              sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n',
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
                               hline_kws={"linestyle": "--", "lw": 1.3},#, sign_marker_p=1e-9, is_annotate_topsnp=True,
-                                 text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)}, ax=ax)
+                                 text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
+                                 logp=True,ax=ax,xticklabel_kws={"rotation": "vertical"})
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name)
 
@@ -567,20 +567,26 @@ class GWAS:
 
 
         else:
-            # sign_limit = df.nlargest(5, 'PValue')
-            # print(sign_limit)
-            # sign_limit = sign_limit.tail(1)
-            # sign_limit = float(sign_limit['PValue'])
-            # print (sign_limit)
+            plt_params = {
+                "font.sans-serif": "Arial",
+                "legend.fontsize": 10,
+                "axes.titlesize": 14,
+                "axes.labelsize": 12,
+                "xtick.labelsize": 10,
+                "ytick.labelsize": 10
+            }
+            plt.rcParams.update(plt_params)
+
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
 
-
-            f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
+            flipped_dict = {value: key for key, value in chrom_mapping.items()}
+            df['Chr'] = df['Chr'].astype(float).replace(flipped_dict)
+            f, ax = plt.subplots(figsize=(12, 6), facecolor="w", edgecolor="k")
             _ = gv.manhattanplot(data=df, chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", logp=False,
                                   title="GWAS Manhatten Plot " + algorithm + '\n',color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
-                                  xlabel="Chromosome", ylabel=r"Feature Importance)")#, sign_marker_p=sign_limit, is_annotate_topsnp=True)
+                                  xlabel="Chromosome", ylabel=r"Feature Importance)", xticklabel_kws={"rotation": "vertical"})#, sign_marker_p=sign_limit, is_annotate_topsnp=True)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name)
 
@@ -588,6 +594,7 @@ class GWAS:
     def plot_gp(self, df, gp_plot_name, algorithm):
         """Bland-Altman Plot for the real and predicted phenotype values."""
         import matplotlib.pyplot as plt
+        #plt.use('agg')
 
         # Calculate mean and difference (redundant here, but for demonstration)
         df['Mean'] = (df['Pheno_Value'] + df['Mean_Predicted_Value']) / 2
