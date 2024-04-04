@@ -69,7 +69,7 @@ class HELPERS:
         return default_path
 
     def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name,
-                     qq_plot_name, algorithm, genomic_predict_name, gp_plot_name, add_log):
+                     qq_plot_name, algorithm, genomic_predict_name, gp_plot_name, gp_plot_name_scatter, add_log):
         """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
         save_dir = os.path.join(save_dir, ts)
@@ -77,21 +77,26 @@ class HELPERS:
         try:
             os.mkdir(save_dir)
         except OSError:
-            add_log('Can not create folder. Please select a valid directory.')
+            add_log('Can not create folder. Please select a valid directory.', error=True)
 
-        # Create a list with source files
-        df = pd.read_csv(gwas_result_name)
-        first_10000_rows = df.head(10000)
-        first_10000_rows.to_csv(gwas_result_name_top, index=False)
+        try:
+            # Create a gwas output file with top 10000 SNPs
+            df = pd.read_csv(gwas_result_name)
+            first_10000_rows = df.head(10000)
+            first_10000_rows.to_csv(gwas_result_name_top, index=False)
+        except FileNotFoundError:
+            pass
 
-        src_files = [gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name, genomic_predict_name, gp_plot_name]
+        src_files = [gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name, genomic_predict_name,
+                     gp_plot_name, gp_plot_name_scatter]
         for src_file in src_files:
             if os.path.exists(os.path.join(current_dir, src_file)):
+
                 shutil.copy(os.path.join(current_dir,src_file), os.path.join(save_dir,src_file))
                 add_log(f"File saved: {src_file}")
             else:
                 pass
-                #print(f"File does not exist and will be skipped: {src_file}")
+
 
 
 
@@ -155,14 +160,14 @@ class HELPERS:
         df_result = df_result.drop(['Predicted_Value_x', 'BED_ID2_y', 'Pheno_ID2'], axis=1)
         df_result = df_result.rename(columns={'Predicted_Value_y': 'Mean_Predicted_Value'})
         df_result['Difference'] = (df_result['Pheno_Value'] - df_result['Mean_Predicted_Value']).abs()
-        df_result['Difference'] = df_result['Difference'].round(5)
-        df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(5)
+        df_result['Difference'] = df_result['Difference'].round(decimals=3)
+        df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(decimals=3)
         df_result.to_csv('out.csv')
 
 
         #print('ok', df_result)
 
-        #print (df_result)
+
         return df_result
 
 

@@ -149,13 +149,14 @@ class GWAS:
         add_log('Final run time (minutes): ' + str(t3))
         return df_lmm_gwas, df_plot
 
-    def run_lmm_gp(self, bed_fixed, pheno, genomic_predict_name, model_nr):
+    def run_lmm_gp(self, bed_fixed, pheno, genomic_predict_name, model_nr, add_log):
         """Genomic Prediction using LMM predictor from fast-lmm library."""
         kf = KFold(n_splits=model_nr + 1)
         results = []
-
+        i = 1
         # Start cross-validation
         for train_indices, test_indices in kf.split(range(bed_fixed.iid_count)):
+            add_log('Model Iteration: ' + str(i))
             # Split data into training and testing
             train = bed_fixed[train_indices, :]
             #test = bed_fixed[test_indices, :]
@@ -176,8 +177,10 @@ class GWAS:
             df_pheno['Pheno_Value'] = pheno.read().val
             merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
             merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
-            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(5)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(3)
+
             results.append(merged_df)
+            i += 1
 
         df_all = self.helper.merge_gp_models(results)
         df_all.to_csv(genomic_predict_name, index=False)
@@ -302,10 +305,13 @@ class GWAS:
             rf_model = RandomForestRegressor(n_estimators=estimators)
             rf_model.fit(X_train, y_train)
 
-            bed_data = bed_fixed.iid
+            #bed_data = bed_fixed.iid
+            bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+            bed_data2 = bed_data.iid
             pheno_data2 = pheno.iid
-            predicted_values = rf_model.predict(bed_fixed.read().val)
-            df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+            #predicted_values = rf_model.predict(bed_fixed.read().val)
+            predicted_values = rf_model.predict(bed_data.read().val)
+            df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
             df_gp['Predicted_Value'] = predicted_values
 
             df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
@@ -337,7 +343,7 @@ class GWAS:
 
         for i in range(int(model_nr)):
             add_log('Model Iteration: ' + str(i + 1))
-            bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
+            #bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
 
             # Split data into training and testing sets
             X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
@@ -348,11 +354,19 @@ class GWAS:
             xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set)
             xgb_model.fit(X_train, y_train)
 
-            bed_data = bed_fixed.iid
+            # for prediction, we need all genotypes
+            bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+
+            #bed_data = bed_fixed.iid
+            bed_data2 = bed_data.iid
+            #print (len(bed_data2))
             pheno_data2 = pheno.iid
-            predicted_values = xgb_model.predict(bed_fixed.read().val)
-            df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
+            #predicted_values = xgb_model.predict(bed_fixed.read().val)
+            predicted_values = xgb_model.predict(bed_data.read().val)
+
+            df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
             df_gp['Predicted_Value'] = predicted_values
+            #print (df_gp)
 
             df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
             df_pheno['Pheno_Value'] = pheno.read().val
@@ -574,7 +588,6 @@ class GWAS:
     def plot_gp(self, df, gp_plot_name, algorithm):
         """Bland-Altman Plot for the real and predicted phenotype values."""
         import matplotlib.pyplot as plt
-        import numpy as np
 
         # Calculate mean and difference (redundant here, but for demonstration)
         df['Mean'] = (df['Pheno_Value'] + df['Mean_Predicted_Value']) / 2
@@ -601,32 +614,30 @@ class GWAS:
         plt.tight_layout(pad=1)
         plt.savefig(gp_plot_name)
 
-        # # Calculate means and differences
-        # means = (data['Mean_Predicted_Value'] + data['Pheno_Value']) / 2
-        # differences = data['Mean_Predicted_Value'] - data['Pheno_Value']
-        # mean_difference = np.mean(differences)
-        # std_difference = np.std(differences)
-        #
-        # # Plotting the Bland-Altman plot
-        # plt.figure(figsize=(10, 6))
-        # plt.scatter(means, differences, color='blue')
-        # plt.axhline(mean_difference, color='red', linestyle='--', label='Mean Difference')
-        # plt.axhline(mean_difference + 1.96 * std_difference, color='green', linestyle='--', label='Upper Limit of Agreement')
-        # plt.axhline(mean_difference - 1.96 * std_difference, color='green', linestyle='--', label='Lower Limit of Agreement')
-        # plt.xlabel('Mean Value')
-        # plt.ylabel('Difference')
-        # plt.title('Bland-Altman Plot (' + algorithm + ')')
-        # plt.legend()
-        # plt.tight_layout(pad=1)
-        # plt.savefig(gp_plot_name)
+
+    def plot_gp_scatter(self, df, gp_plot_name_scatter, algorithm):
+        """Regression Plot for the real and predicted phenotype values."""
+        import matplotlib.pyplot as plt
+        from scipy.stats import pearsonr
+        import seaborn as sns
+
+        df = df.replace([np.inf, -np.inf], np.nan).dropna()
+
+        # Pearson correlation
+        corr, _ = pearsonr(df['Pheno_Value'], df['Mean_Predicted_Value'])
+        corr_label = f"Pearson correlation: {corr:.2f}"
+
+        # Plotting
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(data=df, x='Pheno_Value', y='Mean_Predicted_Value')
+        sns.regplot(x='Pheno_Value', y='Mean_Predicted_Value', data=df, scatter=False, color='red')
+        plt.title('Scatter Plot with Regression Line')
+        plt.xlabel('Phenotype Value')
+        plt.ylabel('Mean Predicted Value')
+        #plt.text(5, max(df['Mean_Predicted_Value']) - 5, corr_label, fontsize=12, color='blue')
+        plt.title('Correlation Plot (' + algorithm + ')' + '\n' + corr_label)
+        plt.tight_layout(pad=1)
+        plt.savefig(gp_plot_name_scatter)
         #plt.show()
-
-
-
-
-
-
-
-
 
 

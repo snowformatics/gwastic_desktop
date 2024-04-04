@@ -11,7 +11,9 @@ import pysnptools.util as pstutil
 #poetry build
 #poetry publish
 
-
+# todo rf error for bride
+# line 355
+# min axe FT bridge with LR
 
 def main():
     app = GWASApp()
@@ -52,10 +54,11 @@ class GWASApp:
         self.manhatten_plot_name = "manhatten_plot.png"
         self.qq_plot_name = "qq_plot.png"
         self.gp_plot_name = "Bland_Altman_plot.png"
+        self.gp_plot_name_scatter = "GP_scatter_plot.png"
         #self.test_size = 0.3 #0.3
         #self.estimators = 200 #200
 
-        self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500)
+        self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500, horizontal_scrollbar=True)
         self.logz = logger.mvLogger(self.log_win)
         table_window = None
         # Set up GUI components and callbacks
@@ -65,7 +68,7 @@ class GWASApp:
     #     print("Save Clicked")
 
     def setup_gui(self):
-        dpg.create_viewport(title='GWAStic Desktop Software', width=2000, height=1200)
+        dpg.create_viewport(title='GWAStic Desktop Software', width=2000, height=1200, resizable=True)
 
 
     # Menu bar
@@ -98,7 +101,7 @@ class GWASApp:
             directory_selector=True, show=False, callback=self.callback_save_results, tag="select_directory",
             cancel_callback=self.cancel_callback_directory, width=700, height=400, default_path=self.default_path)
 
-        with dpg.window(label="GWAStic", width=1000, height=600, no_close=True):
+        with dpg.window(label="GWAStic", width=1000, height=600, no_close=True, horizontal_scrollbar=True):
             with dpg.tab_bar(label='tabbar'):
                 with dpg.tab(label='GWAS Analysis'):
                     dpg.add_text("\nStart GWAS Analysis", indent=50)
@@ -266,7 +269,7 @@ class GWASApp:
         results_path, current_path = self.get_selection_path(self.results_directory)
         save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
                                  self.manhatten_plot_name, self.qq_plot_name, self.algorithm,
-                                            self.genomic_predict_name, self.gp_plot_name, self.add_log)
+                                            self.genomic_predict_name, self.gp_plot_name, self.gp_plot_name_scatter, self.add_log)
         self.add_log('Results saved in: ' + save_dir)
         #except TypeError:
             #self.add_log('Please select a valid directory.', error=True)
@@ -290,11 +293,13 @@ class GWASApp:
         dpg.delete_item("table_gwas")
         dpg.delete_item("table_gp")
         dpg.delete_item("ba_tag")
+        dpg.delete_item("ba_tag2")
         dpg.delete_item("ba_image")
+        dpg.delete_item("ba_image2")
 
         # delete files
         file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name, self.gp_plot_name,
-                      self.manhatten_plot_name, self.qq_plot_name]
+                      self.manhatten_plot_name, self.qq_plot_name, self.gp_plot_name_scatter]
         for f in file_names:
             if os.path.exists(f):
                 os.remove(f)
@@ -426,7 +431,7 @@ class GWASApp:
             self.add_log('Starting Analysis, this might take a while...')
 
             if self.algorithm == 'GP_LMM':
-                gp_df = self.gwas.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr)
+                gp_df = self.gwas.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr, self.add_log)
             elif self.algorithm == 'Random Forest (AI)':
                 gp_df = self.gwas.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
                                             self.genomic_predict_name, chrom_mapping, self.add_log,model_nr)
@@ -437,11 +442,11 @@ class GWASApp:
             self.add_log(check_input_data[1], error=True)
 
 
-
         if gp_df is not None:
             self.add_log('Genomic Prediction done.')
             self.add_log('Genomic Prediction Plotting...')
             self.gwas.plot_gp(gp_df, self.gp_plot_name, self.algorithm)
+            self.gwas.plot_gp_scatter(gp_df, self.gp_plot_name_scatter, self.algorithm)
             self.add_log('Done...')
             self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
         else:
@@ -451,6 +456,7 @@ class GWASApp:
             #self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def show_results_window(self, df, algorithm, genomic_predict):
+
         with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
             dpg.add_button(label="Download Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
             dpg.add_spacer(height=60)
@@ -459,6 +465,11 @@ class GWASApp:
                 width, height, channels, data = dpg.load_image(self.gp_plot_name)
                 with dpg.texture_registry(show=False):
                     dpg.add_static_texture(width=width, height=height, default_value=data, tag="ba_tag")
+
+                width, height, channels, data = dpg.load_image(self.gp_plot_name_scatter)
+                with dpg.texture_registry(show=False):
+                    dpg.add_static_texture(width=width, height=height, default_value=data, tag="ba_tag2")
+
                 with dpg.tab_bar(label='tabbar'):
                     with dpg.tab(label="Genomic Prediction Results"):
                         df = df[['ID1', 'BED_ID2_x', 'Mean_Predicted_Value', 'Pheno_Value', 'Difference']]
@@ -466,16 +477,22 @@ class GWASApp:
                         # df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.table(label='DatasetTable2', row_background=True, borders_innerH=True,
                                        borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gp',
-                                       sortable=True):
+                                       sortable=True, resizable=True):
                             for i in range(df.shape[1]):
                                 dpg.add_table_column(label=df.columns[i], parent='table_gp')
                             for i in range(len(df)):
                                 with dpg.table_row():
                                     for j in range(df.shape[1]):
-                                        dpg.add_text(f"{df.iloc[i, j]}")
-                    with dpg.tab(label="Genomic Prediction Plot"):
+                                        #dpg.add_text(f"{df.iloc[i, j]}")
+                                        value = df.iloc[i, j]
+                                        # Format the value as a string with desired precision, e.g., 2 decimal places
+                                        formatted_value = f"{value:.2f}" if isinstance(value, float) else str(value)
+                                        dpg.add_text(formatted_value)
+                    with dpg.tab(label="Correlation Plot (Predicted vs. Phenotype)"):
+                        dpg.add_image(texture_tag="ba_tag2", tag="ba_image2", width=750, height=450)
+                    with dpg.tab(label="Bland-Altman Plot (Model Accuracy)"):
                         dpg.add_image(texture_tag="ba_tag", tag="ba_image", width=750, height=450)
-                        #dpg.add_text(" Each blue dot represents a pair of predicted and real values for an individual instance.", pos=[770, 130], color=(72, 138, 199))
+
 
             else:
                 width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
