@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 import seaborn as sns
 
-plt.switch_backend('Agg')
+plt.switch_backend('TkAgg')
 
 class GWAS:
     """GWAS class."""
@@ -139,7 +139,7 @@ class GWAS:
 
         elif algorithm == 'Linear regression':
             df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
-
+        print (df_lmm_gwas)
         df_lmm_gwas.dropna(subset=['PValue'], inplace=True)
         # we create one df for the plotting with ints as chr
         df_plot = df_lmm_gwas.copy(deep=True)
@@ -500,7 +500,7 @@ class GWAS:
                     df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, model_nr)
-                    print (df)
+                    #print (df)
                     df['Chr'] = df['Chr'].replace(chrom_mapping)
                     dataframes.append(df)
                 # We merge the models and calculate the sum effect
@@ -525,7 +525,7 @@ class GWAS:
                     dataframes.append(df)
                 if genomic_predict:
                     df = df
-                    print (df)
+                    #print (df)
                 else:
                     df['Chr'] = df['Chr'].replace(chrom_mapping)
                     df = self.helper.merge_models(dataframes)
@@ -618,6 +618,7 @@ class GWAS:
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
                                  logp=True,ax=ax,xticklabel_kws={"rotation": "vertical"})
             plt.tight_layout(pad=1)
+            plt.show()
             plt.savefig(manhatten_plot_name)
 
             # Create QQ plot
