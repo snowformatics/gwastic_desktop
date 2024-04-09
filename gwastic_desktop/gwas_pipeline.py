@@ -9,12 +9,20 @@ import pysnptools.util as pstutil
 import time
 from fastlmm.inference import FastLMM
 from sklearn.model_selection import KFold
-import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
+import geneview as gv
+import numpy as np
+import logging
+from pysnptools.util import log_in_place
+import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
+import seaborn as sns
+
+plt.switch_backend('Agg')
 
 class GWAS:
     """GWAS class."""
@@ -29,10 +37,8 @@ class GWAS:
         script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 
         if sys.platform.startswith('win'):
-
             rel_path = "windows/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
-
         elif sys.platform.startswith('linux'):
             rel_path = "linux/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
@@ -40,6 +46,7 @@ class GWAS:
         elif sys.platform.startswith('darwin'):
             rel_path = "mac/plink"
             abs_file_path = os.path.join(script_dir, rel_path)
+            os.chmod(abs_file_path, 0o755)
             #os.chmod(abs_file_path, 0o755)
 
         #print (abs_file_path)
@@ -61,9 +68,7 @@ class GWAS:
         return plink_log
 
     def filter_out_missing(self, bed):
-        import numpy as np
-        import logging
-        from pysnptools.util import log_in_place
+
         sid_batch_size = 1000  # number of SNPs to read at a time, decrease in case we run oput of memory
         # list of all NaN columns
         all_nan = []
@@ -149,42 +154,6 @@ class GWAS:
         add_log('Final run time (minutes): ' + str(t3))
         return df_lmm_gwas, df_plot
 
-    def run_lmm_gp(self, bed_fixed, pheno, genomic_predict_name, model_nr, add_log):
-        """Genomic Prediction using LMM predictor from fast-lmm library."""
-        kf = KFold(n_splits=model_nr + 1)
-        results = []
-        i = 1
-        # Start cross-validation
-        for train_indices, test_indices in kf.split(range(bed_fixed.iid_count)):
-            add_log('Model Iteration: ' + str(i))
-            # Split data into training and testing
-            train = bed_fixed[train_indices, :]
-            #test = bed_fixed[test_indices, :]
-            # Train the model
-            fastlmm = FastLMM(GB_goal=2)
-            fastlmm.fit(K0_train=train, y=pheno)
-            # Test the model
-            mean, covariance = fastlmm.predict(K0_whole_test=bed_fixed)
-            df = pd.DataFrame({'Column1': mean.val[:, 0], 'Column2': mean.iid[:, 0]})
-
-            bed_data = bed_fixed.iid
-            pheno_data2 = pheno.iid
-            df_gp = pd.DataFrame(bed_data, columns=['ID1', 'BED_ID2'])
-            predicted_values = df['Column1']
-            df_gp['Predicted_Value'] = predicted_values
-
-            df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
-            df_pheno['Pheno_Value'] = pheno.read().val
-            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
-            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
-            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(3)
-
-            results.append(merged_df)
-            i += 1
-
-        df_all = self.helper.merge_gp_models(results)
-        df_all.to_csv(genomic_predict_name, index=False)
-        return df_all
 
 
     def run_gwas_xg(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
@@ -196,21 +165,29 @@ class GWAS:
         df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
         df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
 
+        snp_data = bed_fixed.read().val
+        #print(np.sum(np.isnan(snp_data)))
+        snp_data[np.isnan(snp_data)] = -1
+        #print(np.sum(np.isnan(snp_data)))
+
         for i in range(int(model_nr)):
             add_log('Model Iteration: ' + str(i + 1))
-            bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
+           # bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
 
             # Split data into training and testing sets
-            X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
+            X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno.read().val,
                                                                 test_size=test_size)
 
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
+            #print('ok', X_train, y_train)
             xg_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set)
             xg_model.fit(X_train, y_train)
+
             data = []
             snp_ids = df_bim.iloc[:, 1].tolist()
             for col, score in zip(snp_ids, xg_model.feature_importances_):
+                #print((col, score))
                 data.append((col, score))
             # Convert the list of tuples into a DataFrame
             df = pd.DataFrame(data, columns=['SNP', 'PValue'])
@@ -244,21 +221,47 @@ class GWAS:
         df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
         df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
 
+        snp_data = bed_fixed.read().val
+        #print(np.sum(np.isnan(snp_data)))
+        snp_data[np.isnan(snp_data)] = -1
+        #print(np.sum(np.isnan(snp_data)))
+
+
+
         for i in range(int(model_nr)):
+            #print (type(bed_fixed.read().val))
             add_log('Model Iteration: ' + str(i + 1))
-            bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
 
+            #print(bed_fixed.read().val, pheno.read().val)
+            #print (bed_fixed.read().val.shape, pheno.read().val.shape)
             # Split data into training and testing sets
-            X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
-                                                                test_size=test_size)
-
+            X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno.read().val,
+                                                                test_size=test_size, random_state=42)
+            #print (X_train, X_test, y_train, y_test)
+            #print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
-            rf_model = RandomForestRegressor(n_estimators=estimators)
+            #print('ok', X_train, y_train)
+            rf_model = RandomForestRegressor(n_estimators=estimators, n_jobs=-1, random_state=42)
+           # rf_model = RandomForestClassifier(n_estimators=estimators)
+            #RandomForestClassifier
+            #print(X_train, y_train)
+           # print (type(X_train), type(y_train))
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+
+            #df = pd.DataFrame(X_train)
+            # Create a heatmap
+            #sns.heatmap(df)
+            #plt.show()
+            #print(np.size(X_train) - np.count_nonzero(X_train), np.sum(np.isnan(X_train)))
             rf_model.fit(X_train, y_train)
+            #rf_model.fit(X_train, y_train)
+           # print (rf_model.feature_importances_)
             data = []
             snp_ids = df_bim.iloc[:, 1].tolist()
             for col, score in zip(snp_ids, rf_model.feature_importances_):
+                #print ((col, score))
                 data.append((col, score))
             # Convert the list of tuples into a DataFrame
             df = pd.DataFrame(data, columns=['SNP', 'PValue'])
@@ -284,6 +287,51 @@ class GWAS:
         add_log('Final run time (minutes): ' + str(t3))
         return df_all_rf, df_plot
 
+    def run_lmm_gp(self, bed_fixed, pheno, genomic_predict_name, model_nr, add_log, bed_file, chrom_mapping):
+        """Genomic Prediction using LMM predictor from fast-lmm library."""
+
+        bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+
+        kf = KFold(n_splits=model_nr + 1)
+        results = []
+        i = 1
+        # Start cross-validation
+        for train_indices, test_indices in kf.split(range(bed_fixed.iid_count)):
+            add_log('Model Iteration: ' + str(i))
+            # Split data into training and testing
+            train = bed_fixed[train_indices, :]
+            #test = bed_fixed[test_indices, :]
+            # Train the model
+            fastlmm = FastLMM(GB_goal=2)
+            fastlmm.fit(K0_train=train, y=pheno)
+            # Test the model
+            #mean, covariance = fastlmm.predict(K0_whole_test=bed_fixed)
+            mean, covariance = fastlmm.predict(K0_whole_test=bed_data)
+
+            df = pd.DataFrame({'Column1': mean.val[:, 0], 'Column2': mean.iid[:, 0]})
+
+
+            #bed_data = bed_fixed.iid
+            bed_data2 = bed_data.iid
+            pheno_data2 = pheno.iid
+            df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
+            predicted_values = df['Column1']
+            df_gp['Predicted_Value'] = predicted_values
+
+            df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
+            df_pheno['Pheno_Value'] = pheno.read().val
+            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(3)
+
+            results.append(merged_df)
+            i += 1
+
+        df_all = self.helper.merge_gp_models(results)
+        df_all.to_csv(genomic_predict_name, index=False)
+        return df_all
+
+
     def run_gp_rf(self, bed_fixed, pheno, bed_file, test_size, estimators, genomic_predict_name, chrom_mapping, add_log,
                     model_nr):
         """Genomic Prediction using Random Forest with cross validation."""
@@ -292,26 +340,42 @@ class GWAS:
         df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
         df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
 
+        # training data
+        snp_data = bed_fixed.read().val
+        #print(np.sum(np.isnan(snp_data)))
+        snp_data[np.isnan(snp_data)] = -1
+        #print(np.sum(np.isnan(snp_data)))
+
+        # entire data for training
+        bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+        snp_data_all = bed_data.read().val
+        snp_data_all[np.isnan(snp_data_all)] = -1
+        bed_data2 = bed_data.iid
+        pheno_data2 = pheno.iid
+
         for i in range(int(model_nr)):
             add_log('Model Iteration: ' + str(i + 1))
-            bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
+           # bed_fixed.read().val[np.isnan(bed_fixed.read().val)] = -1
 
             # Split data into training and testing sets
-            X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
+            X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno.read().val,
                                                                 test_size=test_size)
 
             #scaler = StandardScaler()
             #X_train = scaler.fit_transform(X_train)
             rf_model = RandomForestRegressor(n_estimators=estimators)
+
             rf_model.fit(X_train, y_train)
-            print (rf_model)
+
             #bed_data = bed_fixed.iid
-            bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
-            bed_data2 = bed_data.iid
-            pheno_data2 = pheno.iid
+            #bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+            #bed_data2 = bed_data.iid
+            #pheno_data2 = pheno.iid
             #predicted_values = rf_model.predict(bed_fixed.read().val)
-            predicted_values = rf_model.predict(bed_data.read().val)
-            print (predicted_values)
+            #predicted_values = rf_model.predict(bed_data.read().val)
+            predicted_values = rf_model.predict(snp_data_all)
+
+
             df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
             df_gp['Predicted_Value'] = predicted_values
 
@@ -436,6 +500,7 @@ class GWAS:
                     df = self.gwas_ai.run_random_forest(bed_fixed.read().val, pheno.read().val, df_bim, test_size,
                                                   estimators, gwas_result_name, bed_gp, pheno_gp, genomic_predict,
                                                   genomic_predict_name, model_nr)
+                    print (df)
                     df['Chr'] = df['Chr'].replace(chrom_mapping)
                     dataframes.append(df)
                 # We merge the models and calculate the sum effect
@@ -514,8 +579,7 @@ class GWAS:
 
     def plot_gwas(self, df, limit, algorithm, manhatten_plot_name, qq_plot_name, chrom_mapping):
         """Manhatten and qq-plot."""
-        import matplotlib.pyplot as plt
-        import geneview as gv
+
 
         # Extract the top10 SNPs and use the value as significant marker label threshold
 
@@ -594,8 +658,7 @@ class GWAS:
 
     def plot_gp(self, df, gp_plot_name, algorithm):
         """Bland-Altman Plot for the real and predicted phenotype values."""
-        import matplotlib.pyplot as plt
-        #plt.use('agg')
+
 
         # Calculate mean and difference (redundant here, but for demonstration)
         df['Mean'] = (df['Pheno_Value'] + df['Mean_Predicted_Value']) / 2
@@ -625,9 +688,7 @@ class GWAS:
 
     def plot_gp_scatter(self, df, gp_plot_name_scatter, algorithm):
         """Regression Plot for the real and predicted phenotype values."""
-        import matplotlib.pyplot as plt
-        from scipy.stats import pearsonr
-        import seaborn as sns
+
 
         df = df.replace([np.inf, -np.inf], np.nan).dropna()
 

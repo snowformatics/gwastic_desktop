@@ -11,11 +11,13 @@ from fastlmm.inference import FastLMM
 class GWASAI:
     def run_random_forest(self, snp_data, pheno_data, df_bim, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
                     genomic_predict, genomic_predict_name, model_nr):
+        print(np.sum(np.isnan(snp_data)))
         snp_data[np.isnan(snp_data)] = -1
-
+        print(np.sum(np.isnan(snp_data)))
+        print(snp_data.shape, pheno_data.shape)
         # Split data into training and testing sets
-        X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno_data, test_size=test_size)#, random_state=42)
-
+        X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno_data, test_size=test_size, random_state=42)#, random_state=42)
+        print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
         # # Standardize the input features
         ### for GP scalling might be not good
         if genomic_predict:
@@ -27,12 +29,23 @@ class GWASAI:
         #X_test = scaler.transform(X_test)
 
         # Define and train a Random Forest model
-        rf_model = RandomForestRegressor(n_estimators=estimators, n_jobs=-1)#, random_state=0) #42
+        rf_model = RandomForestRegressor(n_estimators=estimators, n_jobs=-1, random_state=42)#, random_state=0) #42
         #rf_model = RandomForestClassifier(n_estimators=estimators,max_depth=2, random_state=0)
+        #print(X_train, y_train, y_test)
+        #print (type(X_train), type(y_train))
+        #import matplotlib.pyplot as plt
+        #import seaborn as sns
+        #plt.imshow(X_train, cmap='viridis')  # 'cmap' denotes the color map
+        #plt.colorbar()  # Optional: adds a color bar to the side
+        #plt.show()
+        #df = pd.DataFrame(X_train)
+        # Create a heatmap
+        #sns.heatmap(df)
+        #plt.show()
 
         # Fit the model to the training data
         rf_model.fit(X_train, y_train)
-
+        print(rf_model.feature_importances_)
         # import seaborn as sns
         # print(len(snp_data))
         #

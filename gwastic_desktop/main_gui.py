@@ -11,6 +11,8 @@ import pysnptools.util as pstutil
 #poetry build
 #poetry publish
 
+# pipline nr 214
+# mac matplotlib agg and permission denied plink
 
 
 
@@ -373,8 +375,12 @@ class GWASApp:
                                                          leave_chr_set, self.gwas_result_name, self.algorithm)
             elif  self.algorithm == 'Random Forest (AI)':
                 gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
-                                                         estimators, self.gwas_result_name, chrom_mapping,
-                                                         self.add_log, model_nr)
+                                                        estimators, self.gwas_result_name, chrom_mapping,
+                                                        self.add_log, model_nr)
+                #gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+                                            # train_size_set, model_nr, estimators, leave_chr_set, max_dep_set,
+                                             # self.gwas_result_name, False, None)
+                #print (gwas_df)
             elif self.algorithm == 'XGBoost (AI)':
                 gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
                                                          self.gwas_result_name, chrom_mapping, self.add_log,
@@ -433,7 +439,8 @@ class GWASApp:
             self.add_log('Starting Analysis, this might take a while...')
 
             if self.algorithm == 'GP_LMM':
-                gp_df = self.gwas.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr, self.add_log)
+                gp_df = self.gwas.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr, self.add_log,
+                                             bed_path, chrom_mapping)
             elif self.algorithm == 'Random Forest (AI)':
                 gp_df = self.gwas.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
                                             self.genomic_predict_name, chrom_mapping, self.add_log,model_nr)
