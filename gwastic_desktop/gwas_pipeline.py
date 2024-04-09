@@ -587,13 +587,13 @@ class GWAS:
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
 
             # Remove rows where column 'A' has a value of 0.0
-
+            print ('1')
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df = df[df['PValue'] != 0.0]
 
             df['Chr'] = df['Chr'].astype(int)
             df['ChrPos'] = df['ChrPos'].astype(int)
-
+            print('2')
             # common parameters for plotting
             plt_params = {
                 "font.sans-serif": "Arial",
@@ -604,23 +604,24 @@ class GWAS:
                 "ytick.labelsize": 14
             }
             plt.rcParams.update(plt_params)
-
+            print('3')
             # Create a manhattan plot
             f, ax = plt.subplots(figsize=(12, 5), facecolor="w", edgecolor="k")
-
+            print('4')
             flipped_dict = {value: key for key, value in chrom_mapping.items()}
             df['Chr'] = df['Chr'].astype(float).replace(flipped_dict)
-
+            print('5')
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
                               sign_marker_color="r", title="GWAS Manhatten Plot " + algorithm + '\n',
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
                               hline_kws={"linestyle": "--", "lw": 1.3},#, sign_marker_p=1e-9, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
                                  logp=True,ax=ax,xticklabel_kws={"rotation": "vertical"})
+            print('6')
             plt.tight_layout(pad=1)
             #plt.show()
             plt.savefig(manhatten_plot_name)
-
+            print('7')
             # Create QQ plot
             f, ax = plt.subplots(figsize=(6, 6), facecolor="w", edgecolor="k")
             #
