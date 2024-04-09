@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 import seaborn as sns
 
-plt.switch_backend('TkAgg')
+plt.switch_backend('Agg')
 
 class GWAS:
     """GWAS class."""
@@ -139,7 +139,7 @@ class GWAS:
 
         elif algorithm == 'Linear regression':
             df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
-        print (df_lmm_gwas)
+        #print (df_lmm_gwas)
         df_lmm_gwas.dropna(subset=['PValue'], inplace=True)
         # we create one df for the plotting with ints as chr
         df_plot = df_lmm_gwas.copy(deep=True)
@@ -618,7 +618,7 @@ class GWAS:
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
                                  logp=True,ax=ax,xticklabel_kws={"rotation": "vertical"})
             plt.tight_layout(pad=1)
-            plt.show()
+            #plt.show()
             plt.savefig(manhatten_plot_name)
 
             # Create QQ plot
