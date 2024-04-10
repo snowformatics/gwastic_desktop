@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
-import dearpygui_ext.themes as dpg_ext
+dpg.create_context()
+#import dearpygui_ext.themes as dpg_ext
 from dearpygui_ext import logger
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.helpers import HELPERS
@@ -12,9 +13,6 @@ import pysnptools.util as pstutil
 #poetry publish
 
 # pipline nr 214
-# mac matplotlib agg and permission denied plink
-
-
 
 def main():
     app = GWASApp()
@@ -25,7 +23,6 @@ class GWASApp:
     def __init__(self):
         self.gwas = GWAS()
         self.helper = HELPERS()
-        dpg.create_context()
 
         with dpg.font_registry():
             script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
@@ -46,9 +43,7 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         #self.default_path = self.helper.get_settings('path') #todo add settings
-        self.default_path = "C:/gwas_test_data/test/vcf2gwas/"
-        self.default_path = "Z:/PrimedPlant_Plant2030/"
-        #self.algorithm =  self.helper.get_settings('algorithm')
+        self.default_path = 'Z:/gwas_test_data/test/'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
@@ -56,8 +51,6 @@ class GWASApp:
         self.qq_plot_name = "qq_plot.png"
         self.gp_plot_name = "Bland_Altman_plot.png"
         self.gp_plot_name_scatter = "GP_scatter_plot.png"
-        #self.test_size = 0.3 #0.3
-        #self.estimators = 200 #200
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500, horizontal_scrollbar=True)
         self.logz = logger.mvLogger(self.log_win)
@@ -65,12 +58,8 @@ class GWASApp:
         # Set up GUI components and callbacks
         self.setup_gui()
 
-    # def save_callback(self):
-    #     print("Save Clicked")
-
     def setup_gui(self):
         dpg.create_viewport(title='GWAStic Desktop Software', width=2000, height=1200, resizable=True)
-
 
     # Menu bar
         with dpg.viewport_menu_bar():
@@ -182,10 +171,6 @@ class GWASApp:
                     self.max_dep_set = dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50,
                                       min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_depth')
                     dpg.add_spacer(height=10)
-                    #dpg.add_separator()
-                    #dpg.add_text("Plot Settings", indent=50)
-                    #dpg.add_spacer(height=20)
-
 
             # Tooltips
             with dpg.tooltip("tooltip_vcf"):
@@ -269,7 +254,6 @@ class GWASApp:
         self.results_directory = app_data
         #print(self.results_directory)
        # try:
-
         results_path, current_path = self.get_selection_path(self.results_directory)
         save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
                                  self.manhatten_plot_name, self.qq_plot_name, self.algorithm,
@@ -280,7 +264,6 @@ class GWASApp:
 
     def cancel_callback_directory(self, sender, app_data):
         self.add_log('Process Canceled')
-
 
     def save_default_path(self, sender, data, user_data):
         """Overwrite the default path. Restart necessary."""
@@ -346,7 +329,6 @@ class GWASApp:
         leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
-        #print (self.algorithm)
 
         #try:
         self.add_log('Reading files...')

@@ -3,12 +3,11 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.metrics import accuracy_score, mean_squared_error
-from fastlmm.inference import FastLMM
+from sklearn.ensemble import RandomForestRegressor
 
-
+###This file is depreciated
 class GWASAI:
+    """This file is depreciated."""
     def run_random_forest(self, snp_data, pheno_data, df_bim, test_size, estimators, gwas_result_name, bed_gp, pheno_gp,
                     genomic_predict, genomic_predict_name, model_nr):
         print(np.sum(np.isnan(snp_data)))
