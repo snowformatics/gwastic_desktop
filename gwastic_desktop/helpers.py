@@ -162,7 +162,7 @@ class HELPERS:
         df_result['Difference'] = (df_result['Pheno_Value'] - df_result['Mean_Predicted_Value']).abs()
         df_result['Difference'] = df_result['Difference'].round(decimals=3)
         df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(decimals=3)
-        df_result.to_csv('out.csv')
+        #df_result.to_csv('out.csv')
 
 
         #print('ok', df_result)

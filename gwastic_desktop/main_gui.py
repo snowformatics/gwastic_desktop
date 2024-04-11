@@ -96,10 +96,10 @@ class GWASApp:
                 with dpg.tab(label='GWAS Analysis'):
                     dpg.add_text("\nStart GWAS Analysis", indent=50)
                     dpg.add_spacer(height=20)
-                    geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
-                    pheno = dpg.add_button(label="Choose Phenotype", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
+                    geno = dpg.add_button(label="Choose a BED file", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
+                    pheno = dpg.add_button(label="Choose a phenotype file", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=20)
-                    self.gwas_combo = dpg.add_combo(label="Algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", tag= 'tooltip_algorithm')
+                    self.gwas_combo = dpg.add_combo(label="Select algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", tag= 'tooltip_algorithm')
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
@@ -107,12 +107,12 @@ class GWASApp:
                 with dpg.tab(label='Genomic Prediction Analysis'):
                     dpg.add_text("\nStart Genomic Prediction", indent=50)
                     dpg.add_spacer(height=20)
-                    geno = dpg.add_button(label="Choose BED", callback=lambda: dpg.show_item("file_dialog_bed"),
+                    geno = dpg.add_button(label="Choose a BED file", callback=lambda: dpg.show_item("file_dialog_bed"),
                                           indent=50)
-                    pheno = dpg.add_button(label="Choose Phenotype",
+                    pheno = dpg.add_button(label="Choose a phenotype file",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM'],
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM'],
                                   indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
@@ -123,41 +123,41 @@ class GWASApp:
                     dpg.add_text("\nConvert a VCF file into BED file format and apply MAF\nor missing genotype filter.", indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Select files:", indent=50)
-                    vcf = dpg.add_button(label="Choose VCF", callback=lambda: dpg.show_item("file_dialog_vcf"),
+                    vcf = dpg.add_button(label="Choose a VCF file", callback=lambda: dpg.show_item("file_dialog_vcf"),
                                          indent=50, tag='tooltip_vcf')
 
-                    variant_ids = dpg.add_button(label="Choose Variants (optional)", tag= 'tooltip_variant',
+                    variant_ids = dpg.add_button(label="Choose a variants file (optional)", tag= 'tooltip_variant',
                                                  callback=lambda: dpg.show_item("file_dialog_variants"), indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Apply filters:", indent=50)
-                    maf_input = dpg.add_input_float(label="MAF", width=150, default_value=0.05,step=0.005, indent=50, tag= 'tooltip_maf')
+                    maf_input = dpg.add_input_float(label="Minor allele frequency (MAF)", width=150, default_value=0.05,step=0.005, indent=50, tag= 'tooltip_maf')
                     geno_input = dpg.add_input_float(label="Missing genotype rate", width=150, default_value=0.1, step=0.005, indent=50, tag= 'tooltip_missing')
                     dpg.add_spacer(height=20)
-                    convert_btn = dpg.add_button(label="Convert", callback=self.convert_vcf, user_data=[maf_input, geno_input, vcf, variant_ids], indent=50)
+                    convert_btn = dpg.add_button(label="Convert VCF", callback=self.convert_vcf, user_data=[maf_input, geno_input, vcf, variant_ids], indent=50)
                     dpg.bind_item_theme(convert_btn, self.our_theme)
 
                 with dpg.tab(label='Settings'):
                     dpg.add_spacer(height=10)
-                    dpg.add_text("General Setting", indent=50, color=(72, 138, 199))
-                    dpg.add_spacer(height=10)
-                    default_path_input = dpg.add_input_text(label="Default Path", default_value=self.default_path, indent=50, tag= 'tooltip_path', width=250)
-                    dpg.add_button(label="Save", callback=self.save_default_path, user_data=[default_path_input], indent=50)
-                    dpg.add_spacer(height=10)
-                    dpg.add_separator()
-                    dpg.add_spacer(height=20)
-                    dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
-                    dpg.add_spacer(height=10)
-                    #self.pvalue_set = dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue', enabled=False)
-                    dpg.add_spacer(height=10)
-                    self.leave_chr_set = dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
-                    dpg.add_spacer(height=10)
-                    dpg.add_separator()
-                    dpg.add_spacer(height=20)
+                    #dpg.add_text("General Setting", indent=50, color=(72, 138, 199))
+                    #dpg.add_spacer(height=10)
+                    # default_path_input = dpg.add_input_text(label="Default Path", default_value=self.default_path, indent=50, tag= 'tooltip_path', width=250)
+                    # dpg.add_button(label="Save", callback=self.save_default_path, user_data=[default_path_input], indent=50)
+                    # dpg.add_spacer(height=10)
+                    # dpg.add_separator()
+                    # dpg.add_spacer(height=20)
+                    # dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
+                    # dpg.add_spacer(height=10)
+                    # #self.pvalue_set = dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue', enabled=False)
+                    # dpg.add_spacer(height=10)
+                    # self.leave_chr_set = dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
+                    # dpg.add_spacer(height=10)
+                    # dpg.add_separator()
+                    # dpg.add_spacer(height=20)
                     dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=10)
                     #self.std_set = dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
                     #dpg.add_spacer(height=10)
-                    self.train_size_set = dpg.add_input_int(label="Training Size", width=150, default_value=70,step=10, indent=50,
+                    self.train_size_set = dpg.add_input_int(label="Training size", width=150, default_value=70,step=10, indent=50,
                                       min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_training')
                     dpg.add_spacer(height=10)
                     self.model_nr = dpg.add_input_int(label="Nr. of models", width=150, default_value=1, step=1,
@@ -165,7 +165,7 @@ class GWASApp:
                                                             min_value=1, max_value=50, min_clamped=True,
                                                             max_clamped=True, tag='tooltip_model')
                     dpg.add_spacer(height=10)
-                    self.estim_set = dpg.add_input_int(label="Number of Trees", width=150, default_value=200, step=10, indent=50,
+                    self.estim_set = dpg.add_input_int(label="Number of trees", width=150, default_value=200, step=10, indent=50,
                                       min_value=1, min_clamped=True, tag= 'tooltip_trees')
                     dpg.add_spacer(height=10)
                     self.max_dep_set = dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50,
@@ -189,8 +189,8 @@ class GWASApp:
                 dpg.add_text("Select the algorithm to be used for the analysis.", color=[79, 128, 226])
            # with dpg.tooltip("tooltip_pvalue"):
                 #dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows for large datasets.", color=[79, 128, 226])
-            with dpg.tooltip("tooltip_chrom"):
-                dpg.add_text("Perform single SNP GWAS via cross validation over the chromosomes.\nDefault to True.\nWarning: setting False can cause proximal contamination.", color=[79, 128, 226])
+            #with dpg.tooltip("tooltip_chrom"):
+                #dpg.add_text("Perform single SNP GWAS via cross validation over the chromosomes.\nDefault to True.\nWarning: setting False can cause proximal contamination.", color=[79, 128, 226])
             #with dpg.tooltip("tooltip_stand"):
                 #dpg.add_text("Check this to standardize features by removing the mean and scaling to unit variance,\noften required for machine learning algorithms.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_training"):
@@ -201,8 +201,8 @@ class GWASApp:
                 dpg.add_text("Specify the number of models to be used in the analysis.\nMore models can increase accuracy but also computation time.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_depth"):
                 dpg.add_text("Determine the maximum depth of the trees.\nDeeper trees can model more complex relationships.", color=[79, 128, 226])
-            with dpg.tooltip("tooltip_path"):
-                dpg.add_text("Set a default path.", color=[79, 128, 226])
+           # with dpg.tooltip("tooltip_path"):
+               # dpg.add_text("Set a default path.", color=[79, 128, 226])
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
@@ -326,7 +326,7 @@ class GWASApp:
         model_nr = dpg.get_value(self.model_nr)
         #pvalue_set = dpg.get_value(self.pvalue_set)
         #std_set = dpg.get_value(self.std_set)
-        leave_chr_set = dpg.get_value(self.leave_chr_set)
+        #leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
 
@@ -353,8 +353,8 @@ class GWASApp:
             self.add_log('Starting Analysis, this might take a while...')
 
             if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
-                gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log,
-                                                         leave_chr_set, self.gwas_result_name, self.algorithm)
+                gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log
+                                                         , self.gwas_result_name, self.algorithm)
             elif  self.algorithm == 'Random Forest (AI)':
                 gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
                                                         estimators, self.gwas_result_name, chrom_mapping,
@@ -395,7 +395,7 @@ class GWASApp:
         self.algorithm = dpg.get_value(self.gwas_gp)
         test_size = (100 - dpg.get_value(self.train_size_set)) / 100
         estimators = dpg.get_value(self.estim_set)
-        leave_chr_set = dpg.get_value(self.leave_chr_set)
+        #leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         model_nr = dpg.get_value(self.model_nr)
 
@@ -449,7 +449,7 @@ class GWASApp:
     def show_results_window(self, df, algorithm, genomic_predict):
 
         with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
-            dpg.add_button(label="Download Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
+            dpg.add_button(label="Export Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
             dpg.add_spacer(height=60)
 
             if genomic_predict:
@@ -507,7 +507,14 @@ class GWASApp:
                         df = df.sort_values(by=['PValue'], ascending=False)
 
                     with dpg.tab(label="GWAS Results (Top 500)"):
+
                         df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                        if algorithm == "FaST-LMM" or algorithm == "Linear regression":
+                            pass
+                        else:
+                            df.columns = df.columns.str.replace('PValue', 'SNP effect')
+                        #print (df)
+
                         max_rows= len(df)
                         if max_rows > 501:
                             max_rows = 500
@@ -520,7 +527,11 @@ class GWASApp:
                             for i in range(max_rows):
                                 with dpg.table_row():
                                     for j in range(df.shape[1]):
-                                        dpg.add_text(f"{df.iloc[i, j]}")
+                                        #dpg.add_text(f"{df.iloc[i, j]}")
+                                        value = df.iloc[i, j]
+                                        # Format the value as a string with desired precision, e.g., 2 decimal places
+                                        #formatted_value = f"{value:.6f}" if isinstance(value, float) else str(value)
+                                        dpg.add_text(value)
 
 
     def run(self):
