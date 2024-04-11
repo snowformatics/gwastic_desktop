@@ -553,6 +553,7 @@ class GWAS:
 
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name)
+            plt.savefig(manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'), dpi=1200)
 
             # Create QQ plot
             f, ax = plt.subplots(figsize=(6, 6), facecolor="w", edgecolor="k")
@@ -563,6 +564,7 @@ class GWAS:
             # #ax.set(ylim=(0, 20), xlim=(0, 20))
             plt.tight_layout(pad=1)
             plt.savefig(qq_plot_name)
+            plt.savefig(qq_plot_name.replace('qq_plot', 'qq_plot_high'), dpi=1200)
 
 
         else:
@@ -589,6 +591,7 @@ class GWAS:
                                   xlabel="Chromosome", ylabel=r"SNP effect", xticklabel_kws={"rotation": "vertical"})#, sign_marker_p=sign_limit, is_annotate_topsnp=True)
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name)
+            plt.savefig(manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'), dpi=1200)
 
 
     def plot_gp(self, df, gp_plot_name, algorithm):
@@ -615,11 +618,13 @@ class GWAS:
         plt.axhline(mean_diff - 1.96 * std_diff, color='green', linestyle='--', label='Lower Limit of Agreement')
         plt.xlabel('Mean Value')
         plt.ylabel('Difference')
-        plt.title('Bland-Altman Plot (' + algorithm + ')')
+        algorithm2 = algorithm.replace(' (AI)', '')
+        plt.title('Bland-Altman Plot (' + algorithm2 + ')')
         plt.legend()
 
         plt.tight_layout(pad=1)
         plt.savefig(gp_plot_name)
+        plt.savefig(gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high'), dpi=1200)
 
 
     def plot_gp_scatter(self, df, gp_plot_name_scatter, algorithm):
@@ -640,9 +645,11 @@ class GWAS:
         plt.xlabel('Phenotype Value')
         plt.ylabel('Mean Predicted Value')
         #plt.text(5, max(df['Mean_Predicted_Value']) - 5, corr_label, fontsize=12, color='blue')
-        plt.title('Correlation Plot (' + algorithm + ')' + '\n' + corr_label)
+        algorithm2 = algorithm.replace(' (AI)', '')
+        plt.title('Correlation Plot (' + algorithm2 + ')' + '\n' + corr_label)
         plt.tight_layout(pad=1)
         plt.savefig(gp_plot_name_scatter)
+        plt.savefig(gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'), dpi=1200)
         #plt.show()
 
 

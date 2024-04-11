@@ -88,7 +88,11 @@ class HELPERS:
             pass
 
         src_files = [gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name, genomic_predict_name,
-                     gp_plot_name, gp_plot_name_scatter]
+                     gp_plot_name, gp_plot_name_scatter,
+                     manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'),
+                     qq_plot_name.replace('qq_plot', 'qq_plot_high'),
+                     gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
+                     gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high')]
         for src_file in src_files:
             if os.path.exists(os.path.join(current_dir, src_file)):
 
@@ -198,14 +202,7 @@ class HELPERS:
         return df_result_sum
         #df_result_sum.to_csv("rf_all_sum10.csv", index=False)
 
-    # def delete_files(self, current_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name,
-    #                  algorithm):
-    #     """Delete all temp files."""
-    #     os.remove(os.path.join(current_dir, manhatten_plot_name))
-    #     os.remove(os.path.join(current_dir, gwas_result_name))
-    #     os.remove(os.path.join(current_dir, gwas_result_name_top))
-    #     if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
-    #         os.remove(os.path.join(current_dir, qq_plot_name))
+
 
 
 

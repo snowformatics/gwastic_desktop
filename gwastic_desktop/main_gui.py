@@ -286,9 +286,15 @@ class GWASApp:
 
         # delete files
         file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name, self.gp_plot_name,
-                      self.manhatten_plot_name, self.qq_plot_name, self.gp_plot_name_scatter]
+                      self.manhatten_plot_name, self.qq_plot_name, self.gp_plot_name_scatter,
+                      self.manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'),
+                     self.qq_plot_name.replace('qq_plot', 'qq_plot_high'),
+                      self.gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
+                      self.gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high')
+                      ]
         for f in file_names:
             if os.path.exists(f):
+               # print(f)
                 os.remove(f)
 
     def add_log(self, message, warn=False, error=False):
