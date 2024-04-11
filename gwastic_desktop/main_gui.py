@@ -294,7 +294,6 @@ class GWASApp:
                       ]
         for f in file_names:
             if os.path.exists(f):
-               # print(f)
                 os.remove(f)
 
     def add_log(self, message, warn=False, error=False):

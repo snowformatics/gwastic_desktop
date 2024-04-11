@@ -605,6 +605,7 @@ class GWAS:
         # Plotting the Bland-Altman Plot
         plt.figure(figsize=(10, 6))
         plt.scatter(df['Mean'], df['Difference'], color='blue')
+        #sns.scatterplot(x='Mean', y='Difference', data=df, color='blue')
 
         # Calculate and plot the mean difference
         mean_diff = df['Difference'].mean()
