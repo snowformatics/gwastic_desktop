@@ -24,9 +24,7 @@ class HELPERS:
                 col1_value = parts[0]
                 try:
                     col1_value = int(col1_value)
-
                 except ValueError:
-
                     # Check if the string in column 1 is already mapped to an integer
                     if col1_value in mapping:
                         parts[0] = str(mapping[col1_value])
@@ -52,7 +50,6 @@ class HELPERS:
     def save_settings(self, default_path):
         """Save the user settings."""
         config = configparser.ConfigParser()
-
         # Add sections and settings
         config['DefaultSettings'] = {'path': default_path, 'algorithm':'FaST-LMM'}
         # Write to a file
@@ -63,13 +60,13 @@ class HELPERS:
         """Get the user settings."""
         config = configparser.ConfigParser()
         config.read('settings.ini')
-
         # Accessing values from DefaultSettings
         default_path= config['DefaultSettings'][setting]
         return default_path
 
     def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name,
-                     qq_plot_name, algorithm, genomic_predict_name, gp_plot_name, gp_plot_name_scatter, add_log):
+                     qq_plot_name, algorithm, genomic_predict_name, gp_plot_name, gp_plot_name_scatter, add_log,
+                     settings_lst):
         """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
         save_dir = os.path.join(save_dir, ts)
@@ -87,6 +84,7 @@ class HELPERS:
         except FileNotFoundError:
             pass
 
+        # Copy all results files
         src_files = [gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name, genomic_predict_name,
                      gp_plot_name, gp_plot_name_scatter,
                      manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'),
@@ -95,70 +93,26 @@ class HELPERS:
                      gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high')]
         for src_file in src_files:
             if os.path.exists(os.path.join(current_dir, src_file)):
-
                 shutil.copy(os.path.join(current_dir,src_file), os.path.join(save_dir,src_file))
                 add_log(f"File saved: {src_file}")
             else:
                 pass
+        # Create a log file with all settings
+        #print(settings_lst)
+        log_file = open(save_dir + '/log.txt', 'w')
+        log_file.write('Algorithm: ' + settings_lst[0])
+        log_file.write('\nBed file used: ' + settings_lst[1])
+        log_file.write('\nPheno file used: ' + settings_lst[2])
+        log_file.write('\nTraining size: ' + str(100-(100*float(settings_lst[3]))))
+        log_file.write('\nNr of trees: ' + str(settings_lst[4]))
+        log_file.write('\nNr of models: ' + str(settings_lst[5]))
+        log_file.write('\nMax depth: ' + str(settings_lst[6]))
 
-
-
-
-
-        # if algorithm == 'GP_LMM' or algorithm == 'XGBoost (AI)':
-        #     shutil.copyfile(os.path.join(current_dir, genomic_predict_name),
-        #                     os.path.join(save_dir, genomic_predict_name))
-        #     shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
-        #
-        # elif algorithm == "Random Forest (AI)" or algorithm == 'XGBoost (AI)':
-        #     shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
-        #     df = pd.read_csv(gwas_result_name)
-        #     first_10000_rows = df.head(10000)
-        #     first_10000_rows.to_csv(gwas_result_name_top, index=False)
-        #
-        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
-        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name_top),
-        #                     os.path.join(save_dir, gwas_result_name_top))
-        #
-        # else:
-        #     shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
-        #     # We store also a trimmed version of single_snp with 10000 SNPs
-        #     df = pd.read_csv(gwas_result_name)
-        #     first_10000_rows = df.head(10000)
-        #     first_10000_rows.to_csv(gwas_result_name_top, index=False)
-        #
-        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
-        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
-        #
-        #     if algorithm == "FaST-LMM" or algorithm == "Linear regression":
-        #         shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
-        #     elif algorithm == "Random Forest (AI)":
-        #         pass
-
-
-        # try:
-        #     shutil.copyfile(os.path.join(current_dir, genomic_predict_name), os.path.join(save_dir, genomic_predict_name))
-        #     shutil.copyfile(os.path.join(current_dir, gp_plot_name), os.path.join(save_dir, gp_plot_name))
-        #
-        #
-        # except FileNotFoundError:
-        #     shutil.copyfile(os.path.join(current_dir, manhatten_plot_name), os.path.join(save_dir, manhatten_plot_name))
-        #     # We store also a trimmed version of single_snp with 10000 SNPs
-        #     df = pd.read_csv(gwas_result_name)
-        #     first_10000_rows = df.head(10000)
-        #     first_10000_rows.to_csv(gwas_result_name_top, index=False)
-        #
-        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name), os.path.join(save_dir, gwas_result_name))
-        #     shutil.copyfile(os.path.join(current_dir, gwas_result_name_top), os.path.join(save_dir, gwas_result_name_top))
-        #
-        #     if algorithm == "FaST-LMM:" or algorithm == "Linear regression":
-        #         shutil.copyfile(os.path.join(current_dir, qq_plot_name), os.path.join(save_dir, qq_plot_name))
         return save_dir
+
 
     def merge_gp_models(self, dataframes):
         df_combined = pd.concat(dataframes)
-        #print (dataframes[0])
-        #print(dataframes[1])
         df_result = df_combined.groupby(['ID1', 'BED_ID2'])['Predicted_Value'].mean().reset_index()
         df_result = pd.merge(dataframes[0], df_result, on='ID1', how='left')
         df_result = df_result.drop(['Predicted_Value_x', 'BED_ID2_y', 'Pheno_ID2'], axis=1)
@@ -166,12 +120,6 @@ class HELPERS:
         df_result['Difference'] = (df_result['Pheno_Value'] - df_result['Mean_Predicted_Value']).abs()
         df_result['Difference'] = df_result['Difference'].round(decimals=3)
         df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(decimals=3)
-        #df_result.to_csv('out.csv')
-
-
-        #print('ok', df_result)
-
-
         return df_result
 
 
@@ -179,28 +127,16 @@ class HELPERS:
         """Combine RF or XG models and calculate the sum of the SNP effect."""
         df_combined = pd.concat(dataframes)
         df_combined = df_combined[df_combined['PValue'] > 0]
-        #df_combined.to_csv('out.csv')
         # Grouping by 'snp' and summing the values
         df2 = df_combined.groupby('SNP')['PValue'].sum().reset_index()
-        #print (df2)
         df_result_sum = pd.merge(df_combined, df2, on='SNP', how='left')
-        #print(df_result_sum)
         df_result_sum = df_result_sum.drop(['PValue_x'], axis=1).drop_duplicates()
         df_result_sum = df_result_sum.rename(columns={'PValue_y': 'PValue'})
-        #print (df_result_sum)
-        #df_combined.to_csv('out.csv')
-
-        #df_result_sum = df_result_sum.sort_values(by=['SNP'])
-       # print(df_result_sum)
-        #df_result_sum[['Chr', 'ChrPos']] = df_result_sum['SNP'].str.split(':', expand=True)
-        #df_result_sum = df_result_sum[['SNP', 'PValue','Chr', 'ChrPos']]
         df_result_sum['Chr'] = df_result_sum['Chr'].astype(int)
         df_result_sum['ChrPos'] = df_result_sum['ChrPos'].astype(int)
         df_result_sum = df_result_sum.sort_values(by=['Chr', 'ChrPos'])
-        #df_result_sum.to_csv('out.csv')
-
         return df_result_sum
-        #df_result_sum.to_csv("rf_all_sum10.csv", index=False)
+
 
 
 

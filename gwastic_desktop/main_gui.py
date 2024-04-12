@@ -252,12 +252,13 @@ class GWASApp:
     def callback_save_results(self, sender, app_data):
         """Save the results inside the folder including tables as csv and plots as png. """
         self.results_directory = app_data
-        #print(self.results_directory)
+
        # try:
         results_path, current_path = self.get_selection_path(self.results_directory)
         save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
-                                 self.manhatten_plot_name, self.qq_plot_name, self.algorithm,
-                                            self.genomic_predict_name, self.gp_plot_name, self.gp_plot_name_scatter, self.add_log)
+                                            self.manhatten_plot_name, self.qq_plot_name, self.algorithm,
+                                            self.genomic_predict_name, self.gp_plot_name, self.gp_plot_name_scatter,
+                                            self.add_log, self.settings_lst)
         self.add_log('Results saved in: ' + save_dir)
         #except TypeError:
             #self.add_log('Please select a valid directory.', error=True)
@@ -343,6 +344,7 @@ class GWASApp:
         check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
         # Replace chromosome names, they need to be numbers
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+        self.settings_lst = [self.algorithm, bed_path, pheno_path, train_size_set, estimators, model_nr, max_dep_set]
         if check_input_data[0]:
             bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_path))
@@ -411,6 +413,7 @@ class GWASApp:
         check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
         # Replace chromosome names, they need to be numbers
         chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+        self.settings_lst = [self.algorithm, bed_path, pheno_path, test_size, estimators, model_nr, max_dep_set]
         if check_input_data[0]:
             bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_path))
