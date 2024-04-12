@@ -318,7 +318,9 @@ class GWASApp:
         else:
             variants_path, current_path = self.get_selection_path(self.variants_app_data)
         self.add_log('Start converting VCF to BED...')
-        plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path, vcf_path.split('.')[0], maf, geno)
+        plink_log = self.gwas.vcf_to_bed(vcf_path, variants_path,
+                                         vcf_path.split('.')[0] +'_maf' + str(round(float(maf),2)) +'_geno' + str(round(float(geno),2)),
+                                         maf, geno)
         self.add_log(plink_log)
 
     def run_gwas(self, sender, data, user_data):

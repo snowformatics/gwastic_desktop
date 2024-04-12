@@ -152,7 +152,7 @@ class GWAS:
     def run_gwas_xg(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
                     model_nr, max_dep_set):
         """GWAS using Random Forest with cross validation."""
-        print (test_size)
+
         t1 = time.time()
         dataframes = []
         df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
