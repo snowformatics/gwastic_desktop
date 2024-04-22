@@ -295,8 +295,8 @@ class GWAS:
         """Genomic Prediction using Random Forest with cross validation."""
         t1 = time.time()
         dataframes = []
-        df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
-        df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+        #df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+        #df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
 
         # training data
         snp_data = bed_fixed.read().val
@@ -307,6 +307,7 @@ class GWAS:
         snp_data_all[np.isnan(snp_data_all)] = -1
         bed_data2 = bed_data.iid
         pheno_data2 = pheno.iid
+
 
         for i in range(int(model_nr)):
             add_log('Model Iteration: ' + str(i + 1))
@@ -345,14 +346,56 @@ class GWAS:
 
         t1 = time.time()
         dataframes = []
-        df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
-        df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+        #df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+        #df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+        #print (len(pheno.read().val))
+        validation = True
+        if validation:
+
+            snp_data = bed_fixed.read().val
+            pheno_data = pheno.read().val
+
+            # Assuming x and y are your numpy arrays and they have the same length
+            total_data_points = len(pheno_data)
+
+            # Calculate the number of validation samples (5% of the total data)
+            num_validation_samples = round(0.1 * total_data_points)
+
+            # Generate random indices for the validation set
+            indices = np.arange(total_data_points)
+            np.random.shuffle(indices)
+            val_indices = indices[:num_validation_samples]
+            train_test_indices = indices[num_validation_samples:]
+
+            # Create validation set
+            snps_for_validation = snp_data[val_indices]
+            pheno_for_validation = pheno_data[val_indices]
+            ids_for_validation1 = bed_fixed.iid[val_indices]
+            ids_for_validation2 = pheno.iid[val_indices]
+            print (ids_for_validation1)
+            #print(ids_for_validation2, pheno_for_validation)
+
+            # Remaining data for training/testing
+            snps_for_training = snp_data[train_test_indices]
+            pheno_for_training = pheno_data[train_test_indices]
+            #print (bed_fixed.iid[train_test_indices])
+            #np.savetxt('rest.csv', y_train_test, delimiter=',')
+            #np.savetxt('val.csv', pheno_for_validation, delimiter=',')
+        else:
+
+            snps_for_training = bed_fixed.read().val
+            pheno_for_training = pheno.read().val
+
+        #print (len(snps_for_training), len(pheno_for_training))
+
 
         for i in range(int(model_nr)):
             add_log('Model Iteration: ' + str(i + 1))
 
             # Split data into training and testing sets
-            X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
+            #X_train, X_test, y_train, y_test = train_test_split(bed_fixed.read().val, pheno.read().val,
+                                                                #test_size=test_size)
+            X_train, X_test, y_train, y_test = train_test_split(snps_for_training, pheno_for_training,
                                                                 test_size=test_size)
 
             #scaler = StandardScaler()
@@ -365,7 +408,6 @@ class GWAS:
             bed_data2 = bed_data.iid
 
             pheno_data2 = pheno.iid
-            #predicted_values = xgb_model.predict(bed_fixed.read().val)
             predicted_values = xgb_model.predict(bed_data.read().val)
 
             df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
@@ -381,6 +423,13 @@ class GWAS:
 
         df_all = self.helper.merge_gp_models(dataframes)
         df_all.to_csv(genomic_predict_name, index=False)
+
+        if validation:
+            unique_ids = np.unique(ids_for_validation1.flatten())
+            # Filter the DataFrame based on these IDs
+            valdiation_df = df_all[df_all['ID1'].isin(unique_ids)]
+            valdiation_df.to_csv(genomic_predict_name.replace('.csv', '_valdation.csv'), index=False)
+            #print(filtered_df)
 
         t2 = time.time()
         t3 = round((t2 - t1) / 60, 2)

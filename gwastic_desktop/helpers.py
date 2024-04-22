@@ -90,7 +90,8 @@ class HELPERS:
                      manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'),
                      qq_plot_name.replace('qq_plot', 'qq_plot_high'),
                      gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
-                     gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high')]
+                     gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high'),
+                     genomic_predict_name.replace('.csv', '_valdation.csv')]
         for src_file in src_files:
             if os.path.exists(os.path.join(current_dir, src_file)):
                 shutil.copy(os.path.join(current_dir,src_file), os.path.join(save_dir,src_file))

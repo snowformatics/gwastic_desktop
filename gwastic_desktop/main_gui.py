@@ -43,7 +43,7 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         #self.default_path = self.helper.get_settings('path') #todo add settings
-        self.default_path = 'Z:/gwas_test_data/test/'
+        self.default_path = 'Z:/wheat/genbank20_GP/'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
@@ -291,7 +291,8 @@ class GWASApp:
                       self.manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'),
                      self.qq_plot_name.replace('qq_plot', 'qq_plot_high'),
                       self.gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
-                      self.gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high')
+                      self.gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high'),
+                      self.genomic_predict_name.replace('.csv', '_valdation.csv')
                       ]
         for f in file_names:
             if os.path.exists(f):
@@ -420,8 +421,10 @@ class GWASApp:
             if check_input_data[0]:
                 bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
                 pheno = Pheno(str(pheno_path))
+                #print(len(pheno.read().val))
                 # replace original bed with one that has the same iids as the pheno
                 bed, pheno = pstutil.intersect_apply([bed, pheno])
+                #print(len(pheno.read().val))
                 bed_fixed = self.gwas.filter_out_missing(bed)
 
                 # format numbers with commas and no decimals
