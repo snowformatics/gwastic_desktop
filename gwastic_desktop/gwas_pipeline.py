@@ -124,8 +124,7 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
-
-    def run_gwas_lmm(self, bed_fixed, pheno, chrom_mapping, add_log, gwas_result_name, algorithm):
+    def run_gwas_lmm(self, bed_fixed, pheno, chrom_mapping, add_log, gwas_result_name, algorithm, bed_file):
         """GWAS using LMM and linear regression methods from fast-lmm library."""
         t1 = time.time()
         if algorithm == 'FaST-LMM':
@@ -133,6 +132,8 @@ class GWAS:
 
         elif algorithm == 'Linear regression':
             df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
+            #self.calculate_qtl(df_lmm_gwas, bed_fixed)
+
         #print (df_lmm_gwas)
         df_lmm_gwas.dropna(subset=['PValue'], inplace=True)
         # we create one df for the plotting with ints as chr
@@ -638,6 +639,10 @@ class GWAS:
         # Extract the top10 SNPs and use the value as significant marker label threshold
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
 
+            # Get the threshold lines
+            sugg_line = 1 / len(df['SNP'])
+            gen_line = 0.05 / len(df['SNP'])
+
             # Remove rows where column 'A' has a value of 0.0
 
             df = df.sort_values(by=['Chr', 'ChrPos'])
@@ -668,7 +673,8 @@ class GWAS:
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
                               hline_kws={"linestyle": "--", "lw": 1.3},#, sign_marker_p=1e-9, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
-                                 logp=True,ax=ax,xticklabel_kws={"rotation": "vertical"})
+                                 logp=True,ax=ax,xticklabel_kws={"rotation": "vertical"}, suggestiveline=sugg_line,
+                                 genomewideline=gen_line)
 
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name)
@@ -712,7 +718,6 @@ class GWAS:
             plt.savefig(manhatten_plot_name)
             plt.savefig(manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'), dpi=300)
 
-
     def plot_gp(self, df, gp_plot_name, algorithm):
         """Bland-Altman Plot for the real and predicted phenotype values."""
 
@@ -746,7 +751,6 @@ class GWAS:
         plt.savefig(gp_plot_name)
         plt.savefig(gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high'), dpi=300)
 
-
     def plot_gp_scatter(self, df, gp_plot_name_scatter, algorithm):
         """Regression Plot for the real and predicted phenotype values."""
 
@@ -771,5 +775,3 @@ class GWAS:
         plt.savefig(gp_plot_name_scatter)
         plt.savefig(gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'), dpi=300)
         #plt.show()
-
-

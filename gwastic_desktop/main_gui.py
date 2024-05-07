@@ -43,7 +43,7 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         #self.default_path = self.helper.get_settings('path') #todo add settings
-        self.default_path = 'Z:/wheat/genbank20_GP/'
+        self.default_path = 'Z:/gwas_test_data/gwastic_paper/small_set/'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
@@ -339,60 +339,60 @@ class GWASApp:
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
 
-        try:
-            self.add_log('Reading files...')
-            bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
-            pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
-            self.add_log('Validating files...')
-            check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
-            # Replace chromosome names, they need to be numbers
-            chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-            self.settings_lst = [self.algorithm, bed_path, pheno_path, train_size_set, estimators, model_nr, max_dep_set]
-            if check_input_data[0]:
-                bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
-                pheno = Pheno(str(pheno_path))
-                # replace original bed with one that has the same iids as the pheno
-                bed, pheno = pstutil.intersect_apply([bed, pheno])
-                bed_fixed = self.gwas.filter_out_missing(bed)
+        #try:
+        self.add_log('Reading files...')
+        bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
+        pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+        self.add_log('Validating files...')
+        check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
+        # Replace chromosome names, they need to be numbers
+        chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+        self.settings_lst = [self.algorithm, bed_path, pheno_path, train_size_set, estimators, model_nr, max_dep_set]
+        if check_input_data[0]:
+            bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
+            pheno = Pheno(str(pheno_path))
+            # replace original bed with one that has the same iids as the pheno
+            bed, pheno = pstutil.intersect_apply([bed, pheno])
+            bed_fixed = self.gwas.filter_out_missing(bed)
 
-                # format numbers with commas and no decimals
-                s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
-                    pheno.iid_count)
-                self.add_log(s3, warn=True)
-                # run single_snp with the fixed file
-                self.add_log('Starting Analysis, this might take a while...')
+            # format numbers with commas and no decimals
+            s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
+                pheno.iid_count)
+            self.add_log(s3, warn=True)
+            # run single_snp with the fixed file
+            self.add_log('Starting Analysis, this might take a while...')
 
-                if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
-                    gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log
-                                                             , self.gwas_result_name, self.algorithm)
-                elif  self.algorithm == 'Random Forest (AI)':
-                    gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
-                                                            estimators, self.gwas_result_name, chrom_mapping,
-                                                            self.add_log, model_nr)
-                    #gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                                # train_size_set, model_nr, estimators, leave_chr_set, max_dep_set,
-                                                 # self.gwas_result_name, False, None)
-                    #print (gwas_df)
-                elif self.algorithm == 'XGBoost (AI)':
-                    gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
-                                                             self.gwas_result_name, chrom_mapping, self.add_log,
-                                                             model_nr, max_dep_set)
+            if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
+                gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log
+                                                         , self.gwas_result_name, self.algorithm, bed_path)
+            elif  self.algorithm == 'Random Forest (AI)':
+                gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
+                                                        estimators, self.gwas_result_name, chrom_mapping,
+                                                        self.add_log, model_nr)
+                #gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
+                                            # train_size_set, model_nr, estimators, leave_chr_set, max_dep_set,
+                                             # self.gwas_result_name, False, None)
+                #print (gwas_df)
+            elif self.algorithm == 'XGBoost (AI)':
+                gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
+                                                         self.gwas_result_name, chrom_mapping, self.add_log,
+                                                         model_nr, max_dep_set)
 
-            else:
-                self.add_log(check_input_data[1], error=True)
+        else:
+            self.add_log(check_input_data[1], error=True)
 
-            if gwas_df is not None:
-                self.add_log('GWAS Analysis done.')
-                self.add_log('GWAS Results Plotting...')
-                self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
-                self.add_log('Done...')
-                self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
+        if gwas_df is not None:
+            self.add_log('GWAS Analysis done.')
+            self.add_log('GWAS Results Plotting...')
+            self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
+            self.add_log('Done...')
+            self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
 
-            else:
-                self.add_log('Error, GWAS Analysis could not be started.', error=True)
+        else:
+            self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
-        except TypeError:
-            self.add_log('Please select a phenotype and genotype file. ', error=True)
+        #except TypeError:
+            #self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def run_genomic_prediction(self, sender, data, user_data):
         from pysnptools.snpreader import Bed, Pheno
