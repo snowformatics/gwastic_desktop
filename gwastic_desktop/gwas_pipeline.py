@@ -349,7 +349,7 @@ class GWAS:
         #df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
         #df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
         #print (len(pheno.read().val))
-        validation = True
+        validation = False
         if validation:
 
             snp_data = bed_fixed.read().val
@@ -372,7 +372,7 @@ class GWAS:
             pheno_for_validation = pheno_data[val_indices]
             ids_for_validation1 = bed_fixed.iid[val_indices]
             ids_for_validation2 = pheno.iid[val_indices]
-            print (ids_for_validation1)
+            #print (ids_for_validation1)
             #print(ids_for_validation2, pheno_for_validation)
 
             # Remaining data for training/testing
@@ -388,7 +388,6 @@ class GWAS:
 
         #print (len(snps_for_training), len(pheno_for_training))
 
-
         for i in range(int(model_nr)):
             add_log('Model Iteration: ' + str(i + 1))
 
@@ -400,7 +399,7 @@ class GWAS:
 
             #scaler = StandardScaler()
             #X_train = scaler.fit_transform(X_train)
-            xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set)
+            xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set)#, min_child_weight=3)
             xgb_model.fit(X_train, y_train)
 
             # for prediction, we need all genotypes
@@ -436,6 +435,76 @@ class GWAS:
         add_log('Final run time (minutes): ' + str(t3))
         return df_all
 
+    def run_gp_nn(self, bed_fixed, pheno, bed_file, test_size, estimators, genomic_predict_name, chrom_mapping, add_log,
+                    model_nr):
+        """Genomic Prediction using Neural Networks with cross validation."""
+
+        import time
+        import numpy as np
+        import pandas as pd
+        from sklearn.model_selection import train_test_split
+        from sklearn.preprocessing import StandardScaler
+        from tensorflow.keras.models import Sequential
+        from tensorflow.keras.layers import Dense, Dropout
+        #from pybedtools import BedTool as Bed
+
+        t1 = time.time()
+        dataframes = []
+
+        # Training data
+        snp_data = bed_fixed.read().val
+        snp_data[np.isnan(snp_data)] = -1
+
+        # Entire data for training
+        bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+        snp_data_all = bed_data.read().val
+        snp_data_all[np.isnan(snp_data_all)] = -1
+        bed_data2 = bed_data.iid
+        pheno_data2 = pheno.iid
+
+        # Scaling features
+        scaler = StandardScaler()
+        #snp_data_scaled = scaler.fit_transform(snp_data)
+        #snp_data_all_scaled = scaler.transform(snp_data_all)
+        snp_data_scaled = snp_data
+        snp_data_all_scaled = snp_data_all
+
+        for i in range(int(model_nr)):
+            add_log('Model Iteration: ' + str(i + 1))
+
+            # Split data into training and testing sets
+            X_train, X_test, y_train, y_test = train_test_split(snp_data_scaled, pheno.read().val, test_size=test_size)
+
+            # Define neural network model
+            model = Sequential([
+                Dense(128, activation='relu', input_dim=X_train.shape[1]),
+                Dropout(0.5),
+                Dense(64, activation='relu'),
+                Dropout(0.3),
+                Dense(1)
+            ])
+
+            model.compile(optimizer='adam', loss='mean_squared_error')
+            model.fit(X_train, y_train.ravel(), epochs=1000, batch_size=32, validation_split=0.8)
+
+            predicted_values = model.predict(snp_data_all_scaled).flatten()
+
+            df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
+            df_gp['Predicted_Value'] = predicted_values
+
+            df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
+            df_pheno['Pheno_Value'] = pheno.read().val
+            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(5)
+            dataframes.append(merged_df)
+
+        df_all = self.helper.merge_gp_models(dataframes)
+        df_all.to_csv(genomic_predict_name, index=False)
+        t2 = time.time()
+        t3 = round((t2 - t1) / 60, 2)
+        add_log('Final run time (minutes): ' + str(t3))
+        return df_all
 
     def start_gwas(self, bed_file, pheno_file, chrom_mapping, algorithm, add_log, test_size, model_nr, estimators, leave_chr_set,
                    max_dep_set, gwas_result_name, genomic_predict, genomic_predict_name):

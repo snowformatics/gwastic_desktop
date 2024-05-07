@@ -112,7 +112,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose a phenotype file",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM'],
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM', 'NN'],
                                   indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
@@ -443,6 +443,9 @@ class GWASApp:
                 elif self.algorithm == 'XGBoost (AI)':
                     gp_df = self.gwas.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set)
+                elif self.algorithm == 'NN':
+                    gp_df = self.gwas.run_gp_nn(bed_fixed, pheno, bed_path, test_size, estimators,
+                                                self.genomic_predict_name, chrom_mapping, self.add_log,model_nr)
             else:
                 self.add_log(check_input_data[1], error=True)
 

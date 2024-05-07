@@ -85,8 +85,8 @@ class HELPERS:
             pass
 
         # Copy all results files
-        src_files = [gwas_result_name, gwas_result_name_top, manhatten_plot_name, qq_plot_name, genomic_predict_name,
-                     gp_plot_name, gp_plot_name_scatter,
+        src_files = [gwas_result_name, gwas_result_name_top, genomic_predict_name,
+                     #manhatten_plot_name, qq_plot_name, gp_plot_name, gp_plot_name_scatter,
                      manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'),
                      qq_plot_name.replace('qq_plot', 'qq_plot_high'),
                      gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
