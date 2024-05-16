@@ -5,11 +5,11 @@ GWAStic is a software for Genome-Wide Association Study (GWAS) that combines tra
 ![ALT TEXT](https://github.com/snowformatics/gwastic_desktop/blob/e0743e1f67e5300d083a96441bbf505b5d7a7696/gwastic_desktop/images/gui.PNG)
 
 ## Table of Contents  
-- [Installation](#1-installation) 
-- [Documentation](https://snowformatics.gitbook.io/product-docs/)  
+- [Installation](#1-installation)
 - [Example datasets](#2-Example datasets)  
 - [References](#3-references)  
 - [Acknowledgment](#4-acknowledgment)  
+- [Documentation](https://snowformatics.gitbook.io/product-docs/) 
 
 
 Key Features:
