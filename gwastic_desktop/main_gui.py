@@ -112,7 +112,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose a phenotype file",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM', 'NN'],
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM'],
                                   indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
@@ -521,14 +521,18 @@ class GWASApp:
                         with dpg.tab(label="QQ-Plot"):
                             dpg.add_image(texture_tag="qq_tag", tag="qq_image", height=450, width=450)
                     else:
-                        df = df.sort_values(by=['PValue'], ascending=False)
+
+                        df = df.sort_values(by=['SNP effect'], ascending=False)
 
                     with dpg.tab(label="GWAS Results (Top 500)"):
 
-                        df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                        #df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
                         if algorithm == "FaST-LMM" or algorithm == "Linear regression":
-                            pass
+                            df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
+                            #print (df)
+                            #pass
                         else:
+                            #print(df)
                             df.columns = df.columns.str.replace('PValue', 'SNP effect')
                         #print (df)
 
