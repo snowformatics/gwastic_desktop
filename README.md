@@ -37,7 +37,8 @@ GWAStic software was build and successfully tested on Windows operating system (
 
 ### Windows:
 
-We recommend to install Anaconda and create an environment:
+> [!TIP]
+> We recommend to install Anaconda and  for managing dependencies, it is often recommended to create a new environment for your project:
 1. Install Anaconda (https://www.anaconda.com/distribution/)
 
 2. `conda create --name gwastic_env python=3.9`
@@ -46,11 +47,14 @@ We recommend to install Anaconda and create an environment:
 
 4. Open the Anaconda prompt and activate your GWAStic environment.<br/>`conda activate gwastic_env`<br/>
 
-Then install GWAStic via pip:
+> [!]
+> Install GWAStic via pip:
 
 5. `pip install gwastic_desktop`
 
-6. Type `gwastic` in the command line to start the software.
+> [!]
+> Run GWAStic:
+6. Type `gwastic` in the Anaconda command line to start the software.
 
 ### Linux:
 
