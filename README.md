@@ -122,8 +122,6 @@ Type `gwastic` in the command line to start the software.
 > [!NOTE]
 > Phenotypic data must be three columns (Family ID; Within-family ID; Value) text or CSV file delimited by *space*. [Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
 
-We provide tow datasets to test GWAStic:
-
 > [!TIP]
 > We provide to two datasets to test GWASTic and validate the software:
 
@@ -152,16 +150,32 @@ Choose the file barley_set\bridge_row_type_GWAS.txt as phenotypic file
 Select method and press Run GWAS
 ```
 
+### Dataset 2 (Arabidopsis thaliana with with Pseudomonas syringe):
+
+> For a quick testing and short run time, we provide a second dataset is on a hypersensitive response phenotype observed in 58 Arabidopsis thaliana host lines (∼900000 SNPs) when infected with Pseudomonas syringe expressing the avrRpm1 gene. Description of the original experiment can be found at https://arapheno.1001genomes.org/phenotype/17/. 
+
+```
+Download the zip file containing the datasets from https://zenodo.org/records/11183758
+Unpack the zip file
+Start GWAStic
+Choose the file small_set\example.bed as genotypic file
+Choose the file small_set\pheno_gwas.csv as phenotypic file
+Select method and press Run GWAS
+```
+
 
 # 3. References
 
->  Purcell S, Neale B, Todd-Brown K, Thomas L, Ferreira MAR, Bender D, Maller J, de Bakker PIW:
- Daly MJ & Sham PC (in press) PLINK: a toolset for whole-genome association and population-based linkage analysis. American Journal of Human Genetics.
+> Atwell S, Huang YS, Vilhjálmsson BJ, Willems G, Horton M, Li Y, Meng D, Platt A, Tarone AM, Hu TT, Jiang R, Muliyati NW, Zhang X, Amer MA, Baxter I, Brachi B, Chory J, Dean C, Debieu M, de Meaux J, Ecker JR, Faure N, Kniskern JM, Jones JD, Michael T, Nemri A, Roux F, Salt DE, Tang C, Todesco M, Traw MB, Weigel D, Marjoram P, Borevitz JO, Bergelson J, Nordborg M  Nature. 2010 465(7298): 627-31. doi: 10.1038/nature08800
 
 > Lippert, C., Listgarten, J., Liu, Y. et al. FaST linear mixed models for genome-wide association studies. Nat Methods 8, 833–835 (2011). https://doi.org/10.1038/nmeth.1681
 
 > Milner,S. et al. (2019) Genebank genomics highlights the diversity of a global barley collection. Nature Genetics, 51(2):319-26. doi: 10.1038/s41588-018-0266-x.
-> 
+
+> Purcell S, Neale B, Todd-Brown K, Thomas L, Ferreira MAR, Bender D, Maller J, de Bakker PIW:
+ Daly MJ & Sham PC (in press) PLINK: a toolset for whole-genome association and population-based linkage analysis. American Journal of Human Genetics.
+
+
 # 4. Acknowledgment
 Gwastic has incorporated the FaST-LMM library (fastlmm.github.io), to enhance its Linear Mixed Models (LMM) feature. 
 We thank Carl Kadie and David Heckerman for not only creating this exceptional tool but also providing outstanding support and discussions.
