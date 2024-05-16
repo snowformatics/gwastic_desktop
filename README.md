@@ -7,6 +7,7 @@ GWAStic is a software for Genome-Wide Association Study (GWAS) that combines tra
 ## Table of Contents  
 - [Installation](#1-installation) 
 - [Documentation](https://snowformatics.gitbook.io/product-docs/)  
+- [Example datasets](#2-Example datasets)  
 - [References](#3-references)  
 - [Acknowledgment](#4-acknowledgment)  
 
@@ -119,7 +120,7 @@ Type `gwastic` in the command line to start the software.
 
 
 
-# 2. Supported input file formats and example datasets
+# 2. Example datasets
 > [!NOTE]
 > VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format.
 [VCF example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/example.vcf.gz)
