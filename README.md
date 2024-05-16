@@ -115,13 +115,12 @@ Type `gwastic` in the command line to start the software.
 
 
 # 2. Supported input file formats and example datasets
-- VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format. 
-
+> [!NOTE]
+> VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format.
 [VCF example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/example.vcf.gz)
 
-- Phenotypic data must be three columns (Family ID; Within-family ID; Value) text or CSV file delimited by *space*.
-
-[Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
+> [!NOTE]
+> Phenotypic data must be three columns (Family ID; Within-family ID; Value) text or CSV file delimited by *space*. [Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
 
 We provide tow datasets to test GWAStic:
 
