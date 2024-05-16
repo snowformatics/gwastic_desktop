@@ -7,8 +7,8 @@ GWAStic is a software for Genome-Wide Association Study (GWAS) that combines tra
 ## Table of Contents  
 - [Installation](#1-installation) 
 - [Documentation](https://snowformatics.gitbook.io/product-docs/)  
-- [References](#2-references)  
-- [Acknowledgment](#3-acknowledgment)  
+- [References](#3-references)  
+- [Acknowledgment](#4-acknowledgment)  
 
 
 Key Features:
@@ -114,7 +114,7 @@ Type `gwastic` in the command line to start the software.
 
 
 
-# Supported input file formats
+# 2. Supported input file formats and example datasets
 - VCF file format (including vcf.gz) and Plink BED (binary) format are supported for all GWAS methods. In case of vcf, you first must convert the genotype data to bed file format. 
 
 [VCF example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/example.vcf.gz)
@@ -123,14 +123,47 @@ Type `gwastic` in the command line to start the software.
 
 [Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
 
-# 2. References
+We provide tow datasets to test GWAStic:
 
- 2.1 - Purcell S, Neale B, Todd-Brown K, Thomas L, Ferreira MAR, Bender D, Maller J, de Bakker PIW:
+> [!TIP]
+> We provide to two datasets to test GWASTic and validate the software:
+
+### Dataset 1 (Barley with row-type phenotype):
+
+>  We have used a subset of data from a recent study (Milner et al.2019) focusing on the genetic basis of barley traits. The genotypic
+data was filtered by applying a genotyping rate cutoff of 0.02 and
+a minor allele frequency (MAF) threshold of 0.05. This resulted
+in a curated dataset comprising 949,174 SNPs. A random subset
+of 147 accessions from the Core 200 collection in the same study
+with available row-type phenotype data was selected. This
+phenotype describes the arrangement of kernels on the spike of
+the barley plant, specifically distinguishing between two-rowed
+and six-rowed barley - a crucial morphological and agricultural
+trait. The four distinct methods - XGB, RF,
+LR, and LMM - were employed to validate the peaks of two rowtype
+associated barley genes previously identified in (Milner et
+al. 2019).
+
+```
+Download the zip file containing the datasets from https://zenodo.org/records/11183758
+Unpack the zip file
+Start GWAStic
+Choose the file barley_set\WGS300_005_0020.bed as genotypic file
+Choose the file barley_set\bridge_row_type_GWAS.txt as phenotypic file
+Select method and press Run GWAS
+```
+
+
+# 3. References
+
+>  Purcell S, Neale B, Todd-Brown K, Thomas L, Ferreira MAR, Bender D, Maller J, de Bakker PIW:
  Daly MJ & Sham PC (in press) PLINK: a toolset for whole-genome association and population-based linkage analysis. American Journal of Human Genetics.
 
- 2.2 -  Lippert, C., Listgarten, J., Liu, Y. et al. FaST linear mixed models for genome-wide association studies. Nat Methods 8, 833–835 (2011). https://doi.org/10.1038/nmeth.1681
+> Lippert, C., Listgarten, J., Liu, Y. et al. FaST linear mixed models for genome-wide association studies. Nat Methods 8, 833–835 (2011). https://doi.org/10.1038/nmeth.1681
 
-# 3. Acknowledgment
+> Milner,S. et al. (2019) Genebank genomics highlights the diversity of a global barley collection. Nature Genetics, 51(2):319-26. doi: 10.1038/s41588-018-0266-x.
+> 
+# 4. Acknowledgment
 Gwastic has incorporated the FaST-LMM library (fastlmm.github.io), to enhance its Linear Mixed Models (LMM) feature. 
 We thank Carl Kadie and David Heckerman for not only creating this exceptional tool but also providing outstanding support and discussions.
 
