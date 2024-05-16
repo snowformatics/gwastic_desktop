@@ -39,8 +39,6 @@ GWAStic software was build and successfully tested on Windows operating system (
 > [!TIP]
 > Video demonstration https://www.youtube.com/embed/vd4KqPqJvEo
 
-<iframe width="768" height="432" src="https://www.youtube.com/embed/vd4KqPqJvEo" title="How to install GWAStic" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
 ### Windows:
 
 > [!TIP]
