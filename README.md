@@ -39,12 +39,12 @@ GWAStic software was build and successfully tested on Windows operating system (
 
 > [!TIP]
 > We recommend to install Anaconda and  for managing dependencies, it is often recommended to create a new environment for your project:
-Install Anaconda (https://www.anaconda.com/distribution/)
+
+Install Anaconda from https://www.anaconda.com/distribution/
 
 ```
 conda create --name gwastic_env python=3.9
 conda activate gwastic_env
-conda install pip
 ```
 
 > [!IMPORTANT]
@@ -61,21 +61,24 @@ Type `gwastic` in the Anaconda command line to start the software.
 
 > [!TIP]
 > We recommend to install Anaconda and  for managing dependencies, it is often recommended to create a new environment for your project:
-`wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
-`chmod +x Miniconda3-latest-Linux-x86_64.sh`
-`./Miniconda3-latest-Linux-x86_64.sh`
-`cd /home/username/miniconda3`
-`source ~/miniconda3/bin/activate`
-`conda create --name gwastic_env python=3.9`
-`conda activate gwastic_env`
+ ```
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
+cd /home/username/miniconda3
+source ~/miniconda3/bin/activate
+conda create --name gwastic_env python=3.9
+conda activate gwastic_env
+```
 
 > [!IMPORTANT]
 > Install GWAStic via pip:
 
-8. `pip install gwastic_desktop`
+`pip install gwastic_desktop`
 > [!IMPORTANT]
 > Run GWAStic:
-9. Type `gwastic` in the command line to start the software.
+
+Type `gwastic` in the command line to start the software.
 
 ### MacOS:
 
