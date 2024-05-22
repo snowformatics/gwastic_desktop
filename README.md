@@ -39,7 +39,7 @@ GWAStic software was build and successfully tested on Windows operating system (
 > [!TIP]
 > Video demonstration https://www.youtube.com/embed/vd4KqPqJvEo
 
-### Windows:
+### Windows OS:
 
 > [!TIP]
 > We recommend to install Anaconda and  for managing dependencies, it is often recommended to create a new environment for your project:
@@ -62,7 +62,7 @@ conda activate gwastic_env
 
 Type `gwastic` in the Anaconda command line to start the software.
 
-### Linux:
+### Linux OS:
 
 > [!TIP]
 > We recommend to install Anaconda and  for managing dependencies, it is often recommended to create a new environment for your project:
@@ -85,7 +85,7 @@ conda activate gwastic_env
 
 Type `gwastic` in the command line to start the software.
 
-### MacOS:
+### Mac OS:
 
 > [!TIP]
 > We recommend to install Anaconda and  for managing dependencies, it is often recommended to create a new environment for your project:

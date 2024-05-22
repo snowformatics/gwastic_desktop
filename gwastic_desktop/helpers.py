@@ -123,8 +123,8 @@ class HELPERS:
         df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(decimals=3)
         return df_result
 
-
     def merge_models(self, dataframes):
+
         """Combine RF or XG models and calculate the sum of the SNP effect."""
         df_combined = pd.concat(dataframes)
         df_combined = df_combined[df_combined['PValue'] > 0]
@@ -137,6 +137,23 @@ class HELPERS:
         df_result_sum['ChrPos'] = df_result_sum['ChrPos'].astype(int)
         df_result_sum = df_result_sum.sort_values(by=['Chr', 'ChrPos'])
         return df_result_sum
+
+        # """Combine RF or XG models and calculate the sum and SD of the SNP effect."""
+        # df_combined = pd.concat(dataframes)
+        # df_combined = df_combined[df_combined['PValue'] > 0]
+        #
+        # # Grouping by 'SNP' and calculating the sum and SD of PValues
+        # df_grouped = df_combined.groupby('SNP')['PValue'].agg(['sum', 'std']).reset_index()
+        # df_grouped = df_grouped.rename(columns={'sum': 'PValue_sum', 'std': 'PValue_sd'})
+        # print (df_grouped)
+        # df_result = pd.merge(df_combined, df_grouped, on='SNP', how='left')
+        # df_result = df_result.drop(['PValue_x'], axis=1).drop_duplicates()
+        # df_result = df_result.rename(columns={'PValue_sum': 'PValue'})
+        # df_result['Chr'] = df_result['Chr'].astype(int)
+        # df_result['ChrPos'] = df_result['ChrPos'].astype(int)
+        # df_result = df_result.sort_values(by=['Chr', 'ChrPos'])
+        #
+        # return df_result
 
 
 

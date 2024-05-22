@@ -43,7 +43,7 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         #self.default_path = self.helper.get_settings('path') #todo add settings
-        self.default_path = 'Z:/gwas_test_data/gwastic_paper/small_set/'
+        self.default_path = 'Z://NH_Paper//wheat//'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
