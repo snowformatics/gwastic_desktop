@@ -113,6 +113,30 @@ class HELPERS:
 
 
     def merge_gp_models(self, dataframes):
+
+        # """Combine RF or XG models and calculate the mean and SD of the Predicted_Value."""
+        # df_combined = pd.concat(dataframes)
+        #
+        # # Grouping by 'ID1' and 'BED_ID2' to calculate mean and SD of 'Predicted_Value'
+        # df_grouped = df_combined.groupby(['ID1', 'BED_ID2'])['Predicted_Value'].agg(['mean', 'std']).reset_index()
+        # df_grouped = df_grouped.rename(columns={'mean': 'Mean_Predicted_Value', 'std': 'SD_Predicted_Value'})
+        #
+        # # Merging the grouped results with the first dataframe in the list
+        # df_result = pd.merge(dataframes[0], df_grouped, on='ID1', how='left')
+        # df_result.to_csv(('out.txt'))
+        # df_result = df_result.drop(['Predicted_Value_x', 'BED_ID2_y', 'Pheno_ID2'], axis=1)
+        # df_result = df_result.rename(columns={'Predicted_Value_y': 'Mean_Predicted_Value'})
+        #
+        # # Calculate the absolute difference between 'Pheno_Value' and 'Mean_Predicted_Value'
+        # df_result['Difference'] = (df_result['Pheno_Value'] - df_result['Mean_Predicted_Value']).abs()
+        #
+        # # Rounding the values
+        # df_result['Difference'] = df_result['Difference'].round(decimals=3)
+        # df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(decimals=3)
+        # df_result['SD_Predicted_Value'] = df_result['SD_Predicted_Value'].round(decimals=3)
+        #
+        # return df_result
+
         df_combined = pd.concat(dataframes)
         df_result = df_combined.groupby(['ID1', 'BED_ID2'])['Predicted_Value'].mean().reset_index()
         df_result = pd.merge(dataframes[0], df_result, on='ID1', how='left')
@@ -125,35 +149,33 @@ class HELPERS:
 
     def merge_models(self, dataframes):
 
-        """Combine RF or XG models and calculate the sum of the SNP effect."""
-        df_combined = pd.concat(dataframes)
-        df_combined = df_combined[df_combined['PValue'] > 0]
-        # Grouping by 'snp' and summing the values
-        df2 = df_combined.groupby('SNP')['PValue'].sum().reset_index()
-        df_result_sum = pd.merge(df_combined, df2, on='SNP', how='left')
-        df_result_sum = df_result_sum.drop(['PValue_x'], axis=1).drop_duplicates()
-        df_result_sum = df_result_sum.rename(columns={'PValue_y': 'PValue'})
-        df_result_sum['Chr'] = df_result_sum['Chr'].astype(int)
-        df_result_sum['ChrPos'] = df_result_sum['ChrPos'].astype(int)
-        df_result_sum = df_result_sum.sort_values(by=['Chr', 'ChrPos'])
-        return df_result_sum
-
-        # """Combine RF or XG models and calculate the sum and SD of the SNP effect."""
+        # """Combine RF or XG models and calculate the sum of the SNP effect."""
         # df_combined = pd.concat(dataframes)
         # df_combined = df_combined[df_combined['PValue'] > 0]
-        #
-        # # Grouping by 'SNP' and calculating the sum and SD of PValues
-        # df_grouped = df_combined.groupby('SNP')['PValue'].agg(['sum', 'std']).reset_index()
-        # df_grouped = df_grouped.rename(columns={'sum': 'PValue_sum', 'std': 'PValue_sd'})
-        # print (df_grouped)
-        # df_result = pd.merge(df_combined, df_grouped, on='SNP', how='left')
-        # df_result = df_result.drop(['PValue_x'], axis=1).drop_duplicates()
-        # df_result = df_result.rename(columns={'PValue_sum': 'PValue'})
-        # df_result['Chr'] = df_result['Chr'].astype(int)
-        # df_result['ChrPos'] = df_result['ChrPos'].astype(int)
-        # df_result = df_result.sort_values(by=['Chr', 'ChrPos'])
-        #
-        # return df_result
+        # # Grouping by 'snp' and summing the values
+        # df2 = df_combined.groupby('SNP')['PValue'].sum().reset_index()
+        # df_result_sum = pd.merge(df_combined, df2, on='SNP', how='left')
+        # df_result_sum = df_result_sum.drop(['PValue_x'], axis=1).drop_duplicates()
+        # df_result_sum = df_result_sum.rename(columns={'PValue_y': 'PValue'})
+        # df_result_sum['Chr'] = df_result_sum['Chr'].astype(int)
+        # df_result_sum['ChrPos'] = df_result_sum['ChrPos'].astype(int)
+        # df_result_sum = df_result_sum.sort_values(by=['Chr', 'ChrPos'])
+        # return df_result_sum
+
+        """Combine RF or XG models and calculate the sum and SD of the SNP effect."""
+        df_combined = pd.concat(dataframes)
+        df_combined = df_combined[df_combined['PValue'] > 0]
+        # Grouping by 'SNP' and calculating the sum and SD of PValues
+        df_grouped = df_combined.groupby('SNP')['PValue'].agg(['sum', 'std']).reset_index()
+        df_grouped = df_grouped.rename(columns={'sum': 'PValue_x', 'std': 'PValue_sd'})
+        df_result = pd.merge(df_combined, df_grouped, on='SNP', how='left')
+        df_result = df_result.drop(['PValue_x'], axis=1).drop_duplicates()
+        df_result = df_result.rename(columns={'PValue_y': 'PValue'})
+        df_result['Chr'] = df_result['Chr'].astype(int)
+        df_result['ChrPos'] = df_result['ChrPos'].astype(int)
+        df_result = df_result.sort_values(by=['Chr', 'ChrPos'])
+
+        return df_result
 
 
 

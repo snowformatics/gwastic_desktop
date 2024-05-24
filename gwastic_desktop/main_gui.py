@@ -3,6 +3,7 @@ dpg.create_context()
 #import dearpygui_ext.themes as dpg_ext
 from dearpygui_ext import logger
 from gwastic_desktop.gwas_pipeline import GWAS
+from gwastic_desktop.gp_pipeline import GenomicPrediction
 from gwastic_desktop.helpers import HELPERS
 import os
 import webbrowser
@@ -23,6 +24,7 @@ class GWASApp:
     def __init__(self):
         self.gwas = GWAS()
         self.helper = HELPERS()
+        self.genomic_predict_class = GenomicPrediction()
 
         with dpg.font_registry():
             script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
@@ -351,6 +353,7 @@ class GWASApp:
         if check_input_data[0]:
             bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
             pheno = Pheno(str(pheno_path))
+            #print (pheno)
             # replace original bed with one that has the same iids as the pheno
             bed, pheno = pstutil.intersect_apply([bed, pheno])
             bed_fixed = self.gwas.filter_out_missing(bed)
@@ -435,26 +438,28 @@ class GWASApp:
                 self.add_log('Starting Analysis, this might take a while...')
 
                 if self.algorithm == 'GP_LMM':
-                    gp_df = self.gwas.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr, self.add_log,
+                    gp_df = self.genomic_predict_class.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr, self.add_log,
                                                  bed_path, chrom_mapping)
                 elif self.algorithm == 'Random Forest (AI)':
-                    gp_df = self.gwas.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
+                    gp_df = self.genomic_predict_class.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr)
                 elif self.algorithm == 'XGBoost (AI)':
-                    gp_df = self.gwas.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
+                    gp_df, df_val = self.genomic_predict_class.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set)
-                elif self.algorithm == 'NN':
-                    gp_df = self.gwas.run_gp_nn(bed_fixed, pheno, bed_path, test_size, estimators,
-                                                self.genomic_predict_name, chrom_mapping, self.add_log,model_nr)
+
             else:
                 self.add_log(check_input_data[1], error=True)
-
 
             if gp_df is not None:
                 self.add_log('Genomic Prediction done.')
                 self.add_log('Genomic Prediction Plotting...')
-                self.gwas.plot_gp(gp_df, self.gp_plot_name, self.algorithm)
-                self.gwas.plot_gp_scatter(gp_df, self.gp_plot_name_scatter, self.algorithm)
+                self.genomic_predict_class.plot_gp(gp_df, self.gp_plot_name, self.algorithm)
+                self.genomic_predict_class.plot_gp_scatter(gp_df, self.gp_plot_name_scatter, self.algorithm)
+                try:
+                    if df_val is not None:
+                        self.genomic_predict_class.plot_gp_scatter(df_val, 'validation_' + self.gp_plot_name_scatter, self.algorithm)
+                except UnboundLocalError:
+                    pass
                 self.add_log('Done...')
                 self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
             else:
@@ -533,7 +538,9 @@ class GWASApp:
                             #pass
                         else:
                             #print(df)
-                            df.columns = df.columns.str.replace('PValue', 'SNP effect')
+                           # df.columns = df.columns.str.replace('PValue', 'SNP effect')
+                            #df.columns = df.columns.str.replace('PValue_x', 'SNP effect')
+                            df.columns = df.columns.str.replace('SNP effect_sd', 'SNP effect SD')
                         #print (df)
 
                         max_rows= len(df)
