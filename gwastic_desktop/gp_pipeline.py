@@ -1,5 +1,5 @@
 from gwastic_desktop.helpers import HELPERS
-from gwastic_desktop.gwas_ai import GWASAI
+#from gwastic_desktop.gwas_ai import GWASAI
 from pysnptools.snpreader import Bed, Pheno
 import time
 from fastlmm.inference import FastLMM
@@ -17,10 +17,10 @@ plt.switch_backend('Agg')
 
 
 class GenomicPrediction:
-    """GWAS class."""
+    """GenomicPrediction class."""
 
     def __init__(self):
-        self.gwas_ai = GWASAI()
+        #self.gwas_ai = GWASAI()
         self.helper = HELPERS()
 
     def run_lmm_gp(self, bed_fixed, pheno, genomic_predict_name, model_nr, add_log, bed_file, chrom_mapping):

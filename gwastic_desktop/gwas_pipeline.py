@@ -1,26 +1,20 @@
 import subprocess
 import sys
 import os
-from gwastic_desktop.helpers import HELPERS
-from gwastic_desktop.gwas_ai import GWASAI
-from fastlmm.association import single_snp, single_snp_linreg
-from pysnptools.snpreader import Bed, Pheno
-import pysnptools.util as pstutil
 import time
-from fastlmm.inference import FastLMM
-from sklearn.model_selection import KFold
 import pandas as pd
+import numpy as np
+import logging
+from gwastic_desktop.helpers import HELPERS
+#from gwastic_desktop.gwas_ai import GWASAI
+from fastlmm.association import single_snp, single_snp_linreg
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
 import geneview as gv
-import numpy as np
-import logging
 from pysnptools.util import log_in_place
 import matplotlib.pyplot as plt
-from scipy.stats import pearsonr
-import seaborn as sns
 
 plt.switch_backend('Agg')
 
@@ -28,7 +22,7 @@ class GWAS:
     """GWAS class."""
 
     def __init__(self):
-        self.gwas_ai = GWASAI()
+        #self.gwas_ai = GWASAI()
         self.helper = HELPERS()
 
     def vcf_to_bed(self, vcf_file, id_file, file_out, maf, geno):
@@ -65,6 +59,7 @@ class GWAS:
         return plink_log
 
     def filter_out_missing(self, bed):
+        """Filter out missing."""
 
         sid_batch_size = 1000  # number of SNPs to read at a time, decrease in case we run oput of memory
         # list of all NaN columns
@@ -566,16 +561,12 @@ class GWAS:
 
     def plot_gwas(self, df, limit, algorithm, manhatten_plot_name, qq_plot_name, chrom_mapping):
         """Manhatten and qq-plot."""
-
         # Extract the top10 SNPs and use the value as significant marker label threshold
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-
             # Get the threshold lines
             sugg_line = 1 / len(df['SNP'])
             gen_line = 0.05 / len(df['SNP'])
-
             # Remove rows where column 'A' has a value of 0.0
-
             df = df.sort_values(by=['Chr', 'ChrPos'])
             df = df[df['PValue'] != 0.0]
 
@@ -621,8 +612,6 @@ class GWAS:
             plt.tight_layout(pad=1)
             plt.savefig(qq_plot_name)
             plt.savefig(qq_plot_name.replace('qq_plot', 'qq_plot_high'), dpi=300)
-
-
         else:
             plt_params = {
                 "font.sans-serif": "Arial",

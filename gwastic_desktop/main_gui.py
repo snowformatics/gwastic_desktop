@@ -2,18 +2,18 @@ import dearpygui.dearpygui as dpg
 dpg.create_context()
 #import dearpygui_ext.themes as dpg_ext
 from dearpygui_ext import logger
+import os
+import webbrowser
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.gp_pipeline import GenomicPrediction
 from gwastic_desktop.helpers import HELPERS
-import os
-import webbrowser
 from pysnptools.snpreader import Bed, Pheno
 import pysnptools.util as pstutil
 
 #poetry build
 #poetry publish
-
 # pipline nr 214
+
 
 def main():
     app = GWASApp()
@@ -38,13 +38,11 @@ class GWASApp:
 
         self.vcf_file = ''
         self.pheno_file = ''
-
         self.vcf_app_data = None
         self.variants_app_data = None
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
-        #self.default_path = self.helper.get_settings('path') #todo add settings
         self.default_path = 'Z://NH_Paper//wheat//'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
@@ -114,7 +112,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose a phenotype file",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["Random Forest (AI)", "XGBoost (AI)", 'GP_LMM'],
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", 'GP_LMM'],
                                   indent=50, width=200, default_value="Random Forest (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
@@ -140,21 +138,6 @@ class GWASApp:
 
                 with dpg.tab(label='Settings'):
                     dpg.add_spacer(height=10)
-                    #dpg.add_text("General Setting", indent=50, color=(72, 138, 199))
-                    #dpg.add_spacer(height=10)
-                    # default_path_input = dpg.add_input_text(label="Default Path", default_value=self.default_path, indent=50, tag= 'tooltip_path', width=250)
-                    # dpg.add_button(label="Save", callback=self.save_default_path, user_data=[default_path_input], indent=50)
-                    # dpg.add_spacer(height=10)
-                    # dpg.add_separator()
-                    # dpg.add_spacer(height=20)
-                    # dpg.add_text("Linear Mixed Model Setting", indent=50, color=(72,138,199))
-                    # dpg.add_spacer(height=10)
-                    # #self.pvalue_set = dpg.add_input_float(label="Pvalue threshold", width=150, default_value=0, indent=50, tag= 'tooltip_pvalue', enabled=False)
-                    # dpg.add_spacer(height=10)
-                    # self.leave_chr_set = dpg.add_checkbox(label="Leave out one chrom ", indent=50, default_value=True, tag= 'tooltip_chrom')
-                    # dpg.add_spacer(height=10)
-                    # dpg.add_separator()
-                    # dpg.add_spacer(height=20)
                     dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
                     dpg.add_spacer(height=10)
                     #self.std_set = dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
@@ -203,8 +186,6 @@ class GWASApp:
                 dpg.add_text("Specify the number of models to be used in the analysis.\nMore models can increase accuracy but also computation time.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_depth"):
                 dpg.add_text("Determine the maximum depth of the trees.\nDeeper trees can model more complex relationships.", color=[79, 128, 226])
-           # with dpg.tooltip("tooltip_path"):
-               # dpg.add_text("Set a default path.", color=[79, 128, 226])
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
@@ -254,16 +235,12 @@ class GWASApp:
     def callback_save_results(self, sender, app_data):
         """Save the results inside the folder including tables as csv and plots as png. """
         self.results_directory = app_data
-
-       # try:
         results_path, current_path = self.get_selection_path(self.results_directory)
         save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
                                             self.manhatten_plot_name, self.qq_plot_name, self.algorithm,
                                             self.genomic_predict_name, self.gp_plot_name, self.gp_plot_name_scatter,
                                             self.add_log, self.settings_lst)
         self.add_log('Results saved in: ' + save_dir)
-        #except TypeError:
-            #self.add_log('Please select a valid directory.', error=True)
 
     def cancel_callback_directory(self, sender, app_data):
         self.add_log('Process Canceled')
@@ -327,9 +304,9 @@ class GWASApp:
         self.add_log(plink_log)
 
     def run_gwas(self, sender, data, user_data):
+        """Starts the GWAS pipeline."""
 
         self.delete_files()
-        #self.add_log('Reading Bed file...')
 
         # Get all settings
         train_size_set = (100-dpg.get_value(self.train_size_set))/100
@@ -337,69 +314,59 @@ class GWASApp:
         model_nr = dpg.get_value(self.model_nr)
         #pvalue_set = dpg.get_value(self.pvalue_set)
         #std_set = dpg.get_value(self.std_set)
-        #leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
 
-        #try:
-        self.add_log('Reading files...')
-        bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
-        pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
-        self.add_log('Validating files...')
-        check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
-        # Replace chromosome names, they need to be numbers
-        chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
-        self.settings_lst = [self.algorithm, bed_path, pheno_path, train_size_set, estimators, model_nr, max_dep_set]
-        if check_input_data[0]:
-            bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
-            pheno = Pheno(str(pheno_path))
-            #print (pheno)
-            # replace original bed with one that has the same iids as the pheno
-            bed, pheno = pstutil.intersect_apply([bed, pheno])
-            bed_fixed = self.gwas.filter_out_missing(bed)
+        try:
+            self.add_log('Reading files...')
+            bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
+            pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+            self.add_log('Validating files...')
+            check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
+            # Replace chromosome names, they need to be numbers
+            chrom_mapping = self.helper.replace_with_integers(bed_path.replace('.bed', '.bim'))
+            self.settings_lst = [self.algorithm, bed_path, pheno_path, train_size_set, estimators, model_nr, max_dep_set]
+            if check_input_data[0]:
+                bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
+                pheno = Pheno(str(pheno_path))
+                # replace original bed with one that has the same iids as the pheno
+                bed, pheno = pstutil.intersect_apply([bed, pheno])
+                bed_fixed = self.gwas.filter_out_missing(bed)
+                # format numbers with commas and no decimals
+                s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
+                    pheno.iid_count)
+                self.add_log(s3, warn=True)
+                # run single_snp with the fixed file
+                self.add_log('Starting Analysis, this might take a while...')
+                if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
+                    gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log
+                                                             , self.gwas_result_name, self.algorithm, bed_path)
+                elif  self.algorithm == 'Random Forest (AI)':
+                    gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
+                                                            estimators, self.gwas_result_name, chrom_mapping,
+                                                            self.add_log, model_nr)
+                elif self.algorithm == 'XGBoost (AI)':
+                    gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
+                                                             self.gwas_result_name, chrom_mapping, self.add_log,
+                                                             model_nr, max_dep_set)
+            else:
+                self.add_log(check_input_data[1], error=True)
 
-            # format numbers with commas and no decimals
-            s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
-                pheno.iid_count)
-            self.add_log(s3, warn=True)
-            # run single_snp with the fixed file
-            self.add_log('Starting Analysis, this might take a while...')
+            if gwas_df is not None:
+                self.add_log('GWAS Analysis done.')
+                self.add_log('GWAS Results Plotting...')
+                self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
+                self.add_log('Done...')
+                self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
 
-            if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
-                gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log
-                                                         , self.gwas_result_name, self.algorithm, bed_path)
-            elif  self.algorithm == 'Random Forest (AI)':
-                gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
-                                                        estimators, self.gwas_result_name, chrom_mapping,
-                                                        self.add_log, model_nr)
-                #gwas_df = self.gwas.start_gwas(bed_path, pheno_path, chrom_mapping, self.algorithm, self.add_log,
-                                            # train_size_set, model_nr, estimators, leave_chr_set, max_dep_set,
-                                             # self.gwas_result_name, False, None)
-                #print (gwas_df)
-            elif self.algorithm == 'XGBoost (AI)':
-                gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
-                                                         self.gwas_result_name, chrom_mapping, self.add_log,
-                                                         model_nr, max_dep_set)
+            else:
+                self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
-        else:
-            self.add_log(check_input_data[1], error=True)
-
-        if gwas_df is not None:
-            self.add_log('GWAS Analysis done.')
-            self.add_log('GWAS Results Plotting...')
-            self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
-            self.add_log('Done...')
-            self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
-
-        else:
-            self.add_log('Error, GWAS Analysis could not be started.', error=True)
-
-        #except TypeError:
-            #self.add_log('Please select a phenotype and genotype file. ', error=True)
+        except TypeError:
+            self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def run_genomic_prediction(self, sender, data, user_data):
-        from pysnptools.snpreader import Bed, Pheno
-        import pysnptools.util as pstutil
+        """Starts the GP pipeline."""
 
         self.delete_files()
         self.add_log('Reading Bed file...')
@@ -408,10 +375,8 @@ class GWASApp:
         self.algorithm = dpg.get_value(self.gwas_gp)
         test_size = (100 - dpg.get_value(self.train_size_set)) / 100
         estimators = dpg.get_value(self.estim_set)
-        #leave_chr_set = dpg.get_value(self.leave_chr_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         model_nr = dpg.get_value(self.model_nr)
-
         try:
             self.add_log('Reading files...')
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
@@ -424,19 +389,14 @@ class GWASApp:
             if check_input_data[0]:
                 bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
                 pheno = Pheno(str(pheno_path))
-                #print(len(pheno.read().val))
                 # replace original bed with one that has the same iids as the pheno
                 bed, pheno = pstutil.intersect_apply([bed, pheno])
-                #print(len(pheno.read().val))
                 bed_fixed = self.gwas.filter_out_missing(bed)
-
                 # format numbers with commas and no decimals
                 s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
                     pheno.iid_count)
                 self.add_log(s3, warn=True)
-                # run single_snp with the fixed file
                 self.add_log('Starting Analysis, this might take a while...')
-
                 if self.algorithm == 'GP_LMM':
                     gp_df = self.genomic_predict_class.run_lmm_gp(bed_fixed, pheno, self.genomic_predict_name, model_nr, self.add_log,
                                                  bed_path, chrom_mapping)
@@ -446,7 +406,6 @@ class GWASApp:
                 elif self.algorithm == 'XGBoost (AI)':
                     gp_df, df_val = self.genomic_predict_class.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set)
-
             else:
                 self.add_log(check_input_data[1], error=True)
 
@@ -469,7 +428,7 @@ class GWASApp:
             self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def show_results_window(self, df, algorithm, genomic_predict):
-
+        """Create a new window to show the plots and tables."""
         with dpg.window(label="Results", width=975, height=600, horizontal_scrollbar=True, pos=(1000, 35)):
             dpg.add_button(label="Export Results", pos =(400, 40), callback=lambda: dpg.show_item("select_directory"))
             dpg.add_spacer(height=60)
@@ -506,7 +465,6 @@ class GWASApp:
                     with dpg.tab(label="Bland-Altman Plot (Model Accuracy)"):
                         dpg.add_image(texture_tag="ba_tag", tag="ba_image", width=750, height=450)
 
-
             else:
                 width, height, channels, data = dpg.load_image(self.manhatten_plot_name)
                 with dpg.texture_registry(show=False):
@@ -517,7 +475,6 @@ class GWASApp:
                             dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
                         else:
                             dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=900, height=300)
-                        #dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=width, height=height)
                     if algorithm == "FaST-LMM" or algorithm == "Linear regression":
                         width2, height2, channels2, data2 = dpg.load_image(self.qq_plot_name)
                         with dpg.texture_registry(show=False):
@@ -530,23 +487,14 @@ class GWASApp:
                         df = df.sort_values(by=['SNP effect'], ascending=False)
 
                     with dpg.tab(label="GWAS Results (Top 500)"):
-
-                        #df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
                         if algorithm == "FaST-LMM" or algorithm == "Linear regression":
                             df = df[['SNP', 'Chr', 'ChrPos', 'PValue']]
-                            #print (df)
-                            #pass
                         else:
-                            #print(df)
-                           # df.columns = df.columns.str.replace('PValue', 'SNP effect')
-                            #df.columns = df.columns.str.replace('PValue_x', 'SNP effect')
                             df.columns = df.columns.str.replace('SNP effect_sd', 'SNP effect SD')
-                        #print (df)
 
                         max_rows= len(df)
                         if max_rows > 501:
                             max_rows = 500
-                        #df = df.sort_values(by=['PValue'], ascending=True)
                         with dpg.table(label='DatasetTable',row_background=True, borders_innerH=True,
                                        borders_outerH=True, borders_innerV=True, borders_outerV=True, tag='table_gwas',
                                        sortable=True):
@@ -555,12 +503,10 @@ class GWASApp:
                             for i in range(max_rows):
                                 with dpg.table_row():
                                     for j in range(df.shape[1]):
-                                        #dpg.add_text(f"{df.iloc[i, j]}")
                                         value = df.iloc[i, j]
                                         # Format the value as a string with desired precision, e.g., 2 decimal places
                                         #formatted_value = f"{value:.6f}" if isinstance(value, float) else str(value)
                                         dpg.add_text(value)
-
 
     def run(self):
         dpg.setup_dearpygui()

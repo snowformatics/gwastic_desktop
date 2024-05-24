@@ -7,12 +7,13 @@ import configparser
 
 
 class HELPERS:
-    def duplicate_column(self, input_file, output_file):
-        # Read the text file with one column
-        df = pd.read_csv(input_file, header=None)
-        df[1] = df[0]
-        # Write the DataFrame with two columns to a new file
-        df.to_csv(output_file, index=False, header=False, sep=' ')
+    # def duplicate_column(self, input_file, output_file):
+    #     """Depreciated."""
+    #     # Read the text file with one column
+    #     df = pd.read_csv(input_file, header=None)
+    #     df[1] = df[0]
+    #     # Write the DataFrame with two columns to a new file
+    #     df.to_csv(output_file, index=False, header=False, sep=' ')
 
     def replace_with_integers(self, input_file):
         """Replace string chromosome names with integers."""
@@ -33,7 +34,6 @@ class HELPERS:
                         mapping[col1_value] = current_integer
                         parts[0] = str(current_integer)
                         current_integer += 1
-
         return mapping
 
     def get_timestamp(self):
@@ -43,6 +43,7 @@ class HELPERS:
         return dt_string
 
     def save_raw_data(self, bed, pheno):
+        """Save the SNP matrix."""
         np.save('snp', bed.read().val)
         np.savez_compressed('snp.npz', bed.read().val)
         np.save('pheno', pheno.read().val)
@@ -75,7 +76,6 @@ class HELPERS:
             os.mkdir(save_dir)
         except OSError:
             add_log('Can not create folder. Please select a valid directory.', error=True)
-
         try:
             # Create a gwas output file with top 10000 SNPs
             df = pd.read_csv(gwas_result_name)
@@ -83,7 +83,6 @@ class HELPERS:
             first_10000_rows.to_csv(gwas_result_name_top, index=False)
         except FileNotFoundError:
             pass
-
         # Copy all results files
         src_files = [gwas_result_name, gwas_result_name_top, genomic_predict_name,
                      #manhatten_plot_name, qq_plot_name, gp_plot_name, gp_plot_name_scatter,
@@ -99,7 +98,6 @@ class HELPERS:
             else:
                 pass
         # Create a log file with all settings
-        #print(settings_lst)
         log_file = open(save_dir + '/log.txt', 'w')
         log_file.write('Algorithm: ' + settings_lst[0])
         log_file.write('\nBed file used: ' + settings_lst[1])
@@ -108,11 +106,10 @@ class HELPERS:
         log_file.write('\nNr of trees: ' + str(settings_lst[4]))
         log_file.write('\nNr of models: ' + str(settings_lst[5]))
         log_file.write('\nMax depth: ' + str(settings_lst[6]))
-
         return save_dir
 
-
     def merge_gp_models(self, dataframes):
+        """Merge all GP ML models."""
 
         # """Combine RF or XG models and calculate the mean and SD of the Predicted_Value."""
         # df_combined = pd.concat(dataframes)
@@ -148,6 +145,7 @@ class HELPERS:
         return df_result
 
     def merge_models(self, dataframes):
+        """Merge all GWAS ML models."""
 
         # """Combine RF or XG models and calculate the sum of the SNP effect."""
         # df_combined = pd.concat(dataframes)
