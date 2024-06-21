@@ -7,6 +7,7 @@ import webbrowser
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.gp_pipeline import GenomicPrediction
 from gwastic_desktop.helpers import HELPERS
+from gwastic_desktop.plot_pipeline import Plot
 from pysnptools.snpreader import Bed, Pheno
 import pysnptools.util as pstutil
 
@@ -25,6 +26,7 @@ class GWASApp:
         self.gwas = GWAS()
         self.helper = HELPERS()
         self.genomic_predict_class = GenomicPrediction()
+        self.plot_class = Plot()
 
         with dpg.font_registry():
             script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
@@ -43,7 +45,7 @@ class GWASApp:
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
-        self.default_path = 'Z://NH_Paper//wheat//'
+        self.default_path = 'Z://gwas_test_data/gwastic_paper/small_set'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
@@ -51,6 +53,8 @@ class GWASApp:
         self.qq_plot_name = "qq_plot.png"
         self.gp_plot_name = "Bland_Altman_plot.png"
         self.gp_plot_name_scatter = "GP_scatter_plot.png"
+        self.pheno_stats_name = 'pheno_statistics.pdf'
+        self.geno_stats_name = 'geno_statistics.pdf'
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500, horizontal_scrollbar=True)
         self.logz = logger.mvLogger(self.log_win)
@@ -355,7 +359,10 @@ class GWASApp:
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
+                self.plot_class.plot_pheno_statistics(pheno_path, self.pheno_stats_name)
+                self.plot_class.plot_geno_statistics(bed_fixed, pheno, self.geno_stats_name)
                 self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
+
                 self.add_log('Done...')
                 self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
 

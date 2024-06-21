@@ -125,6 +125,8 @@ class GWAS:
         t1 = time.time()
         if algorithm == 'FaST-LMM':
             df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
+            #K = df_lmm_gwas['K']
+            #print (K)
 
         elif algorithm == 'Linear regression':
             df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
