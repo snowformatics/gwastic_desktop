@@ -186,14 +186,15 @@ class Plot:
             pdf.savefig()
             plt.close()
 
-            # Add a page with heritability percentage barchart and explained variance ratio plot
-            plt.figure(figsize=(10, 4))
+            plt.figure(figsize=(12, 4))
             plt.suptitle('Heritability and Explained Variance Ratio', fontsize=16)
+            plt.subplots_adjust(top=0.75, wspace=0.5)
 
             # Heritability percentage barchart
             plt.subplot(1, 2, 1)
             plt.bar(['Heritability'], [heritability_percent], color='#8cc5e3')
             plt.ylim(0, 100)
+            #plt.xlim(0, 2)
             plt.ylabel('Percentage')
             plt.title('Heritability (%)')
 
