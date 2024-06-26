@@ -67,7 +67,7 @@ class HELPERS:
 
     def save_results(self, current_dir, save_dir, gwas_result_name, gwas_result_name_top, manhatten_plot_name,
                      qq_plot_name, algorithm, genomic_predict_name, gp_plot_name, gp_plot_name_scatter, add_log,
-                     settings_lst):
+                     settings_lst, pheno_stats_name, geno_stats_name ):
         """Stores the files of the analysis in the selected path."""
         ts = self.get_timestamp() + '_' + algorithm.replace(' ', '_')
         save_dir = os.path.join(save_dir, ts)
@@ -90,7 +90,8 @@ class HELPERS:
                      qq_plot_name.replace('qq_plot', 'qq_plot_high'),
                      gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
                      gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high'),
-                     genomic_predict_name.replace('.csv', '_valdation.csv')]
+                     genomic_predict_name.replace('.csv', '_valdation.csv'),
+                     pheno_stats_name, geno_stats_name]
         for src_file in src_files:
             if os.path.exists(os.path.join(current_dir, src_file)):
                 shutil.copy(os.path.join(current_dir,src_file), os.path.join(save_dir,src_file))

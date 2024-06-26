@@ -66,9 +66,9 @@ class GWASApp:
         dpg.create_viewport(title='GWAStic Desktop Software', width=2000, height=1200, resizable=True)
 
     # Menu bar
-        with dpg.viewport_menu_bar():
-            with dpg.menu(label="Help"):
-                dpg.add_button(label="Documentation", callback=lambda: webbrowser.open("https://snowformatics.gitbook.io/product-docs/"))
+    #     with dpg.viewport_menu_bar():
+    #         with dpg.menu(label="Help"):
+    #             dpg.add_button(label="Documentation", callback=lambda: webbrowser.open("https://snowformatics.gitbook.io/product-docs/"))
 
         # File dialogs
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf",
@@ -116,7 +116,7 @@ class GWASApp:
                     pheno = dpg.add_button(label="Choose a phenotype file",
                                            callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", 'GP_LMM', 'Test'],
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", 'GP_LMM'],#, 'Test'],
                                   indent=50, width=200, default_value="XGBoost (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
@@ -243,7 +243,7 @@ class GWASApp:
         save_dir = self.helper.save_results(os.getcwd(), current_path, self.gwas_result_name, self.gwas_result_name_top,
                                             self.manhatten_plot_name, self.qq_plot_name, self.algorithm,
                                             self.genomic_predict_name, self.gp_plot_name, self.gp_plot_name_scatter,
-                                            self.add_log, self.settings_lst)
+                                            self.add_log, self.settings_lst, self.pheno_stats_name, self.geno_stats_name )
         self.add_log('Results saved in: ' + save_dir)
 
     def cancel_callback_directory(self, sender, app_data):
@@ -275,7 +275,8 @@ class GWASApp:
                      self.qq_plot_name.replace('qq_plot', 'qq_plot_high'),
                       self.gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
                       self.gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high'),
-                      self.genomic_predict_name.replace('.csv', '_valdation.csv')
+                      self.genomic_predict_name.replace('.csv', '_valdation.csv'),
+                      self.pheno_stats_name, self.geno_stats_name
                       ]
         for f in file_names:
             if os.path.exists(f):
