@@ -7,7 +7,7 @@ import numpy as np
 import logging
 from gwastic_desktop.helpers import HELPERS
 #from gwastic_desktop.gwas_ai import GWASAI
-from fastlmm.association import single_snp, single_snp_linreg
+from fastlmm.association import single_snp, single_snp_linreg, single_snp_scale
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
@@ -125,6 +125,11 @@ class GWAS:
         t1 = time.time()
         if algorithm == 'FaST-LMM':
             df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
+            from pysnptools.util.mapreduce1.runner import LocalMultiProc
+            #runner = LocalMultiProc(taskcount=2)
+            #df_lmm_gwas = single_snp_scale(bed_fixed, pheno, output_file_name=gwas_result_name, runner=runner)
+
+
             #K = df_lmm_gwas['K']
             #print (K)
 

@@ -333,10 +333,12 @@ class GWASApp:
             self.settings_lst = [self.algorithm, bed_path, pheno_path, train_size_set, estimators, model_nr, max_dep_set]
             if check_input_data[0]:
                 bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
+               # bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)[:, bed.pos[:, 0] == 7].read()
                 pheno = Pheno(str(pheno_path))
                 # replace original bed with one that has the same iids as the pheno
                 bed, pheno = pstutil.intersect_apply([bed, pheno])
                 bed_fixed = self.gwas.filter_out_missing(bed)
+
                 # format numbers with commas and no decimals
                 s3 = "Dataset after intersection:" + ' SNPs: ' + str(bed.sid_count) + ' Pheno IDs: ' + str(
                     pheno.iid_count)

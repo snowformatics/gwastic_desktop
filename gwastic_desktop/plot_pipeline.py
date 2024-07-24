@@ -29,6 +29,7 @@ class Plot:
         #print (pheno.iid, pheno.val)
         # Load the phenotype data from a space-delimited file
         file_path = pheno_file  # Change this to your file path
+
         df = pd.read_csv(file_path, delim_whitespace=True, header=None, names=['ID1', 'ID2', 'Observation'])
 
         # Create a PDF to save the plots
@@ -196,7 +197,7 @@ class Plot:
             plt.ylim(0, 100)
             #plt.xlim(0, 2)
             plt.ylabel('Percentage')
-            plt.title('Heritability (%)')
+            plt.title('Heritability (%) ' + str(heritability_percent))
 
             # Explained variance ratio plot
             plt.subplot(1, 2, 2)
