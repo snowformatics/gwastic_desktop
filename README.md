@@ -132,7 +132,7 @@ Type `gwastic` in the command line to start the software.
 [VCF example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/example.vcf.gz)
 
 > [!NOTE]
-> Phenotypic data must be three columns (Family ID; Within-family ID; Value) text or CSV file delimited by *space*. [Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
+> Phenotypic data must be three columns (Family ID; Within-family ID; Value) text file delimited by *space*. [Phenotype example file](https://github.com/snowformatics/data/blob/cd8ac371fe669711430a6a4d7c00960082b3cd4b/gwastic_test_data/pheno.csv)
 
 > [!TIP]
 > We provide to two datasets to test GWASTic and validate the software:

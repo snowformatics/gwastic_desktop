@@ -578,6 +578,7 @@ class GWAS:
         """Manhatten and qq-plot."""
         # Extract the top10 SNPs and use the value as significant marker label threshold
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
+            #df = df.head(limit)
             df = df.dropna(subset=['ChrPos'])
 
             # Get the threshold lines
@@ -619,6 +620,8 @@ class GWAS:
             plt.tight_layout(pad=1)
             plt.savefig(manhatten_plot_name)
             plt.savefig(manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'), dpi=300)
+            #plt.savefig(manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'), dpi=50)
+
 
             # Create QQ plot
             f, ax = plt.subplots(figsize=(6, 6), facecolor="w", edgecolor="k")
@@ -630,6 +633,7 @@ class GWAS:
             plt.tight_layout(pad=1)
             plt.savefig(qq_plot_name)
             plt.savefig(qq_plot_name.replace('qq_plot', 'qq_plot_high'), dpi=300)
+            #plt.savefig(qq_plot_name.replace('qq_plot', 'qq_plot_high'), dpi=50)
         else:
             plt_params = {
                 "font.sans-serif": "Arial",

@@ -11,7 +11,7 @@ from gwastic_desktop.plot_pipeline import Plot
 from pysnptools.snpreader import Bed, Pheno
 import pysnptools.util as pstutil
 
-# check gwas xg and rf merge sum
+# adjust coloumn size
 # reduce dpi
 # add p value threshold
 # after run delete path files
@@ -470,7 +470,7 @@ class GWASApp:
                 self.add_log('GWAS Results Plotting...')
                 #self.plot_class.plot_pheno_statistics(pheno_path, self.pheno_stats_name)
                 #self.plot_class.plot_geno_statistics(bed_fixed, pheno, self.geno_stats_name)
-                self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
+                self.gwas.plot_gwas(df_plot, 100000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
                 end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process)
 
                 self.add_log('Done...')
