@@ -166,16 +166,24 @@ class HELPERS:
 
         """Combine RF or XG models and calculate the sum and SD of the SNP effect."""
         df_combined = pd.concat(dataframes)
+
         df_combined = df_combined[df_combined['PValue'] > 0]
+        #df_combined.to_csv('com.txt')
         # Grouping by 'SNP' and calculating the sum and SD of PValues
-        df_grouped = df_combined.groupby('SNP')['PValue'].agg(['sum', 'std']).reset_index()
+        df_grouped = df_combined.groupby(['SNP', 'Chr', 'ChrPos'])['PValue'].agg(['sum', 'std']).reset_index()
+        #df_grouped.to_csv('group.txt')
         df_grouped = df_grouped.rename(columns={'sum': 'PValue_x', 'std': 'PValue_sd'})
-        df_result = pd.merge(df_combined, df_grouped, on='SNP', how='left')
-        df_result = df_result.drop(['PValue_x'], axis=1).drop_duplicates()
-        df_result = df_result.rename(columns={'PValue_y': 'PValue'})
+        #df_result = pd.merge(df_grouped, df_combined, on='SNP', how='left')
+        #df_result.to_csv('res1.txt')
+        #df_result = df_result.drop(['PValue_x'], axis=1).drop_duplicates()
+        #df_result.to_csv('res2.txt')
+
+        df_result = df_grouped
+        df_result = df_result.rename(columns={'PValue_x': 'PValue'})
         df_result['Chr'] = df_result['Chr'].astype(int)
         df_result['ChrPos'] = df_result['ChrPos'].astype(int)
         df_result = df_result.sort_values(by=['Chr', 'ChrPos'])
+        #df_result.to_csv('res1.txt')
 
         return df_result
 

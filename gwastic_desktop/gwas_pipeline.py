@@ -16,6 +16,12 @@ import geneview as gv
 from pysnptools.util import log_in_place
 import matplotlib.pyplot as plt
 
+
+
+    #print("[ Top 10 Memory Consumers ]")
+    #for stat in top_stats[:10]:
+       # print(stat)
+
 plt.switch_backend('Agg')
 
 class GWAS:
@@ -120,23 +126,25 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
-    def run_gwas_lmm(self, bed_fixed, pheno, chrom_mapping, add_log, gwas_result_name, algorithm, bed_file):
+    def run_gwas_lmm(self, bed_fixed, pheno, chrom_mapping, add_log, gwas_result_name, algorithm, bed_file, cov_file):
         """GWAS using LMM and linear regression methods from fast-lmm library."""
         t1 = time.time()
         if algorithm == 'FaST-LMM':
-            df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
-            from pysnptools.util.mapreduce1.runner import LocalMultiProc
-            #runner = LocalMultiProc(taskcount=2)
-            #df_lmm_gwas = single_snp_scale(bed_fixed, pheno, output_file_name=gwas_result_name, runner=runner)
+            if cov_file:
+                df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name, covar=cov_file)
+            else:
+                df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
 
 
-            #K = df_lmm_gwas['K']
+           # K = df_lmm_gwas['K']
             #print (K)
 
         elif algorithm == 'Linear regression':
-            df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
-            #self.calculate_qtl(df_lmm_gwas, bed_fixed)
 
+            if cov_file:
+                df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name, covar=cov_file)
+            else:
+                df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
         #print (df_lmm_gwas)
         df_lmm_gwas.dropna(subset=['PValue'], inplace=True)
         # we create one df for the plotting with ints as chr
@@ -570,6 +578,8 @@ class GWAS:
         """Manhatten and qq-plot."""
         # Extract the top10 SNPs and use the value as significant marker label threshold
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
+            df = df.dropna(subset=['ChrPos'])
+
             # Get the threshold lines
             sugg_line = 1 / len(df['SNP'])
             gen_line = 0.05 / len(df['SNP'])
@@ -578,6 +588,7 @@ class GWAS:
             df = df[df['PValue'] != 0.0]
 
             df['Chr'] = df['Chr'].astype(int)
+
             df['ChrPos'] = df['ChrPos'].astype(int)
 
             # common parameters for plotting

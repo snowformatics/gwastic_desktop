@@ -11,10 +11,84 @@ from gwastic_desktop.plot_pipeline import Plot
 from pysnptools.snpreader import Bed, Pheno
 import pysnptools.util as pstutil
 
+# check gwas xg and rf merge sum
+# reduce dpi
+# add p value threshold
+# after run delete path files
+
+import psutil
+import time
+import tracemalloc
+import gc
+
+
+def start_measurements():
+    # Start tracing memory allocations
+    tracemalloc.start()
+
+    # Record initial memory usage
+    process = psutil.Process()
+    initial_memory_usage = process.memory_info().rss
+
+    # Record initial CPU usage
+    initial_cpu_times = process.cpu_times()
+    initial_cpu_percent = psutil.cpu_percent(interval=None)
+
+    # Start time
+    start_time = time.time()
+
+    return initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process
+
+
+def end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process):
+    # End time
+    end_time = time.time()
+
+    # Force garbage collection to clean up memory
+    gc.collect()
+
+    # Record final memory usage
+    final_memory_usage = process.memory_info().rss
+
+    # Record final CPU usage
+    final_cpu_times = process.cpu_times()
+    final_cpu_percent = psutil.cpu_percent(interval=None)
+
+    # Take a snapshot of current memory usage
+
+
+    # Stop tracing memory allocations
+    tracemalloc.stop()
+
+    # Calculate and print performance metrics
+    execution_time = end_time - start_time
+    initial_memory_mb = initial_memory_usage / 1024 / 1024
+    final_memory_mb = final_memory_usage / 1024 / 1024
+    memory_difference_mb = (final_memory_usage - initial_memory_usage) / 1024 / 1024
+
+    # Calculate CPU time usage
+    cpu_time_user = final_cpu_times.user - initial_cpu_times.user
+    cpu_time_system = final_cpu_times.system - initial_cpu_times.system
+    cpu_time_total = cpu_time_user + cpu_time_system
+
+    # Calculate CPU percent usage difference
+    cpu_percent_difference = final_cpu_percent - initial_cpu_percent
+
+    print(f"Execution time: {execution_time:.2f} seconds")
+    print(f"Initial Memory Usage: {initial_memory_mb:.2f} MB")
+    print(f"Final Memory Usage: {final_memory_mb:.2f} MB")
+    print(f"Memory Difference: {memory_difference_mb:.2f} MB")
+    print(f"CPU Time (User): {cpu_time_user:.2f} seconds")
+    print(f"CPU Time (System): {cpu_time_system:.2f} seconds")
+    print(f"CPU Time (Total): {cpu_time_total:.2f} seconds")
+    print(f"CPU Percent Usage Difference: {cpu_percent_difference:.2f}%")
+
+
+
+
 #poetry build
 #poetry publish
 # pipline nr 214
-
 
 def main():
     app = GWASApp()
@@ -86,6 +160,11 @@ class GWASApp:
             dpg.add_file_extension("Source files (*.txt *.csv){.txt,.csv}", color=(255, 255, 0, 255))
             dpg.add_file_extension(".*")
 
+        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_cov, file_count=3,
+                             tag="file_dialog_cov", width=700, height=400, default_path=self.default_path):
+            dpg.add_file_extension("Source files (*.txt *.csv){.txt,.csv}", color=(255, 255, 0, 255))
+            dpg.add_file_extension(".*")
+
         with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_bed, file_count=3,
                              tag="file_dialog_bed", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension(".bed", color=(255, 150, 150, 255))
@@ -101,7 +180,12 @@ class GWASApp:
                     dpg.add_text("\nStart GWAS Analysis", indent=50)
                     dpg.add_spacer(height=20)
                     geno = dpg.add_button(label="Choose a BED file", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50, tag= 'tooltip_bed')
+                    dpg.add_spacer(height=5)
                     pheno = dpg.add_button(label="Choose a phenotype file", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
+                    dpg.add_spacer(height=5)
+                    cov_file = dpg.add_button(label="Choose a covariate file (optional)",
+                                           callback=lambda: dpg.show_item("file_dialog_cov"), indent=50,
+                                           tag='tooltip_cov')
                     dpg.add_spacer(height=20)
                     self.gwas_combo = dpg.add_combo(label="Select algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", tag= 'tooltip_algorithm')
                     dpg.add_spacer(height=20)
@@ -174,6 +258,10 @@ class GWASApp:
                 dpg.add_text("Click to select a Binary BED file containing genotype data.\nMust be accompanied by .bim and .fam files.\n", color=[79, 128, 226])
             with dpg.tooltip("tooltip_pheno"):
                 dpg.add_text("Click to select a file with phenotype data that will be used in the GWAS analysis.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_cov"):
+                dpg.add_text("A covariate is a variable that is potentially predictive of the outcome being studied\nand is accounted for in the analysis to improve the accuracy of the results (like age and sex).\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces",
+                    color=[79, 128, 226])
+
             with dpg.tooltip("tooltip_algorithm"):
                 dpg.add_text("Select the algorithm to be used for the analysis.", color=[79, 128, 226])
            # with dpg.tooltip("tooltip_pvalue"):
@@ -223,6 +311,15 @@ class GWASApp:
             self.add_log('Pheno File Selected: ' + pheno_path)
         except TypeError:
             self.add_log('Wrong Pheno File Selected: ' + pheno_path, error=True)
+
+    def callback_cov(self, sender, app_data):
+        """Get phenotype file path selected from the user."""
+        self.cov_app_data = app_data
+        try:
+            cov_path, current_path = self.get_selection_path(self.cov_app_data)
+            self.add_log('Covariants File Selected: ' + cov_path)
+        except TypeError:
+            self.add_log('Wrong Pheno File Selected: ' + cov_path, error=True)
 
     def get_selection_path(self, app_data):
         """Extract path from the app_data dictionary selections key."""
@@ -323,9 +420,14 @@ class GWASApp:
         self.algorithm = dpg.get_value(self.gwas_combo)
 
         try:
+            initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process = start_measurements()
             self.add_log('Reading files...')
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
             pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
+            try:
+                cov_path, current_path3 = self.get_selection_path(self.cov_app_data)
+            except:
+                cov_path, current_path3 = None, None
             self.add_log('Validating files...')
             check_input_data = self.gwas.validate_gwas_input_files(bed_path, pheno_path)
             # Replace chromosome names, they need to be numbers
@@ -335,6 +437,10 @@ class GWASApp:
                 bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)
                # bed = Bed(str(bed_path), count_A1=False, chrom_map=chrom_mapping)[:, bed.pos[:, 0] == 7].read()
                 pheno = Pheno(str(pheno_path))
+                if cov_path:
+                    cov = Pheno(str(cov_path))
+                else:
+                    cov = None
                 # replace original bed with one that has the same iids as the pheno
                 bed, pheno = pstutil.intersect_apply([bed, pheno])
                 bed_fixed = self.gwas.filter_out_missing(bed)
@@ -347,7 +453,7 @@ class GWASApp:
                 self.add_log('Starting Analysis, this might take a while...')
                 if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
                     gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log
-                                                             , self.gwas_result_name, self.algorithm, bed_path)
+                                                             , self.gwas_result_name, self.algorithm, bed_path, cov)
                 elif  self.algorithm == 'Random Forest (AI)':
                     gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
                                                             estimators, self.gwas_result_name, chrom_mapping,
@@ -362,9 +468,10 @@ class GWASApp:
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
-                self.plot_class.plot_pheno_statistics(pheno_path, self.pheno_stats_name)
-                self.plot_class.plot_geno_statistics(bed_fixed, pheno, self.geno_stats_name)
+                #self.plot_class.plot_pheno_statistics(pheno_path, self.pheno_stats_name)
+                #self.plot_class.plot_geno_statistics(bed_fixed, pheno, self.geno_stats_name)
                 self.gwas.plot_gwas(df_plot, 10000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
+                end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process)
 
                 self.add_log('Done...')
                 self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
