@@ -410,6 +410,10 @@ class GWASApp:
         estimators = dpg.get_value(self.estim_set)
         model_nr = dpg.get_value(self.model_nr)
         snp_limit = dpg.get_value(self.snp_limit)
+        nr_jobs = int(dpg.get_value(self.nr_jobs))
+        if nr_jobs == 0:
+            nr_jobs = -1
+        gb_goal = int(dpg.get_value(self.gb_goal))
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
 
@@ -447,15 +451,15 @@ class GWASApp:
                 self.add_log('Starting Analysis, this might take a while...')
                 if self.algorithm == 'FaST-LMM' or self.algorithm == 'Linear regression':
                     gwas_df, df_plot =self.gwas.run_gwas_lmm(bed_fixed, pheno, chrom_mapping, self.add_log
-                                                             , self.gwas_result_name, self.algorithm, bed_path, cov)
+                                                             ,self.gwas_result_name, self.algorithm, bed_path, cov, gb_goal)
                 elif  self.algorithm == 'Random Forest (AI)':
                     gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
                                                             estimators, self.gwas_result_name, chrom_mapping,
-                                                            self.add_log, model_nr)
+                                                            self.add_log, model_nr, nr_jobs)
                 elif self.algorithm == 'XGBoost (AI)':
                     gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
                                                              self.gwas_result_name, chrom_mapping, self.add_log,
-                                                             model_nr, max_dep_set)
+                                                             model_nr, max_dep_set, nr_jobs)
             else:
                 self.add_log(check_input_data[1], error=True)
 
@@ -496,6 +500,9 @@ class GWASApp:
         estimators = dpg.get_value(self.estim_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         model_nr = dpg.get_value(self.model_nr)
+        nr_jobs = int(dpg.get_value(self.nr_jobs))
+        if nr_jobs == 0:
+            nr_jobs = -1
         try:
             self.add_log('Reading files...')
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
@@ -521,10 +528,10 @@ class GWASApp:
                                                  bed_path, chrom_mapping)
                 elif self.algorithm == 'Random Forest (AI)':
                     gp_df = self.genomic_predict_class.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
-                                                self.genomic_predict_name, chrom_mapping, self.add_log,model_nr)
+                                                self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, nr_jobs)
                 elif self.algorithm == 'XGBoost (AI)':
                     gp_df, df_val = self.genomic_predict_class.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
-                                                self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set)
+                                                self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set, nr_jobs)
                 else:
                     self.genomic_predict_class.model_validation(bed_fixed, pheno, bed_path, test_size, estimators,
                                                                 self.genomic_predict_name,  chrom_mapping, self.add_log,

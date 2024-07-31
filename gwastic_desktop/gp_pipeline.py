@@ -27,7 +27,6 @@ class GenomicPrediction:
         """Genomic Prediction using LMM predictor from fast-lmm library."""
 
         bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
-
         kf = KFold(n_splits=model_nr + 1)
         results = []
         i = 1
@@ -65,7 +64,7 @@ class GenomicPrediction:
         return df_all
 
     def run_gp_rf(self, bed_fixed, pheno, bed_file, test_size, estimators, genomic_predict_name, chrom_mapping, add_log,
-                  model_nr):
+                  model_nr, nr_jobs):
         """Genomic Prediction using Random Forest with cross validation."""
         t1 = time.time()
         dataframes = []
@@ -90,7 +89,7 @@ class GenomicPrediction:
 
             # scaler = StandardScaler()
             # X_train = scaler.fit_transform(X_train)
-            rf_model = RandomForestRegressor(n_estimators=estimators)
+            rf_model = RandomForestRegressor(n_estimators=estimators, n_jobs=nr_jobs)
 
             rf_model.fit(X_train, y_train.ravel())
             predicted_values = rf_model.predict(snp_data_all)
@@ -113,7 +112,7 @@ class GenomicPrediction:
         return df_all
 
     def run_gp_xg(self, bed_fixed, pheno, bed_file, test_size, estimators, genomic_predict_name, chrom_mapping, add_log,
-                  model_nr, max_dep_set):
+                  model_nr, max_dep_set, nr_jobs):
         """Genomic Prediction using XgBOOST with cross validation."""
 
         t1 = time.time()
@@ -172,7 +171,7 @@ class GenomicPrediction:
             # scaler = StandardScaler()
             # X_train = scaler.fit_transform(X_train)
             xgb_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1,
-                                         max_depth=max_dep_set)  # , min_child_weight=3)
+                                         max_depth=max_dep_set, nthread=nr_jobs)  # , min_child_weight=3)
             xgb_model.fit(X_train, y_train)
 
             # for prediction, we need all genotypes

@@ -126,26 +126,27 @@ class GWAS:
         else:
             return (False, "Phenotpic ID's does not match with .fam file IDs.")
 
-    def run_gwas_lmm(self, bed_fixed, pheno, chrom_mapping, add_log, gwas_result_name, algorithm, bed_file, cov_file):
+    def run_gwas_lmm(self, bed_fixed, pheno, chrom_mapping, add_log, gwas_result_name, algorithm, bed_file, cov_file, gb_goal):
         """GWAS using LMM and linear regression methods from fast-lmm library."""
         t1 = time.time()
+        if gb_goal == 0:
+            gb_goal = None
+
         if algorithm == 'FaST-LMM':
             if cov_file:
-                df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name, covar=cov_file)
+                df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name, covar=cov_file, GB_goal=gb_goal)
             else:
-                df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name)
-
+                df_lmm_gwas = single_snp(bed_fixed, pheno, output_file_name=gwas_result_name, GB_goal=gb_goal)
 
            # K = df_lmm_gwas['K']
             #print (K)
 
         elif algorithm == 'Linear regression':
-
             if cov_file:
-                df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name, covar=cov_file)
+                df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name, covar=cov_file, GB_goal=gb_goal)
             else:
-                df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name)
-        #print (df_lmm_gwas)
+                df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name, GB_goal=gb_goal)
+
         df_lmm_gwas.dropna(subset=['PValue'], inplace=True)
         # we create one df for the plotting with ints as chr
         df_plot = df_lmm_gwas.copy(deep=True)
@@ -161,7 +162,7 @@ class GWAS:
         return df_lmm_gwas, df_plot
 
     def run_gwas_xg(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
-                    model_nr, max_dep_set):
+                    model_nr, max_dep_set, nr_jobs):
         """GWAS using Random Forest with cross validation."""
 
         t1 = time.time()
@@ -182,7 +183,7 @@ class GWAS:
 
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
-            xg_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set)
+            xg_model = xgb.XGBRegressor(n_estimators=estimators, learning_rate=0.1, max_depth=max_dep_set, nthread=nr_jobs)
             xg_model.fit(X_train, y_train)
 
             data = []
@@ -212,7 +213,7 @@ class GWAS:
         return df_all_xg, df_plot
 
     def run_gwas_rf(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
-                    model_nr):
+                    model_nr, nr_jobs):
         """GWAS using Random Forest with cross validation."""
         t1 = time.time()
         dataframes = []
@@ -222,6 +223,7 @@ class GWAS:
         snp_data = bed_fixed.read().val
         snp_data[np.isnan(snp_data)] = -1
 
+
         for i in range(int(model_nr)):
             add_log('Model Iteration: ' + str(i + 1))
             # Split data into training and testing sets
@@ -229,7 +231,7 @@ class GWAS:
                                                                 test_size=test_size)
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
-            rf_model = RandomForestRegressor(n_estimators=estimators, n_jobs=-1)
+            rf_model = RandomForestRegressor(n_estimators=estimators, n_jobs=nr_jobs)
             rf_model.fit(X_train, y_train.ravel())
             data = []
             snp_ids = df_bim.iloc[:, 1].tolist()
@@ -578,7 +580,6 @@ class GWAS:
         """Manhatten and qq-plot."""
         # Extract the top10 SNPs and use the value as significant marker label threshold
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-            print (limit)
             if limit != '':
                 df = df.head(int(limit))
             df = df.dropna(subset=['ChrPos'])
