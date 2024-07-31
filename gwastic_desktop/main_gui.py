@@ -190,7 +190,7 @@ class GWASApp:
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
 
-                with dpg.tab(label= 'Convert VCF'):
+                with dpg.tab(label='Convert VCF'):
                     dpg.add_text("\nConvert a VCF file into BED file format and apply MAF\nor missing genotype filter.", indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Select files:", indent=50)
