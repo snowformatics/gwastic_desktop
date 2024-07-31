@@ -118,7 +118,7 @@ class GWASApp:
         self.bed_app_data = None
         self.pheno_app_data = None
         self.cov_app_data = None
-        self.default_path = 'Z://gwas_test_data/gwastic_paper/small_set'
+        self.default_path = '.'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
         self.genomic_predict_name = "genomic_prediction_results.csv"
@@ -129,6 +129,8 @@ class GWASApp:
         self.pheno_stats_name = 'pheno_statistics.pdf'
         self.geno_stats_name = 'geno_statistics.pdf'
 
+        self.snp_limit_set = None
+
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500, horizontal_scrollbar=True)
         self.logz = logger.mvLogger(self.log_win)
         table_window = None
@@ -138,40 +140,28 @@ class GWASApp:
     def setup_gui(self):
         dpg.create_viewport(title='GWAStic Desktop Software', width=2000, height=1200, resizable=True)
 
-    # Menu bar
-    #     with dpg.viewport_menu_bar():
-    #         with dpg.menu(label="Help"):
-    #             dpg.add_button(label="Documentation", callback=lambda: webbrowser.open("https://snowformatics.gitbook.io/product-docs/"))
-
         # File dialogs
-        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf",
-                             width=700, height=400, default_path=self.default_path):
-
+        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_vcf, file_count=3, tag="file_dialog_vcf", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension("Source files (*.vcf *.gz){.vcf,.gz}", color=(255, 255, 0, 255))
 
-        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_variants, file_count=3,
-                             tag="file_dialog_variants", width=700, height=400, default_path=self.default_path):
+        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_variants, file_count=3, tag="file_dialog_variants", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension("Source files (*.txt *.csv){.txt,.csv}", color=(255, 255, 0, 255))
             dpg.add_file_extension(".*")
 
-        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_pheno, file_count=3,
-                             tag="file_dialog_pheno", width=700, height=400, default_path=self.default_path):
+        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_pheno, file_count=3, tag="file_dialog_pheno", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension("Source files (*.txt *.csv){.txt,.csv}", color=(255, 255, 0, 255))
             dpg.add_file_extension(".*")
 
-        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_cov, file_count=3,
-                             tag="file_dialog_cov", width=700, height=400, default_path=self.default_path):
+        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_cov, file_count=3, tag="file_dialog_cov", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension("Source files (*.txt *.csv){.txt,.csv}", color=(255, 255, 0, 255))
             dpg.add_file_extension(".*")
 
-        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_bed, file_count=3,
-                             tag="file_dialog_bed", width=700, height=400, default_path=self.default_path):
+        with dpg.file_dialog(directory_selector=False, show=False, callback=self.callback_bed, file_count=3, tag="file_dialog_bed", width=700, height=400, default_path=self.default_path):
             dpg.add_file_extension(".bed", color=(255, 150, 150, 255))
             dpg.add_file_extension(".*")
 
         dpg.add_file_dialog(
-            directory_selector=True, show=False, callback=self.callback_save_results, tag="select_directory",
-            cancel_callback=self.cancel_callback_directory, width=700, height=400, default_path=self.default_path)
+            directory_selector=True, show=False, callback=self.callback_save_results, tag="select_directory", cancel_callback=self.cancel_callback_directory, width=700, height=400, default_path=self.default_path)
 
         with dpg.window(label="GWAStic", width=1000, height=600, no_close=True, horizontal_scrollbar=True):
             with dpg.tab_bar(label='tabbar'):
@@ -182,9 +172,7 @@ class GWASApp:
                     dpg.add_spacer(height=5)
                     pheno = dpg.add_button(label="Choose a phenotype file", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50, tag= 'tooltip_pheno')
                     dpg.add_spacer(height=5)
-                    cov_file = dpg.add_button(label="Choose a covariate file (optional)",
-                                           callback=lambda: dpg.show_item("file_dialog_cov"), indent=50,
-                                           tag='tooltip_cov')
+                    cov_file = dpg.add_button(label="Choose a covariate file (optional)", callback=lambda: dpg.show_item("file_dialog_cov"), indent=50, tag='tooltip_cov')
                     dpg.add_spacer(height=20)
                     self.gwas_combo = dpg.add_combo(label="Select algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", tag= 'tooltip_algorithm')
                     dpg.add_spacer(height=20)
@@ -194,27 +182,20 @@ class GWASApp:
                 with dpg.tab(label='Genomic Prediction Analysis'):
                     dpg.add_text("\nStart Genomic Prediction", indent=50)
                     dpg.add_spacer(height=20)
-                    geno = dpg.add_button(label="Choose a BED file", callback=lambda: dpg.show_item("file_dialog_bed"),
-                                          indent=50)
-                    pheno = dpg.add_button(label="Choose a phenotype file",
-                                           callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
+                    geno = dpg.add_button(label="Choose a BED file", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50)
+                    pheno = dpg.add_button(label="Choose a phenotype file", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", 'GP_LMM'],#, 'Test'],
-                                  indent=50, width=200, default_value="XGBoost (AI)")
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", 'GP_LMM'], indent=50, width=200, default_value="XGBoost (AI)")
                     dpg.add_spacer(height=20)
-                    gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],
-                                              indent=50)
+                    gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
 
                 with dpg.tab(label='Convert VCF'):
                     dpg.add_text("\nConvert a VCF file into BED file format and apply MAF\nor missing genotype filter.", indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Select files:", indent=50)
-                    vcf = dpg.add_button(label="Choose a VCF file", callback=lambda: dpg.show_item("file_dialog_vcf"),
-                                         indent=50, tag='tooltip_vcf')
-
-                    variant_ids = dpg.add_button(label="Choose a variants file (optional)", tag= 'tooltip_variant',
-                                                 callback=lambda: dpg.show_item("file_dialog_variants"), indent=50)
+                    vcf = dpg.add_button(label="Choose a VCF file", callback=lambda: dpg.show_item("file_dialog_vcf"), indent=50, tag='tooltip_vcf')
+                    variant_ids = dpg.add_button(label="Choose a variants file (optional)", tag= 'tooltip_variant', callback=lambda: dpg.show_item("file_dialog_variants"), indent=50)
                     dpg.add_spacer(height=20)
                     dpg.add_text("Apply filters:", indent=50)
                     maf_input = dpg.add_input_float(label="Minor allele frequency (MAF)", width=150, default_value=0.05,step=0.005, indent=50, tag= 'tooltip_maf')
@@ -225,24 +206,28 @@ class GWASApp:
 
                 with dpg.tab(label='Settings'):
                     dpg.add_spacer(height=10)
-                    dpg.add_text("Machine Learning Settings", indent=50, color=(72,138,199))
+                    dpg.add_text("General Settings", indent=50, color=(72, 138, 199))
+                    dpg.add_spacer(height=7)
+                    self.nr_jobs = dpg.add_input_int(label="Number of jobs to run", width=150, default_value=-1, step=1, indent=50, min_value=-1, max_value=50, min_clamped=True, max_clamped=True, tag='tooltip_nr_jobs')
+                    dpg.add_spacer(height=7)
+                    self.gb_goal = dpg.add_input_int(label="Gigabytes of memory per run", width=150, default_value=0, step=4, indent=50, min_value=0, max_value=512, min_clamped=True, max_clamped=True, tag='tooltip_gb_goal')
+                    dpg.add_spacer(height=7)
+                    self.snp_limit_set = dpg.add_input_text(label="SNP limit", indent=50, width=150, default_value='', tag="tooltip_limit")
+                    dpg.add_spacer(height=7)
+                    self.plot_stats = dpg.add_checkbox(label="Advanced Plotting", indent=50, default_value=False, tag="tooltip_stats")
+                    dpg.add_spacer(height=7)
+                    self.skip_result_window = dpg.add_checkbox(label="Skip result window", indent=50, default_value=False)
+
+                    dpg.add_spacer(height=20)
+                    dpg.add_text("Machine Learning Settings", indent=50, color=(72, 138, 199))
                     dpg.add_spacer(height=10)
-                    #self.std_set = dpg.add_checkbox(label="Apply Standardization", indent=50, tag= 'tooltip_stand')
-                    #dpg.add_spacer(height=10)
-                    self.train_size_set = dpg.add_input_int(label="Training size", width=150, default_value=70,step=10, indent=50,
-                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_training')
-                    dpg.add_spacer(height=10)
-                    self.model_nr = dpg.add_input_int(label="Nr. of models", width=150, default_value=1, step=1,
-                                                            indent=50,
-                                                            min_value=1, max_value=50, min_clamped=True,
-                                                            max_clamped=True, tag='tooltip_model')
-                    dpg.add_spacer(height=10)
-                    self.estim_set = dpg.add_input_int(label="Number of trees", width=150, default_value=200, step=10, indent=50,
-                                      min_value=1, min_clamped=True, tag= 'tooltip_trees')
-                    dpg.add_spacer(height=10)
-                    self.max_dep_set = dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50,
-                                      min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag= 'tooltip_depth')
-                    dpg.add_spacer(height=10)
+                    self.train_size_set = dpg.add_input_int(label="Training size", width=150, default_value=70, step=10, indent=50, min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag='tooltip_training')
+                    dpg.add_spacer(height=7)
+                    self.model_nr = dpg.add_input_int(label="Nr. of models", width=150, default_value=1, step=1, indent=50, min_value=1, max_value=50, min_clamped=True, max_clamped=True, tag='tooltip_model')
+                    dpg.add_spacer(height=7)
+                    self.estim_set = dpg.add_input_int(label="Number of trees", width=150, default_value=200, step=10, indent=50, min_value=1, min_clamped=True, tag='tooltip_trees')
+                    dpg.add_spacer(height=7)
+                    self.max_dep_set = dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50, min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag='tooltip_depth')
 
             # Tooltips
             with dpg.tooltip("tooltip_vcf"):
@@ -258,17 +243,9 @@ class GWASApp:
             with dpg.tooltip("tooltip_pheno"):
                 dpg.add_text("Click to select a file with phenotype data that will be used in the GWAS analysis.\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
             with dpg.tooltip("tooltip_cov"):
-                dpg.add_text("A covariate is a variable that is potentially predictive of the outcome being studied\nand is accounted for in the analysis to improve the accuracy of the results (like age and sex).\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces",
-                    color=[79, 128, 226])
-
+                dpg.add_text("A covariate is a variable that is potentially predictive of the outcome being studied\nand is accounted for in the analysis to improve the accuracy of the results (like age and sex).\nVariant IDs must match with IDs in the .fam file.\nMust be space seperated.\nExample.\nID1 ID1 0.25\nID2 ID2 0.89\nImportant:ID's must not contain spaces", color=[79, 128, 226])
             with dpg.tooltip("tooltip_algorithm"):
                 dpg.add_text("Select the algorithm to be used for the analysis.", color=[79, 128, 226])
-           # with dpg.tooltip("tooltip_pvalue"):
-                #dpg.add_text("All output rows with p-values less than this threshold will be included.\nBy default, all rows are included.\nThis is used to exclude rows for large datasets.", color=[79, 128, 226])
-            #with dpg.tooltip("tooltip_chrom"):
-                #dpg.add_text("Perform single SNP GWAS via cross validation over the chromosomes.\nDefault to True.\nWarning: setting False can cause proximal contamination.", color=[79, 128, 226])
-            #with dpg.tooltip("tooltip_stand"):
-                #dpg.add_text("Check this to standardize features by removing the mean and scaling to unit variance,\noften required for machine learning algorithms.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_training"):
                 dpg.add_text("Set the percentage of the dataset to be used for training the model.\nThe rest will be used for testing.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_trees"):
@@ -277,6 +254,14 @@ class GWASApp:
                 dpg.add_text("Specify the number of models to be used in the analysis.\nMore models can increase accuracy but also computation time.", color=[79, 128, 226])
             with dpg.tooltip("tooltip_depth"):
                 dpg.add_text("Determine the maximum depth of the trees.\nDeeper trees can model more complex relationships.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_nr_jobs"):
+                dpg.add_text("Nr of jobs specifies the number of CPU cores to use,\nwith -1 using all available cores, 1 using a single core,\nand 8 using eight cores for parallel processing.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_gb_goal"):
+                dpg.add_text("Gigabytes of memory the run should use.\nIf 0, will read the SNPs in blocks the same size as the kernel,\nwhich is memory efficient with little overhead on computation time.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_limit"):
+                dpg.add_text("Sets the maximum number of SNPs to be used for the Manhattan and QQ plots.\nRecommended for large SNP datasets to improve plotting performance,\nas handling a high number of SNPs can significantly slow down the plotting process.\nLeave the field empty to use all SNPs (default).", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_stats"):
+                dpg.add_text("Enable this setting to access more advanced plotting features for both phenotypic and genotypic statistics.\nThis is particularly useful for creating high-quality graphics suitable for publication.\nPlease note that enabling these options may significantly increase processing time, especially with large datasets.\nBy default, this feature is disabled to optimize performance.", color=[79, 128, 226])
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
@@ -424,7 +409,7 @@ class GWASApp:
         train_size_set = (100-dpg.get_value(self.train_size_set))/100
         estimators = dpg.get_value(self.estim_set)
         model_nr = dpg.get_value(self.model_nr)
-        #pvalue_set = dpg.get_value(self.pvalue_set)
+        #snp_limit_set = dpg.get_value(self.snp_limit_set)
         #std_set = dpg.get_value(self.std_set)
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
