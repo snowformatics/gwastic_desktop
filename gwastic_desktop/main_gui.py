@@ -129,7 +129,7 @@ class GWASApp:
         self.pheno_stats_name = 'pheno_statistics.pdf'
         self.geno_stats_name = 'geno_statistics.pdf'
 
-        self.snp_limit_set = None
+        self.snp_limit = None
 
         self.log_win = dpg.add_window(label="Log", pos=(0, 635), width=1000, height=500, horizontal_scrollbar=True)
         self.logz = logger.mvLogger(self.log_win)
@@ -212,11 +212,11 @@ class GWASApp:
                     dpg.add_spacer(height=7)
                     self.gb_goal = dpg.add_input_int(label="Gigabytes of memory per run", width=150, default_value=0, step=4, indent=50, min_value=0, max_value=512, min_clamped=True, max_clamped=True, tag='tooltip_gb_goal')
                     dpg.add_spacer(height=7)
-                    self.snp_limit_set = dpg.add_input_text(label="SNP limit", indent=50, width=150, default_value='', tag="tooltip_limit")
+                    self.snp_limit = dpg.add_input_text(label="SNP limit", indent=50, width=150, default_value='', tag="tooltip_limit")
                     dpg.add_spacer(height=7)
                     self.plot_stats = dpg.add_checkbox(label="Advanced Plotting", indent=50, default_value=False, tag="tooltip_stats")
-                    dpg.add_spacer(height=7)
-                    self.skip_result_window = dpg.add_checkbox(label="Skip result window", indent=50, default_value=False)
+                    #dpg.add_spacer(height=7)
+                    #self.skip_result_window = dpg.add_checkbox(label="Skip result window", indent=50, default_value=False)
 
                     dpg.add_spacer(height=20)
                     dpg.add_text("Machine Learning Settings", indent=50, color=(72, 138, 199))
@@ -409,8 +409,7 @@ class GWASApp:
         train_size_set = (100-dpg.get_value(self.train_size_set))/100
         estimators = dpg.get_value(self.estim_set)
         model_nr = dpg.get_value(self.model_nr)
-        #snp_limit_set = dpg.get_value(self.snp_limit_set)
-        #std_set = dpg.get_value(self.std_set)
+        snp_limit = dpg.get_value(self.snp_limit)
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
 
@@ -463,12 +462,16 @@ class GWASApp:
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
-                #self.plot_class.plot_pheno_statistics(pheno_path, self.pheno_stats_name)
-                #self.plot_class.plot_geno_statistics(bed_fixed, pheno, self.geno_stats_name)
-                self.gwas.plot_gwas(df_plot, 100000, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
+                print (dpg.get_value(self.plot_stats))
+                if dpg.get_value(self.plot_stats):
+                    self.plot_class.plot_pheno_statistics(pheno_path, self.pheno_stats_name)
+                    self.plot_class.plot_geno_statistics(bed_fixed, pheno, self.geno_stats_name)
+                self.gwas.plot_gwas(df_plot, snp_limit, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
                 end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process)
 
                 self.add_log('Done...')
+                #print (dpg.get_value(self.skip_result_window))
+                #if not dpg.get_value(self.skip_result_window):
                 self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
                 # Delete all files paths
                 self.bed_app_data = None

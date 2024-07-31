@@ -578,7 +578,9 @@ class GWAS:
         """Manhatten and qq-plot."""
         # Extract the top10 SNPs and use the value as significant marker label threshold
         if algorithm == 'FaST-LMM' or algorithm == 'Linear regression':
-            #df = df.head(limit)
+            print (limit)
+            if limit != '':
+                df = df.head(int(limit))
             df = df.dropna(subset=['ChrPos'])
 
             # Get the threshold lines
