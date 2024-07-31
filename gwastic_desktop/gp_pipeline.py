@@ -1,5 +1,5 @@
 from gwastic_desktop.helpers import HELPERS
-#from gwastic_desktop.gwas_ai import GWASAI
+from sklearn.linear_model import Ridge
 from pysnptools.snpreader import Bed, Pheno
 import time
 from fastlmm.inference import FastLMM
@@ -105,6 +105,57 @@ class GenomicPrediction:
             dataframes.append(merged_df)
 
         df_all = self.helper.merge_gp_models(dataframes)
+
+        df_all.to_csv(genomic_predict_name, index=False)
+        t2 = time.time()
+        t3 = round((t2 - t1) / 60, 2)
+        add_log('Final run time (minutes): ' + str(t3))
+        return df_all
+
+    def run_gp_ridge(self, bed_fixed, pheno, bed_file, test_size, alpha, genomic_predict_name, chrom_mapping, add_log,
+                     model_nr):
+        """Genomic Prediction using Ridge Regression with cross validation."""
+
+        t1 = time.time()
+        dataframes = []
+        # df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+        # df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
+
+        # training data
+        snp_data = bed_fixed.read().val
+        snp_data[np.isnan(snp_data)] = -1
+        # entire data for training
+        bed_data = Bed(str(bed_file), count_A1=False, chrom_map=chrom_mapping)
+        snp_data_all = bed_data.read().val
+        snp_data_all[np.isnan(snp_data_all)] = -1
+        bed_data2 = bed_data.iid
+        pheno_data2 = pheno.iid
+
+        for i in range(int(model_nr)):
+            add_log('Model Iteration: ' + str(i + 1))
+            # Split data into training and testing sets
+            X_train, X_test, y_train, y_test = train_test_split(snp_data, pheno.read().val,
+                                                                test_size=test_size)
+
+            # scaler = StandardScaler()
+            # X_train = scaler.fit_transform(X_train)
+            ridge_model = Ridge(alpha=alpha)
+
+            ridge_model.fit(X_train, y_train.ravel())
+            predicted_values = ridge_model.predict(snp_data_all)
+
+            df_gp = pd.DataFrame(bed_data2, columns=['ID1', 'BED_ID2'])
+            df_gp['Predicted_Value'] = predicted_values
+
+            df_pheno = pd.DataFrame(pheno_data2, columns=['ID1', 'Pheno_ID2'])
+            df_pheno['Pheno_Value'] = pheno.read().val
+            merged_df = df_gp.merge(df_pheno, on='ID1', how='outer')
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].astype(float)
+            merged_df['Predicted_Value'] = merged_df['Predicted_Value'].round(5)
+            dataframes.append(merged_df)
+
+        df_all = self.helper.merge_gp_models(dataframes)
+
         df_all.to_csv(genomic_predict_name, index=False)
         t2 = time.time()
         t3 = round((t2 - t1) / 60, 2)
@@ -207,7 +258,8 @@ class GenomicPrediction:
         t2 = time.time()
         t3 = round((t2 - t1) / 60, 2)
         add_log('Final run time (minutes): ' + str(t3))
-        return df_all, valdiation_df
+        return df_all
+        #return df_all, valdiation_df
 
     def find_best_parameters(self, snps_for_training, pheno_for_training, param_grid):
         from sklearn.model_selection import GridSearchCV, KFold, train_test_split
@@ -351,7 +403,7 @@ class GenomicPrediction:
 
     def plot_gp(self, df, gp_plot_name, algorithm):
         """Bland-Altman Plot for the real and predicted phenotype values."""
-
+        #print (df)
         # Calculate mean and difference (redundant here, but for demonstration)
         df['Mean'] = (df['Pheno_Value'] + df['Mean_Predicted_Value']) / 2
         df['Difference'] = df['Pheno_Value'] - df['Mean_Predicted_Value']

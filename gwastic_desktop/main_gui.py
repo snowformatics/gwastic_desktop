@@ -10,14 +10,16 @@ from gwastic_desktop.plot_pipeline import Plot
 from pysnptools.snpreader import Bed, Pheno
 import pysnptools.util as pstutil
 
-# adjust column size
-# settings dpi, limit snp, reports
-# manual cov
-
+# only for testing
 import psutil
 import time
 import tracemalloc
 import gc
+
+
+# adjust column size
+#poetry build
+#poetry publish
 
 
 def start_measurements():
@@ -81,12 +83,6 @@ def end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percen
     print(f"CPU Time (Total): {cpu_time_total:.2f} seconds")
     print(f"CPU Percent Usage Difference: {cpu_percent_difference:.2f}%")
 
-
-
-
-#poetry build
-#poetry publish
-# pipline nr 214
 
 def main():
     app = GWASApp()
@@ -174,7 +170,7 @@ class GWASApp:
                     dpg.add_spacer(height=5)
                     cov_file = dpg.add_button(label="Choose a covariate file (optional)", callback=lambda: dpg.show_item("file_dialog_cov"), indent=50, tag='tooltip_cov')
                     dpg.add_spacer(height=20)
-                    self.gwas_combo = dpg.add_combo(label="Select algorithm", items=["FaST-LMM", "Linear regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", tag= 'tooltip_algorithm')
+                    self.gwas_combo = dpg.add_combo(label="Select algorithm", items=["FaST-LMM", "Linear regression", "Ridge Regression", "Random Forest (AI)", "XGBoost (AI)"], indent=50, width=200, default_value="FaST-LMM", tag= 'tooltip_algorithm')
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run GWAS", callback=self.run_gwas, user_data=[geno, pheno], indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
@@ -185,7 +181,7 @@ class GWASApp:
                     geno = dpg.add_button(label="Choose a BED file", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50)
                     pheno = dpg.add_button(label="Choose a phenotype file", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", 'GP_LMM'], indent=50, width=200, default_value="XGBoost (AI)")
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", "Ridge Regression", 'GP_LMM'], indent=50, width=200, default_value="XGBoost (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
@@ -460,6 +456,11 @@ class GWASApp:
                     gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
                                                              self.gwas_result_name, chrom_mapping, self.add_log,
                                                              model_nr, max_dep_set, nr_jobs)
+                elif self.algorithm == 'Ridge Regression':
+                    gwas_df, df_plot = self.gwas.run_gwas_ridge(bed_fixed, pheno, bed_path, train_size_set,1.0,
+                                                             self.gwas_result_name, chrom_mapping, self.add_log,
+                                                             model_nr)
+
             else:
                 self.add_log(check_input_data[1], error=True)
 
@@ -486,7 +487,7 @@ class GWASApp:
                 self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
         except TypeError:
-            self.add_log('Please select a phenotype and genotype file. ', error=True)
+           self.add_log('Please select a phenotype and genotype file. ', error=True)
 
     def run_genomic_prediction(self, sender, data, user_data):
         """Starts the GP pipeline."""
@@ -530,8 +531,12 @@ class GWASApp:
                     gp_df = self.genomic_predict_class.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, nr_jobs)
                 elif self.algorithm == 'XGBoost (AI)':
-                    gp_df, df_val = self.genomic_predict_class.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
+                    gp_df = self.genomic_predict_class.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set, nr_jobs)
+                elif self.algorithm == 'Ridge Regression':
+                    gp_df = self.genomic_predict_class.run_gp_ridge(bed_fixed, pheno, bed_path, test_size, 1.0,
+                                                                self.gwas_result_name, chrom_mapping, self.add_log,
+                                                                model_nr)
                 else:
                     self.genomic_predict_class.model_validation(bed_fixed, pheno, bed_path, test_size, estimators,
                                                                 self.genomic_predict_name,  chrom_mapping, self.add_log,
@@ -544,11 +549,11 @@ class GWASApp:
                 self.add_log('Genomic Prediction Plotting...')
                 self.genomic_predict_class.plot_gp(gp_df, self.gp_plot_name, self.algorithm)
                 self.genomic_predict_class.plot_gp_scatter(gp_df, self.gp_plot_name_scatter, self.algorithm)
-                try:
-                    if df_val is not None:
-                        self.genomic_predict_class.plot_gp_scatter(df_val, 'validation_' + self.gp_plot_name_scatter, self.algorithm)
-                except UnboundLocalError:
-                    pass
+                # try:
+                #     if df_val is not None:
+                #         self.genomic_predict_class.plot_gp_scatter(df_val, 'validation_' + self.gp_plot_name_scatter, self.algorithm)
+                # except UnboundLocalError:
+                #     pass
                 self.add_log('Done...')
                 self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
                 # Delete all files paths
