@@ -3,7 +3,6 @@ dpg.create_context()
 #import dearpygui_ext.themes as dpg_ext
 from dearpygui_ext import logger
 import os
-import webbrowser
 from gwastic_desktop.gwas_pipeline import GWAS
 from gwastic_desktop.gp_pipeline import GenomicPrediction
 from gwastic_desktop.helpers import HELPERS
@@ -11,10 +10,9 @@ from gwastic_desktop.plot_pipeline import Plot
 from pysnptools.snpreader import Bed, Pheno
 import pysnptools.util as pstutil
 
-# adjust coloumn size
-# reduce dpi
-# add p value threshold
-# after run delete path files
+# adjust column size
+# settings dpi, limit snp, reports
+# manual cov
 
 import psutil
 import time
@@ -119,6 +117,7 @@ class GWASApp:
         self.results_directory = None
         self.bed_app_data = None
         self.pheno_app_data = None
+        self.cov_app_data = None
         self.default_path = 'Z://gwas_test_data/gwastic_paper/small_set'
         self.gwas_result_name = "gwas_results.csv"
         self.gwas_result_name_top = "gwas_results_top10000.csv"
@@ -286,6 +285,7 @@ class GWASApp:
         """Get vcf file path selected from the user."""
         self.vcf_app_data = app_data
         vcf_path, current_path = self.get_selection_path(self.vcf_app_data)
+        dpg.configure_item("file_dialog_variants", default_path=current_path)
         self.add_log('VCF Selected: ' + vcf_path)
 
     def callback_bed(self, sender, app_data):
@@ -293,6 +293,8 @@ class GWASApp:
         self.bed_app_data = app_data
         try:
             bed_path, current_path = self.get_selection_path(self.bed_app_data)
+            dpg.configure_item("file_dialog_cov", default_path=current_path)
+            dpg.configure_item("file_dialog_pheno", default_path=current_path)
             self.add_log('BED file Selected: ' + bed_path)
         except TypeError:
             self.add_log('Invalid BED file Selected', error=True)
@@ -301,13 +303,18 @@ class GWASApp:
         """Get variant file path selected from the user."""
         self.variants_app_data = app_data
         variants_path, current_path = self.get_selection_path(self.variants_app_data)
+        dpg.configure_item("file_dialog_vcf", default_path=current_path)
+
         self.add_log('Variant File Selected: ' + variants_path)
 
     def callback_pheno(self, sender, app_data):
         """Get phenotype file path selected from the user."""
         self.pheno_app_data = app_data
+
         try:
             pheno_path, current_path = self.get_selection_path(self.pheno_app_data)
+            dpg.configure_item("file_dialog_cov", default_path=current_path)
+            dpg.configure_item("file_dialog_bed", default_path=current_path)
             self.add_log('Pheno File Selected: ' + pheno_path)
         except TypeError:
             self.add_log('Wrong Pheno File Selected: ' + pheno_path, error=True)
@@ -317,6 +324,8 @@ class GWASApp:
         self.cov_app_data = app_data
         try:
             cov_path, current_path = self.get_selection_path(self.cov_app_data)
+            dpg.configure_item("file_dialog_bed", default_path=current_path)
+            dpg.configure_item("file_dialog_pheno", default_path=current_path)
             self.add_log('Covariants File Selected: ' + cov_path)
         except TypeError:
             self.add_log('Wrong Pheno File Selected: ' + cov_path, error=True)
@@ -329,6 +338,7 @@ class GWASApp:
         try:
             for key, value in k.items():
                 file_path = value
+
             return file_path, current_path
         except UnboundLocalError:
             pass
@@ -369,7 +379,7 @@ class GWASApp:
         file_names = [self.gwas_result_name, self.gwas_result_name_top, self.genomic_predict_name, self.gp_plot_name,
                       self.manhatten_plot_name, self.qq_plot_name, self.gp_plot_name_scatter,
                       self.manhatten_plot_name.replace('manhatten_plot', 'manhatten_plot_high'),
-                     self.qq_plot_name.replace('qq_plot', 'qq_plot_high'),
+                      self.qq_plot_name.replace('qq_plot', 'qq_plot_high'),
                       self.gp_plot_name_scatter.replace('GP_scatter_plot', 'GP_scatter_plot_high'),
                       self.gp_plot_name.replace('Bland_Altman_plot', 'Bland_Altman_plot_high'),
                       self.genomic_predict_name.replace('.csv', '_valdation.csv'),
@@ -475,6 +485,10 @@ class GWASApp:
 
                 self.add_log('Done...')
                 self.show_results_window(gwas_df, self.algorithm, genomic_predict=False)
+                # Delete all files paths
+                self.bed_app_data = None
+                self.pheno_app_data = None
+                self.cov_app_data = None
 
             else:
                 self.add_log('Error, GWAS Analysis could not be started.', error=True)
@@ -542,6 +556,10 @@ class GWASApp:
                     pass
                 self.add_log('Done...')
                 self.show_results_window(gp_df, self.algorithm, genomic_predict=True)
+                # Delete all files paths
+                self.bed_app_data = None
+                self.pheno_app_data = None
+
             else:
                 self.add_log('Error, GWAS Analysis could not be started.', error=True)
 
