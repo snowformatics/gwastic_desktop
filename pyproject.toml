@@ -6,7 +6,7 @@ authors = ["Stefanie Lueck <lueck@ipk-gatersleben.de>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.9"
+python = "^3.9"
 dearpygui = "*"
 dearpygui-ext = "*"
 pandas = "*"
