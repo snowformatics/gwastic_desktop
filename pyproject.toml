@@ -1,21 +1,21 @@
 [tool.poetry]
 name = "gwastic-desktop"
-version = "0.5.4"
+version = "0.5.5"
 description = "GWAS software that combines traditional statistical methods with the power of Artificial Intelligence"
 authors = ["Stefanie Lueck <lueck@ipk-gatersleben.de>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-dearpygui = "1.10.0"
-dearpygui-ext = "0.9.5"
-pandas = "2.1.1"
-fastlmm = "0.6.7"
-geneview = "0.2.1"
-matplotlib = "3.8.0"
-xgboost = "2.0.0"
-scikit-learn="1.4.0"
-scipy="1.11.3"
+python = "3.9"
+dearpygui = "."
+dearpygui-ext = "."
+pandas = "."
+fastlmm = "."
+geneview = "."
+matplotlib = "."
+xgboost = "."
+scikit-learn="."
+scipy="."
 
 [build-system]
 requires = ["poetry-core"]
