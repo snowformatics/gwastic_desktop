@@ -7,15 +7,15 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "3.9"
-dearpygui = "."
-dearpygui-ext = "."
-pandas = "."
-fastlmm = "."
-geneview = "."
-matplotlib = "."
-xgboost = "."
-scikit-learn="."
-scipy="."
+dearpygui = "*"
+dearpygui-ext = "*"
+pandas = "*"
+fastlmm = "*"
+geneview = "*"
+matplotlib = "*"
+xgboost = "*"
+scikit-learn="*"
+scipy="*"
 
 [build-system]
 requires = ["poetry-core"]
