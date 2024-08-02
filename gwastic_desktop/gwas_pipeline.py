@@ -282,7 +282,9 @@ class GWAS:
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
 
-            ridge_model = ridge_regression(alpha=alpha)
+            ridge_model = Ridge(alpha=alpha)
+
+
             ridge_model.fit(X_train, y_train.ravel())
 
             data = []
