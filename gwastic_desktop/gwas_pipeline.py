@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestRegressor
 import geneview as gv
 from pysnptools.util import log_in_place
 import matplotlib.pyplot as plt
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, ridge_regression
 
 
 
@@ -163,7 +163,7 @@ class GWAS:
         return df_lmm_gwas, df_plot
 
     def run_gwas_xg(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
-                    model_nr, max_dep_set, nr_jobs):
+                    model_nr, max_dep_set, nr_jobs, method):
         """GWAS using Random Forest with cross validation."""
 
         t1 = time.time()
@@ -198,7 +198,7 @@ class GWAS:
             df['Chr'] = df['Chr'].replace(chrom_mapping)
             dataframes.append(df)
 
-        df_all_xg = self.helper.merge_models(dataframes)
+        df_all_xg = self.helper.merge_models(dataframes, method)
         df_all_xg = df_all_xg.sort_values(by='PValue', ascending=False)
         # we create one df for the plotting with ints as chr
         df_plot = df_all_xg.copy(deep=True)
@@ -214,7 +214,7 @@ class GWAS:
         return df_all_xg, df_plot
 
     def run_gwas_rf(self, bed_fixed, pheno, bed_file, test_size, estimators, gwas_result_name, chrom_mapping, add_log,
-                    model_nr, nr_jobs):
+                    model_nr, nr_jobs, method):
         """GWAS using Random Forest with cross validation."""
         t1 = time.time()
         dataframes = []
@@ -245,7 +245,7 @@ class GWAS:
             df['Chr'] = df['Chr'].replace(chrom_mapping)
             dataframes.append(df)
 
-        df_all_rf = self.helper.merge_models(dataframes)
+        df_all_rf = self.helper.merge_models(dataframes, method)
         df_all_rf = df_all_rf.sort_values(by='PValue', ascending=False)
         # we create one df for the plotting with ints as chr
         df_plot = df_all_rf.copy(deep=True)
@@ -264,7 +264,7 @@ class GWAS:
         return df_all_rf, df_plot
 
     def run_gwas_ridge(self, bed_fixed, pheno, bed_file, test_size, alpha, gwas_result_name, chrom_mapping, add_log,
-                       model_nr):
+                       model_nr, method):
         """GWAS using Ridge Regression with cross validation."""
         t1 = time.time()
         dataframes = []
@@ -282,7 +282,7 @@ class GWAS:
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
 
-            ridge_model = Ridge(alpha=alpha)
+            ridge_model = ridge_regression(alpha=alpha)
             ridge_model.fit(X_train, y_train.ravel())
 
             data = []
@@ -297,7 +297,7 @@ class GWAS:
             df['Chr'] = df['Chr'].replace(chrom_mapping)
             dataframes.append(df)
 
-        df_all_ridge = self.helper.merge_models(dataframes)
+        df_all_ridge = self.helper.merge_models(dataframes, method)
         df_all_ridge = df_all_ridge.sort_values(by='PValue', ascending=False)
         # we create one df for the plotting with ints as chr
         df_plot = df_all_ridge.copy(deep=True)

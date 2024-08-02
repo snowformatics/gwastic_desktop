@@ -16,6 +16,8 @@ import time
 import tracemalloc
 import gc
 
+# median (default), mean, sum for gwas ml
+# qt simulation
 
 # adjust column size
 #poetry build
@@ -221,6 +223,8 @@ class GWASApp:
                     dpg.add_spacer(height=7)
                     self.model_nr = dpg.add_input_int(label="Nr. of models", width=150, default_value=1, step=1, indent=50, min_value=1, max_value=50, min_clamped=True, max_clamped=True, tag='tooltip_model')
                     dpg.add_spacer(height=7)
+                    self.aggregation_method = dpg.add_combo(("sum", "median", "mean"), label="Aggregation Method", indent=50, width=150, default_value='sum', tag='tooltip_aggr')
+                    dpg.add_spacer(height=7)
                     self.estim_set = dpg.add_input_int(label="Number of trees", width=150, default_value=200, step=10, indent=50, min_value=1, min_clamped=True, tag='tooltip_trees')
                     dpg.add_spacer(height=7)
                     self.max_dep_set = dpg.add_input_int(label="Max depth", width=150, default_value=3, step=10, indent=50, min_value=0, max_value=100, min_clamped=True, max_clamped=True, tag='tooltip_depth')
@@ -258,6 +262,10 @@ class GWASApp:
                 dpg.add_text("Sets the maximum number of SNPs to be used for the Manhattan and QQ plots.\nRecommended for large SNP datasets to improve plotting performance,\nas handling a high number of SNPs can significantly slow down the plotting process.\nLeave the field empty to use all SNPs (default).", color=[79, 128, 226])
             with dpg.tooltip("tooltip_stats"):
                 dpg.add_text("Enable this setting to access more advanced plotting features for both phenotypic and genotypic statistics.\nThis is particularly useful for creating high-quality graphics suitable for publication.\nPlease note that enabling these options may significantly increase processing time, especially with large datasets.\nBy default, this feature is disabled to optimize performance.", color=[79, 128, 226])
+            with dpg.tooltip("tooltip_aggr"):
+                dpg.add_text("Choose an aggregation method to combine SNP effects from multiple models (GWAS only).\nSum: Adds up the effect from all models.\nMedian: Use the middle value of the effects.\nMean: Calculates the average of the effects. ", color=[79, 128, 226])
+
+
 
             dpg.bind_font(self.font)
             dpg.set_global_font_scale(0.6)
@@ -412,6 +420,7 @@ class GWASApp:
         gb_goal = int(dpg.get_value(self.gb_goal))
         max_dep_set = dpg.get_value(self.max_dep_set)
         self.algorithm = dpg.get_value(self.gwas_combo)
+        aggregation_method = str(dpg.get_value(self.aggregation_method))
 
         try:
             initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process = start_measurements()
@@ -451,15 +460,15 @@ class GWASApp:
                 elif  self.algorithm == 'Random Forest (AI)':
                     gwas_df, df_plot = self.gwas.run_gwas_rf(bed_fixed, pheno, bed_path, train_size_set,
                                                             estimators, self.gwas_result_name, chrom_mapping,
-                                                            self.add_log, model_nr, nr_jobs)
+                                                            self.add_log, model_nr, nr_jobs, aggregation_method)
                 elif self.algorithm == 'XGBoost (AI)':
                     gwas_df, df_plot = self.gwas.run_gwas_xg(bed_fixed, pheno, bed_path, train_size_set, estimators,
                                                              self.gwas_result_name, chrom_mapping, self.add_log,
-                                                             model_nr, max_dep_set, nr_jobs)
+                                                             model_nr, max_dep_set, nr_jobs, aggregation_method)
                 elif self.algorithm == 'Ridge Regression':
                     gwas_df, df_plot = self.gwas.run_gwas_ridge(bed_fixed, pheno, bed_path, train_size_set,1.0,
                                                              self.gwas_result_name, chrom_mapping, self.add_log,
-                                                             model_nr)
+                                                             model_nr, aggregation_method)
 
             else:
                 self.add_log(check_input_data[1], error=True)

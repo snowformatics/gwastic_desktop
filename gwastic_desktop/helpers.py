@@ -148,7 +148,7 @@ class HELPERS:
         df_result['Mean_Predicted_Value'] = df_result['Mean_Predicted_Value'].round(decimals=3)
         return df_result
 
-    def merge_models(self, dataframes):
+    def merge_models(self, dataframes, method):
         """Merge all GWAS ML models."""
 
         # """Combine RF or XG models and calculate the sum of the SNP effect."""
@@ -170,9 +170,9 @@ class HELPERS:
         df_combined = df_combined[df_combined['PValue'] > 0]
         #df_combined.to_csv('com.txt')
         # Grouping by 'SNP' and calculating the sum and SD of PValues
-        df_grouped = df_combined.groupby(['SNP', 'Chr', 'ChrPos'])['PValue'].agg(['sum', 'std']).reset_index()
+        df_grouped = df_combined.groupby(['SNP', 'Chr', 'ChrPos'])['PValue'].agg([method, 'std']).reset_index()
         #df_grouped.to_csv('group.txt')
-        df_grouped = df_grouped.rename(columns={'sum': 'PValue_x', 'std': 'PValue_sd'})
+        df_grouped = df_grouped.rename(columns={method: 'PValue_x', 'std': 'PValue_sd'})
         #df_result = pd.merge(df_grouped, df_combined, on='SNP', how='left')
         #df_result.to_csv('res1.txt')
         #df_result = df_result.drop(['PValue_x'], axis=1).drop_duplicates()
