@@ -210,20 +210,23 @@ class Plot:
             pdf.savefig()
             plt.close()
 
-            # Create the hierarchically-clustered heatmap on a new page
-            kinship_df = pd.DataFrame(kernel2, index=sample_names, columns=sample_names)
-            g = sns.clustermap(kinship_df, cmap='vlag', figsize=(15, 15), xticklabels=1, yticklabels=1)
+            try:
+                kinship_df = pd.DataFrame(kernel2, index=sample_names, columns=sample_names)
+                g = sns.clustermap(kinship_df, cmap='vlag', figsize=(15, 15), xticklabels=1, yticklabels=1,
+                                   method='single', metric='euclidean')
 
-            # Adjust the title positioning
-            plt.subplots_adjust(top=0.95)
-            g.fig.suptitle('Hierarchically-Clustered Kinship Matrix', fontsize=16)
+                # Adjust the title positioning
+                plt.subplots_adjust(top=0.95)
+                g.fig.suptitle('Hierarchically-Clustered Kinship Matrix', fontsize=16)
 
-            # Adjust the font size for labels
-            plt.setp(g.ax_heatmap.get_xticklabels(), fontsize=4, rotation=90)
-            plt.setp(g.ax_heatmap.get_yticklabels(), fontsize=4, rotation=0)
-            x0, _y0, _w, _h = g.cbar_pos
-            g.ax_cbar.set_position([x0, 0.9, g.ax_row_dendrogram.get_position().width - 0.1, 0.05])
+                # Adjust the font size for labels
+                plt.setp(g.ax_heatmap.get_xticklabels(), fontsize=4, rotation=90)
+                plt.setp(g.ax_heatmap.get_yticklabels(), fontsize=4, rotation=0)
+                x0, _y0, _w, _h = g.cbar_pos
+                g.ax_cbar.set_position([x0, 0.9, g.ax_row_dendrogram.get_position().width - 0.1, 0.05])
+                # Save the heatmap to the PDF
+                pdf.savefig(g.fig)
+                plt.close()
+            except RecursionError:
+                pass
 
-            # Save the heatmap to the PDF
-            pdf.savefig(g.fig)
-            plt.close()

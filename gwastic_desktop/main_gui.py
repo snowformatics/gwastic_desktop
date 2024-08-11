@@ -11,10 +11,10 @@ from pysnptools.snpreader import Bed, Pheno
 import pysnptools.util as pstutil
 
 # only for testing
-import psutil
-import time
-import tracemalloc
-import gc
+# import psutil
+# import time
+# import tracemalloc
+# import gc
 
 # median (default), mean, sum for gwas ml
 # qt simulation
@@ -24,67 +24,67 @@ import gc
 #poetry publish
 
 
-def start_measurements():
-    # Start tracing memory allocations
-    tracemalloc.start()
-
-    # Record initial memory usage
-    process = psutil.Process()
-    initial_memory_usage = process.memory_info().rss
-
-    # Record initial CPU usage
-    initial_cpu_times = process.cpu_times()
-    initial_cpu_percent = psutil.cpu_percent(interval=None)
-
-    # Start time
-    start_time = time.time()
-
-    return initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process
-
-
-def end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process):
-    # End time
-    end_time = time.time()
-
-    # Force garbage collection to clean up memory
-    gc.collect()
-
-    # Record final memory usage
-    final_memory_usage = process.memory_info().rss
-
-    # Record final CPU usage
-    final_cpu_times = process.cpu_times()
-    final_cpu_percent = psutil.cpu_percent(interval=None)
-
-    # Take a snapshot of current memory usage
-
-
-    # Stop tracing memory allocations
-    tracemalloc.stop()
-
-    # Calculate and print performance metrics
-    execution_time = end_time - start_time
-    initial_memory_mb = initial_memory_usage / 1024 / 1024
-    final_memory_mb = final_memory_usage / 1024 / 1024
-    memory_difference_mb = (final_memory_usage - initial_memory_usage) / 1024 / 1024
-
-    # Calculate CPU time usage
-    cpu_time_user = final_cpu_times.user - initial_cpu_times.user
-    cpu_time_system = final_cpu_times.system - initial_cpu_times.system
-    cpu_time_total = cpu_time_user + cpu_time_system
-
-    # Calculate CPU percent usage difference
-    cpu_percent_difference = final_cpu_percent - initial_cpu_percent
-
-    print(f"Execution time: {execution_time:.2f} seconds")
-    print(f"Initial Memory Usage: {initial_memory_mb:.2f} MB")
-    print(f"Final Memory Usage: {final_memory_mb:.2f} MB")
-    print(f"Memory Difference: {memory_difference_mb:.2f} MB")
-    print(f"CPU Time (User): {cpu_time_user:.2f} seconds")
-    print(f"CPU Time (System): {cpu_time_system:.2f} seconds")
-    print(f"CPU Time (Total): {cpu_time_total:.2f} seconds")
-    print(f"CPU Percent Usage Difference: {cpu_percent_difference:.2f}%")
-
+# def start_measurements():
+#     # Start tracing memory allocations
+#     tracemalloc.start()
+#
+#     # Record initial memory usage
+#     process = psutil.Process()
+#     initial_memory_usage = process.memory_info().rss
+#
+#     # Record initial CPU usage
+#     initial_cpu_times = process.cpu_times()
+#     initial_cpu_percent = psutil.cpu_percent(interval=None)
+#
+#     # Start time
+#     start_time = time.time()
+#
+#     return initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process
+#
+#
+# def end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process):
+#     # End time
+#     end_time = time.time()
+#
+#     # Force garbage collection to clean up memory
+#     gc.collect()
+#
+#     # Record final memory usage
+#     final_memory_usage = process.memory_info().rss
+#
+#     # Record final CPU usage
+#     final_cpu_times = process.cpu_times()
+#     final_cpu_percent = psutil.cpu_percent(interval=None)
+#
+#     # Take a snapshot of current memory usage
+#
+#
+#     # Stop tracing memory allocations
+#     tracemalloc.stop()
+#
+#     # Calculate and print performance metrics
+#     execution_time = end_time - start_time
+#     initial_memory_mb = initial_memory_usage / 1024 / 1024
+#     final_memory_mb = final_memory_usage / 1024 / 1024
+#     memory_difference_mb = (final_memory_usage - initial_memory_usage) / 1024 / 1024
+#
+#     # Calculate CPU time usage
+#     cpu_time_user = final_cpu_times.user - initial_cpu_times.user
+#     cpu_time_system = final_cpu_times.system - initial_cpu_times.system
+#     cpu_time_total = cpu_time_user + cpu_time_system
+#
+#     # Calculate CPU percent usage difference
+#     cpu_percent_difference = final_cpu_percent - initial_cpu_percent
+#
+#     print(f"Execution time: {execution_time:.2f} seconds")
+#     print(f"Initial Memory Usage: {initial_memory_mb:.2f} MB")
+#     print(f"Final Memory Usage: {final_memory_mb:.2f} MB")
+#     print(f"Memory Difference: {memory_difference_mb:.2f} MB")
+#     print(f"CPU Time (User): {cpu_time_user:.2f} seconds")
+#     print(f"CPU Time (System): {cpu_time_system:.2f} seconds")
+#     print(f"CPU Time (Total): {cpu_time_total:.2f} seconds")
+#     print(f"CPU Percent Usage Difference: {cpu_percent_difference:.2f}%")
+#
 
 def main():
     app = GWASApp()
@@ -423,7 +423,7 @@ class GWASApp:
         aggregation_method = str(dpg.get_value(self.aggregation_method))
 
         try:
-            initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process = start_measurements()
+            #initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process = start_measurements()
             self.add_log('Reading files...')
             bed_path, current_path1 = self.get_selection_path(self.bed_app_data)
             pheno_path, current_path2 = self.get_selection_path(self.pheno_app_data)
@@ -476,12 +476,12 @@ class GWASApp:
             if gwas_df is not None:
                 self.add_log('GWAS Analysis done.')
                 self.add_log('GWAS Results Plotting...')
-                print (dpg.get_value(self.plot_stats))
+                #print (dpg.get_value(self.plot_stats))
                 if dpg.get_value(self.plot_stats):
                     self.plot_class.plot_pheno_statistics(pheno_path, self.pheno_stats_name)
                     self.plot_class.plot_geno_statistics(bed_fixed, pheno, self.geno_stats_name)
                 self.gwas.plot_gwas(df_plot, snp_limit, self.algorithm, self.manhatten_plot_name, self.qq_plot_name, chrom_mapping)
-                end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process)
+                #end_measurements(initial_memory_usage, initial_cpu_times, initial_cpu_percent, start_time, process)
 
                 self.add_log('Done...')
                 #print (dpg.get_value(self.skip_result_window))
