@@ -544,7 +544,7 @@ class GWASApp:
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set, nr_jobs)
                 elif self.algorithm == 'Ridge Regression':
                     gp_df = self.genomic_predict_class.run_gp_ridge(bed_fixed, pheno, bed_path, test_size, 1.0,
-                                                                self.gwas_result_name, chrom_mapping, self.add_log,
+                                                                self.genomic_predict_name, chrom_mapping, self.add_log,
                                                                 model_nr)
                 else:
                     self.genomic_predict_class.model_validation(bed_fixed, pheno, bed_path, test_size, estimators,
