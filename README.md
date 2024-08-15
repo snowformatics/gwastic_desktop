@@ -104,8 +104,13 @@ Open the downloaded .pkg file to launch the installer and follow the on-screen i
 
 Open Terminal. You can do this by pressing Cmd + Space to open Spotlight Search, typing "Terminal", and pressing Enter.
 
+ Create a new environment by typing:
 ```
 conda create --name gwastic_env python=3.9
+```
+
+ Activate the environment:
+```
 conda activate gwastic_env
 ```
 
@@ -114,9 +119,9 @@ conda activate gwastic_env
 
 `pip install gwastic_desktop`
 
-For MacOS it's important to update matplotlib via conda:
+For MacOS it's important to install the xgboost library via conda:
 
-`conda install matplotlib`
+`conda install -c conda-forge py-xgboost -y`
 
 
 > [!IMPORTANT]
