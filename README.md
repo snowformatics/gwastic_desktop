@@ -95,6 +95,11 @@ Type `gwastic` in the command line to start the software.
 
 ### Mac OS:
 
+> [!IMPORTANT]
+We've received feedback from Mac users experiencing installation issues, and we've identified a problem specific to macOS involving a missing library necessary for parallel processing. We strongly recommend installing this dependency via Homebrew before proceeding with the installation of the GWASTic software:
+
+`brew install libomp`
+
 > [!TIP]
 > We recommend to install Anaconda and  for managing dependencies, it is often recommended to create a new environment for your project:
 
@@ -118,11 +123,6 @@ conda activate gwastic_env
 > Install GWAStic via pip:
 
 `pip install gwastic_desktop`
-
-For MacOS it's important to install the xgboost library via conda:
-
-`conda install -c conda-forge py-xgboost -y`
-
 
 > [!IMPORTANT]
 > Run GWAStic:
