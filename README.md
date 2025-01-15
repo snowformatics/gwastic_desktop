@@ -4,6 +4,10 @@ GWAStic is a software for Genome-Wide Association Study (GWAS) that combines tra
 (AI) for comprehensive genetic analysis. It supports genomic prediction and offers diverse statistical outputs for phenotypic and genotypic data, 
 making it an essential tool for researchers aiming to uncover complex genetic interactions and predict phenotypic outcomes efficiently.
 
+> [!IMPORTANT]
+> Please cite:
+> Stefanie Lück, Uwe Scholz, Dimitar Douchkov, Introducing GWAStic: a user-friendly, cross-platform solution for genome-wide association studies and genomic prediction, Bioinformatics Advances, Volume 4, Issue 1, 2024, vbae177, https://doi.org/10.1093/bioadv/vbae177
+
 [Installation](#1-installation)
 
 ![ALT TEXT](https://github.com/snowformatics/gwastic_desktop/blob/e0743e1f67e5300d083a96441bbf505b5d7a7696/gwastic_desktop/images/gui.PNG)
