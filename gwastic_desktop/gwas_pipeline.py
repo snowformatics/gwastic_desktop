@@ -109,8 +109,10 @@ class GWAS:
         pheno_ids = []
         columns = None
         for line2 in pheno_data:
+
             line2 = line2.strip()
             line2 = line2.split(' ')
+            #print(line2)
             columns = len(line2)
             if len(line2) > 1:
                 pheno_ids.append(line2[0])
@@ -353,7 +355,7 @@ class GWAS:
             df['Chr'] = df['Chr'].astype(float).replace(flipped_dict)
 
             _ = gv.manhattanplot(data=df,chrom='Chr', pos="ChrPos", pv="PValue", snp="SNP", marker=".",color=['#4297d8', '#eec03c','#423496','#495227','#d50b6f','#e76519','#d580b7','#84d3ac'],
-                              sign_marker_color="r", title="Manhatten Plot (" + algorithm + ')',
+                              sign_marker_color="r", title="Manhattan Plot (" + algorithm + ')',
                               xlabel="Chromosome", ylabel=r"$-log_{10}{(P)}$", sign_line_cols=["#D62728", "#2CA02C"],
                               hline_kws={"linestyle": "--", "lw": 1.3},#, sign_marker_p=1e-9, is_annotate_topsnp=True,
                                  text_kws={"fontsize": 12, "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},

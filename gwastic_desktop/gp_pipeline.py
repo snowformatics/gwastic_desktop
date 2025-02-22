@@ -323,7 +323,7 @@ class GenomicPrediction:
         all_models_predictions = []
 
         # Perform 10 iterations of training/testing excluding the validation set
-        for i in range(10):
+        for i in range(50):
         # kf = KFold(n_splits=2, shuffle=True)
         # for train_index, test_index in kf.split(X_train_full):
         #     X_train, X_test = X_train_full[train_index], X_train_full[test_index]

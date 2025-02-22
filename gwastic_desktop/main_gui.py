@@ -183,7 +183,7 @@ class GWASApp:
                     geno = dpg.add_button(label="Choose a BED file", callback=lambda: dpg.show_item("file_dialog_bed"), indent=50)
                     pheno = dpg.add_button(label="Choose a phenotype file", callback=lambda: dpg.show_item("file_dialog_pheno"), indent=50)
                     dpg.add_spacer(height=20)
-                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", "Ridge Regression", 'GP_LMM'], indent=50, width=200, default_value="XGBoost (AI)")
+                    self.gwas_gp = dpg.add_combo(label="Select Algorithm", items=["XGBoost (AI)", "Random Forest (AI)", "Ridge Regression", 'GP_LMM', 'val'], indent=50, width=200, default_value="XGBoost (AI)")
                     dpg.add_spacer(height=20)
                     gwas_btn = dpg.add_button(label="Run Genomic Prediction", callback=self.run_genomic_prediction, user_data=[geno, pheno],indent=50)
                     dpg.bind_item_theme(gwas_btn, self.our_theme)
@@ -618,7 +618,7 @@ class GWASApp:
                 with dpg.texture_registry(show=False):
                     dpg.add_static_texture(width=width, height=height, default_value=data, tag="manhatten_tag")
                 with dpg.tab_bar(label='tabbar'):
-                    with dpg.tab(label="Manhatten Plot"):
+                    with dpg.tab(label="Manhattan Plot"):
                         if algorithm == "FaST-LMM" or algorithm == "Linear regression":
                             dpg.add_image(texture_tag="manhatten_tag", tag="manhatten_image", width=950, height=400)
                         else:
