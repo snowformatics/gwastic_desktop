@@ -540,6 +540,7 @@ class GWASApp:
                     gp_df = self.genomic_predict_class.run_gp_rf(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, nr_jobs)
                 elif self.algorithm == 'XGBoost (AI)':
+
                     gp_df = self.genomic_predict_class.run_gp_xg(bed_fixed, pheno, bed_path, test_size, estimators,
                                                 self.genomic_predict_name, chrom_mapping, self.add_log,model_nr, max_dep_set, nr_jobs)
                 elif self.algorithm == 'Ridge Regression':

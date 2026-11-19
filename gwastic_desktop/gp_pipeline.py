@@ -171,7 +171,7 @@ class GenomicPrediction:
         # df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
         # df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
         # print (len(pheno.read().val))
-        validation = False
+        validation = True
         if validation:
 
             snp_data = bed_fixed.read().val
@@ -249,8 +249,27 @@ class GenomicPrediction:
             unique_ids = np.unique(ids_for_validation1.flatten())
             # Filter the DataFrame based on these IDs
             valdiation_df = df_all[df_all['ID1'].isin(unique_ids)]
-
             valdiation_df.to_csv(genomic_predict_name.replace('.csv', '_valdation.csv'), index=False)
+            plt.figure(figsize=(18, 6))
+
+            # Create a subplot for each set
+            for i, set_type in enumerate(['Validation'], 1):
+                plt.subplot(1, 3, i)
+
+                # Plotting the correlation
+                correlation = valdiation_df['Pheno_Value'].corr(valdiation_df['Mean_Predicted_Value'])
+                sns.scatterplot(x='Pheno_Value', y='Mean_Predicted_Value', data=valdiation_df)
+                sns.regplot(x='Pheno_Value', y='Mean_Predicted_Value', data=valdiation_df, scatter=False, color='red')
+                # Title with correlation coefficient
+                plt.title(f'{set_type} Set (corr={correlation:.2f})')
+                plt.xlabel('Phenotype')
+                plt.ylabel('Mean_Prediction')
+
+            # Adjust layout
+            plt.tight_layout()
+
+            # Save the plot to a file
+            plt.savefig('validation_set_corr.png', dpi=300)  # Save as high-resolution PNG file
             # print(filtered_df)
         else:
             valdiation_df = None
@@ -311,7 +330,7 @@ class GenomicPrediction:
 
         # Create validation set (10% of the data)
         X_train_full, X_val, y_train_full, y_val, train_full_ids, val_ids = train_test_split(
-            snps_for_training, pheno_for_training, ids, test_size=0.2)#, stratify=pheno_for_training)
+            snps_for_training, pheno_for_training, ids, test_size=0.1)#, stratify=pheno_for_training)
 
         #from sklearn.preprocessing import StandardScaler
         #scaler = StandardScaler()
@@ -323,7 +342,7 @@ class GenomicPrediction:
         all_models_predictions = []
 
         # Perform 10 iterations of training/testing excluding the validation set
-        for i in range(50):
+        for i in range(10):
         # kf = KFold(n_splits=2, shuffle=True)
         # for train_index, test_index in kf.split(X_train_full):
         #     X_train, X_test = X_train_full[train_index], X_train_full[test_index]

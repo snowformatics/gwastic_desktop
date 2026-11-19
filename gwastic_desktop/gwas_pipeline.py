@@ -49,20 +49,23 @@ class GWAS:
             abs_file_path = os.path.join(script_dir, rel_path)
             os.chmod(abs_file_path, 0o755)
 
-        if id_file == None:
-            process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
-                                        "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                        "--geno", geno, "--double-id"])
+        try:
+            if id_file == None:
+                process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
+                                            "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
+                                            "--geno", geno, "--double-id"])
 
-        else:
-            process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
-                                        "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
-                                        "--geno", geno, "--double-id", "--keep", id_file])
+            else:
+                process = subprocess.Popen([abs_file_path, "--vcf", vcf_file, "--make-bed", "--out", file_out,
+                                            "--allow-extra-chr", "--set-missing-var-ids", "@:#", "--maf", maf,
+                                            "--geno", geno, "--double-id", "--keep", id_file, "--vcf-half-call", "missing"])
 
-        process.wait()
+            process.wait()
+            plink_log = "Conversion done!"
+        except:
         # read the log file
         #plink_log = open(file_out + '.log').read()
-        plink_log = "Conversion done!"
+            plink_log = "Conversion error!"
         return plink_log
 
     def filter_out_missing(self, bed):
@@ -145,6 +148,8 @@ class GWAS:
             #print (K)
 
         elif algorithm == 'Linear regression':
+            print (bed_fixed)
+            print (pheno)
             if cov_file:
                 df_lmm_gwas = single_snp_linreg(test_snps=bed_fixed, pheno=pheno, output_file_name=gwas_result_name, covar=cov_file, GB_goal=gb_goal)
             else:
@@ -170,7 +175,7 @@ class GWAS:
 
         t1 = time.time()
         dataframes = []
-        df_bim = pd.read_csv(bed_file.replace('bed', 'bim'), delimiter='\t', header=None)
+        df_bim = pd.read_csv(bed_file.replace('.bed', '.bim'), delimiter='\t', header=None)
         df_bim.columns = ['Chr', 'SNP', 'NA', 'ChrPos', 'NA', 'NA']
 
         snp_data = bed_fixed.read().val
