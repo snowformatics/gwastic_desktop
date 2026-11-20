@@ -6,3 +6,4 @@ geneview==0.2.1
 matplotlib==3.9.3
 fastlmm==0.6.11
 bed-reader==1.0.6
+xgboost
