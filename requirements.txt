@@ -1,7 +1,8 @@
-dearpygui
-dearpygui-ext
-pandas
-numpy
-geneview
-matplotlib
-fastlmm
+dearpygui==2.0.0
+dearpygui-ext==2.0.0
+pandas==2.2.3
+numpy==2.0.2
+geneview==0.2.1
+matplotlib==3.9.3
+fastlmm==0.6.11
+bed-reader==1.0.6
